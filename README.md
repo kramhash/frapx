@@ -5,6 +5,7 @@ Web graphics utilities for building lightweight visual effects on the web.
 ## Packages
 
 - [`@frapx/shader`](./packages/shader) - Create lightweight WebGL shader backgrounds for websites.
+- [`@frapx/shader-noise`](./packages/shader-noise) - Lightweight GLSL 3D noise helpers for shader backgrounds.
 
 ## Architecture
 

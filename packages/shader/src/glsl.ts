@@ -28,5 +28,5 @@ mat2 rotate2d(float angle) {
   float c = cos(angle);
   return mat2(c, -s, s, c);
 }
-`
+`,
 } as const;

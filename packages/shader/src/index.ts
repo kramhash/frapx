@@ -15,7 +15,7 @@ export type {
   TextureSource,
   UniformInput,
   UniformInputMap,
-  UniformRuntimeValue
+  UniformRuntimeValue,
 } from "./types";
 export {
   DestroyedError,
@@ -23,5 +23,5 @@ export {
   ShaderError,
   TargetNotFoundError,
   TextureLoadError,
-  UnsupportedError
+  UnsupportedError,
 } from "./internal/errors";

@@ -80,7 +80,7 @@ export type RenderState<TUniforms extends UniformInputMap = UniformInputMap> = {
 };
 
 export type CreateShaderBackgroundOptions<
-  TUniforms extends UniformInputMap = UniformInputMap
+  TUniforms extends UniformInputMap = UniformInputMap,
 > = {
   target?: string | Element;
   canvas?: HTMLCanvasElement;
@@ -105,7 +105,7 @@ export type CreateShaderBackgroundOptions<
 };
 
 export type ShaderBackgroundInstance<
-  TUniforms extends UniformInputMap = UniformInputMap
+  TUniforms extends UniformInputMap = UniformInputMap,
 > = {
   readonly canvas: HTMLCanvasElement | null;
   readonly gl: WebGLRenderingContext | null;
@@ -119,7 +119,7 @@ export type ShaderBackgroundInstance<
   destroy(): void;
   setUniform<K extends keyof TUniforms & string>(
     name: K,
-    value: UniformRuntimeValue<TUniforms[K]>
+    value: UniformRuntimeValue<TUniforms[K]>,
   ): void;
   setUniform(name: string, value: UniformInput): void;
   setUniforms(values: Record<string, UniformInput>): void;

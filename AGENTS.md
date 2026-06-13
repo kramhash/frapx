@@ -12,6 +12,7 @@
 
 - This is a pnpm monorepo.
 - The npm package is `@frapx/shader` in `packages/shader`.
+- The optional 3D noise helper package is `@frapx/shader-noise` in `packages/shader-noise`.
 - The example app is `@frapx/example-vite-basic` in `examples/vite-basic`.
 - Prefer the repository's established patterns over adding new abstractions.
 
