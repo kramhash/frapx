@@ -40,6 +40,21 @@ fx.setUniform("progress", 0.4);
 // GLSL: uniform float u_progress;
 ```
 
+This naming rule also applies to initial custom uniforms:
+
+```ts
+createShaderBackground({
+  target: ".hero",
+  fragment,
+  uniforms: {
+    progress: 0
+  }
+});
+```
+
+The shader must declare `uniform float u_progress;`, not `uniform float progress;`.
+Uniforms set before `ready` are cached and applied on the first render.
+
 ## Textures
 
 ```ts

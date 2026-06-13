@@ -67,6 +67,16 @@ export const applyUniform = (
   }
 };
 
+export const applyProgramUniform = (
+  gl: WebGLRenderingContext,
+  program: WebGLProgram,
+  location: WebGLUniformLocation,
+  uniform: NormalizedUniform
+): void => {
+  gl.useProgram(program);
+  applyUniform(gl, location, uniform);
+};
+
 export const collectUniformLocations = (
   gl: WebGLRenderingContext,
   program: WebGLProgram

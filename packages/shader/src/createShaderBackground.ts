@@ -21,6 +21,7 @@ import {
 import { toUniformName } from "./internal/names";
 import { loadTextures, type LoadedTexture } from "./internal/textures";
 import {
+  applyProgramUniform,
   applyUniform,
   collectUniformLocations,
   createUniformCache,
@@ -229,9 +230,14 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
     const gl = this.dom?.canvas.getContext("webgl");
     const location = this.uniformLocations.get(uniformName);
-    if (gl && location) {
-      applyUniform(gl, location, this.uniformCache.get(uniformName)!);
-    } else {
+    if (gl && this.program && location) {
+      applyProgramUniform(
+        gl,
+        this.program,
+        location,
+        this.uniformCache.get(uniformName)!
+      );
+    } else if (this.program) {
       this.warnUnknownUniform(uniformName);
     }
 
