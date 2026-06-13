@@ -1,0 +1,43 @@
+{
+  "name": "@frapx/shader",
+  "version": "0.1.0",
+  "description": "Lightweight WebGL shader background runtime for websites.",
+  "keywords": [
+    "webgl",
+    "shader",
+    "glsl",
+    "canvas",
+    "background",
+    "visual-effects",
+    "web-animation"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./glsl": {
+      "types": "./dist/glsl.d.ts",
+      "import": "./dist/glsl.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "directory": "packages/shader"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

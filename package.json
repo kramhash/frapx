@@ -1,0 +1,21 @@
+{
+  "name": "frapx",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "pnpm --filter @frapx/shader build",
+    "typecheck": "pnpm --filter @frapx/shader typecheck",
+    "test": "pnpm --filter @frapx/shader test",
+    "test:e2e": "pnpm --filter @frapx/shader test:e2e",
+    "dev": "pnpm --filter @frapx/example-vite-basic dev"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.0",
+    "@types/node": "^24.0.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
+  }
+}

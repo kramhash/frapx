@@ -1,0 +1,17 @@
+{
+  "name": "@frapx/example-vite-basic",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@frapx/shader": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "typescript": "^5.8.3"
+  }
+}
