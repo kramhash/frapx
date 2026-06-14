@@ -55,6 +55,31 @@ createShaderBackground({
 The shader must declare `uniform float u_progress;`, not `uniform float progress;`.
 Uniforms set before `ready` are cached and applied on the first render.
 
+## Color Uniforms
+
+Use `hexToRgb()` and `hexToRgba()` to convert hex colors into `vec3` and `vec4` uniform values.
+
+```ts
+import { createShaderBackground, glsl, hexToRgb, hexToRgba } from "@frapx/shader";
+
+const fx = createShaderBackground({
+  target: ".hero",
+  fragment,
+  uniforms: {
+    baseColor: hexToRgb("#7dd3fc"),
+    overlayColor: hexToRgba("#0f172acc")
+  }
+});
+```
+
+```glsl
+uniform vec3 u_baseColor;
+uniform vec4 u_overlayColor;
+```
+
+The helpers support `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, and the same forms without `#`.
+The returned values are sRGB channels normalized to `0..1`. Invalid hex values throw an `Error`.
+
 ## Textures
 
 ```ts

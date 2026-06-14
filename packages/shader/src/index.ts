@@ -1,4 +1,6 @@
 export { createShaderBackground } from "./createShaderBackground";
+export { hexToRgb, hexToRgba } from "./color";
+export type { Rgb, Rgba } from "./color";
 export { glsl, glslUtils } from "./glsl";
 export type {
   CreateShaderBackgroundOptions,
