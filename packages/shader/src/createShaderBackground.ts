@@ -3,6 +3,8 @@ import type {
   RenderState,
   ShaderBackgroundInstance,
   ShaderStatus,
+  TextureInput,
+  TextureMap,
   UniformInput,
   UniformInputMap,
   UniformRuntimeValue
@@ -10,6 +12,7 @@ import type {
 import {
   DestroyedError,
   TargetNotFoundError,
+  TextureLoadError,
   UnsupportedError
 } from "./internal/errors";
 import {
@@ -19,7 +22,7 @@ import {
   type DomSetup
 } from "./internal/dom";
 import { toUniformName } from "./internal/names";
-import { loadTextures, type LoadedTexture } from "./internal/textures";
+import { loadTexture, type LoadedTexture } from "./internal/textures";
 import {
   applyProgramUniform,
   applyUniform,
@@ -57,8 +60,12 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   private dom: DomSetup | null = null;
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
+  private attribLocation = -1;
   private uniformLocations = new Map<string, WebGLUniformLocation>();
-  private textures: LoadedTexture[] = [];
+  private textureInputs = new Map<string, TextureInput>();
+  private textures = new Map<string, LoadedTexture>();
+  private textureUnits = new Map<string, number>();
+  private textureVersions = new Map<string, number>();
   private resizeObserver: ResizeObserver | null = null;
   private intersectionObserver: IntersectionObserver | null = null;
   private rafId = 0;
@@ -151,16 +158,20 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
     this.inRender = true;
     this.resize();
+    // Reset to the default framebuffer each frame so a render-target left bound
+    // by an extension (e.g. in onAfterRender) cannot leak into this frame.
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.width, this.height);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(this.program);
     this.applyBuiltInUniforms(gl);
-    this.applyCachedUniforms(gl);
-    this.applyTextures(gl);
 
     const state = this.createRenderState(gl);
     this.options.onBeforeRender?.(state);
-    this.applyCachedUniforms(gl);
+    // Re-establish all of the core's draw state after the user hook so any GL
+    // side-effects (program, array buffer, attrib pointer, textures) cannot
+    // corrupt the core draw. This is what makes the core a safe FBO host.
+    this.prepareDrawState(gl);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     this.options.onAfterRender?.(state);
@@ -199,7 +210,9 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
     const gl = this.dom?.canvas.getContext("webgl");
     if (gl) {
-      for (const texture of this.textures) gl.deleteTexture(texture.texture);
+      for (const texture of this.textures.values()) {
+        gl.deleteTexture(texture.texture);
+      }
       if (this.buffer) gl.deleteBuffer(this.buffer);
       if (this.program) gl.deleteProgram(this.program);
     }
@@ -256,6 +269,68 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
+  async setTexture(name: string, input: TextureInput): Promise<void> {
+    if (this.destroyed) return;
+
+    let gl = this.dom?.canvas.getContext("webgl");
+    if (!gl) {
+      await this.ready;
+      if (this.destroyed) return;
+      gl = this.dom?.canvas.getContext("webgl");
+    }
+
+    if (!gl) {
+      const error = new TextureLoadError(
+        "Cannot set texture before WebGL is ready."
+      );
+      this.options.onError?.(error);
+      throw error;
+    }
+
+    const version = (this.textureVersions.get(name) ?? 0) + 1;
+    this.textureVersions.set(name, version);
+
+    try {
+      const unit = this.resolveTextureUnit(gl, name);
+      const loaded = await loadTexture(gl, name, input, unit);
+
+      if (this.destroyed || this.textureVersions.get(name) !== version) {
+        gl.deleteTexture(loaded.texture);
+        return;
+      }
+
+      const previous = this.textures.get(name);
+      this.textureInputs.set(name, input);
+      this.textures.set(name, loaded);
+      if (previous) gl.deleteTexture(previous.texture);
+      this.applyTextureSizeUniform(loaded);
+
+      if (
+        this.options.renderMode === "demand" &&
+        !this.inRender &&
+        this.onscreen
+      ) {
+        this.render();
+      }
+    } catch (error) {
+      if (!this.textures.has(name) && !this.textureInputs.has(name)) {
+        this.textureUnits.delete(name);
+      }
+      const normalized =
+        error instanceof Error ? error : new Error(String(error));
+      this.options.onError?.(normalized);
+      throw normalized;
+    }
+  }
+
+  async setTextures(values: TextureMap): Promise<void> {
+    await Promise.all(
+      Object.entries(values).map(([name, input]) =>
+        this.setTexture(name, input)
+      )
+    );
+  }
+
   private async init(): Promise<void> {
     if (typeof window === "undefined" || typeof document === "undefined") {
       this.failUnsupported(new UnsupportedError("WebGL requires a browser."));
@@ -289,11 +364,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       this.setupContextEvents();
       this.setupProgram(gl);
       this.resize();
-      this.textures = await loadTextures(
-        gl,
-        this.options.textures,
-        () => this.destroyed
-      );
+      this.textureInputs = new Map(Object.entries(this.options.textures ?? {}));
+      await this.loadTextureInputs(gl);
       if (this.destroyed) return;
       this.applyTextureSizeUniforms();
       this.currentStatus = "ready";
@@ -321,7 +393,22 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     );
     gl.useProgram(this.program);
     this.buffer = createFullscreenBuffer(gl, this.program);
+    this.attribLocation = gl.getAttribLocation(this.program, "a_position");
     this.uniformLocations = collectUniformLocations(gl, this.program);
+  }
+
+  // Re-bind the core's program, fullscreen geometry, textures and uniforms so a
+  // draw is correct regardless of GL state changed by onBeforeRender/onAfterRender.
+  private prepareDrawState(gl: WebGLRenderingContext): void {
+    if (!this.program) return;
+    gl.useProgram(this.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    if (this.attribLocation >= 0) {
+      gl.enableVertexAttribArray(this.attribLocation);
+      gl.vertexAttribPointer(this.attribLocation, 2, gl.FLOAT, false, 0, 0);
+    }
+    this.applyTextures(gl);
+    this.applyCachedUniforms(gl);
   }
 
   private setupDomObservers(): void {
@@ -401,9 +488,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       try {
         this.setupProgram(gl);
         this.applyCachedUniforms(gl);
-        void loadTextures(gl, this.options.textures, () => this.destroyed).then(
-          (textures) => {
-            this.textures = textures;
+        void this.loadTextureInputs(gl).then(
+          () => {
             this.applyTextureSizeUniforms();
             if (this.contextRestoredShouldRun) this.start();
             else this.render();
@@ -473,11 +559,24 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   }
 
   private applyTextureSizeUniforms(): void {
-    for (const texture of this.textures) {
-      this.uniformCache.set(texture.sizeUniformName, {
-        type: "vec2",
-        value: [texture.width, texture.height]
-      });
+    for (const texture of this.textures.values()) {
+      this.applyTextureSizeUniform(texture);
+    }
+  }
+
+  private applyTextureSizeUniform(texture: LoadedTexture): void {
+    const uniform = {
+      type: "vec2" as const,
+      value: [texture.width, texture.height]
+    };
+    this.uniformCache.set(texture.sizeUniformName, uniform);
+
+    const gl = this.dom?.canvas.getContext("webgl");
+    const location = this.uniformLocations.get(texture.sizeUniformName);
+    if (gl && this.program && location) {
+      applyProgramUniform(gl, this.program, location, uniform);
+    } else if (this.program) {
+      this.warnUnknownUniform(texture.sizeUniformName);
     }
   }
 
@@ -493,16 +592,52 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   }
 
   private applyTextures(gl: WebGLRenderingContext): void {
-    for (let unit = 0; unit < this.textures.length; unit += 1) {
-      const texture = this.textures[unit];
-      if (!texture) continue;
+    for (const texture of this.textures.values()) {
+      const unit = this.textureUnits.get(texture.name);
+      if (unit === undefined) continue;
       const location = this.uniformLocations.get(texture.uniformName);
-      if (!location) continue;
+      if (!location) {
+        this.warnUnknownUniform(texture.uniformName);
+        continue;
+      }
 
       gl.activeTexture(gl.TEXTURE0 + unit);
       gl.bindTexture(gl.TEXTURE_2D, texture.texture);
       gl.uniform1i(location, unit);
     }
+  }
+
+  private async loadTextureInputs(gl: WebGLRenderingContext): Promise<void> {
+    const loadedTextures = new Map<string, LoadedTexture>();
+
+    for (const [name, input] of this.textureInputs) {
+      if (this.destroyed) break;
+      const unit = this.resolveTextureUnit(gl, name);
+      loadedTextures.set(name, await loadTexture(gl, name, input, unit));
+    }
+
+    for (const texture of this.textures.values()) {
+      gl.deleteTexture(texture.texture);
+    }
+    this.textures = loadedTextures;
+  }
+
+  private resolveTextureUnit(gl: WebGLRenderingContext, name: string): number {
+    const existing = this.textureUnits.get(name);
+    if (existing !== undefined) return existing;
+
+    const maxUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS) as number;
+
+    for (let unit = 0; unit < maxUnits; unit += 1) {
+      if (![...this.textureUnits.values()].includes(unit)) {
+        this.textureUnits.set(name, unit);
+        return unit;
+      }
+    }
+
+    throw new TextureLoadError(
+      `Texture unit limit exceeded while loading texture: ${name}`
+    );
   }
 
   private createRenderState(

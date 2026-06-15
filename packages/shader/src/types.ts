@@ -117,6 +117,8 @@ export type ShaderBackgroundInstance<
   render(): void;
   resize(): void;
   destroy(): void;
+  setTexture(name: string, input: TextureInput): Promise<void>;
+  setTextures(values: TextureMap): Promise<void>;
   setUniform<K extends keyof TUniforms & string>(
     name: K,
     value: UniformRuntimeValue<TUniforms[K]>,

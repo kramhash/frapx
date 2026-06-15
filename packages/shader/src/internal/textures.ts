@@ -28,7 +28,7 @@ export const loadTextures = async (
   return loaded;
 };
 
-const loadTexture = async (
+export const loadTexture = async (
   gl: WebGLRenderingContext,
   name: string,
   input: TextureInput,

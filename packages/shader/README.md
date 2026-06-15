@@ -107,6 +107,23 @@ uniform vec2 u_imageSize;
 
 Supported v1 sources are image URL, `HTMLImageElement`, and `HTMLCanvasElement`.
 
+Textures can be updated at runtime. Updates are async because URL sources must
+load before they can be uploaded to WebGL.
+
+```ts
+await fx.setTexture("image", "/next-hero.webp");
+
+await fx.setTextures({
+  image: "/next-hero.webp",
+  mask: nextMaskCanvas
+});
+```
+
+`setTextures()` is a partial update: omitted texture names are left unchanged.
+If a runtime texture update fails, the previous texture remains active and the
+returned promise rejects. In `"demand"` render mode, successful texture updates
+request a render.
+
 ## External Uniforms
 
 Scroll is intentionally not built in. Use any scroll or animation library and push values into uniforms.
@@ -194,6 +211,8 @@ fx.stop();
 fx.render();
 fx.resize();
 fx.destroy();
+await fx.setTexture("image", "/next-hero.webp");
+await fx.setTextures({ image: "/next-hero.webp" });
 fx.setUniform("progress", 0.5);
 fx.setUniforms({ progress: 0.5, color: [1, 0, 0] });
 ```
