@@ -3,9 +3,17 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   resolve: {
-    alias: {
-      "@frapx/shader": resolve(__dirname, "../../packages/shader/src/index.ts"),
-      "@frapx/shader/glsl": resolve(__dirname, "../../packages/shader/src/glsl.ts")
-    }
+    // Resolve all @frapx/shader subpaths to source so the example reflects edits
+    // without a rebuild. Wildcard avoids per-export drift (e.g. /color, /glsl).
+    alias: [
+      {
+        find: /^@frapx\/shader$/,
+        replacement: resolve(__dirname, "../../packages/shader/src/index.ts")
+      },
+      {
+        find: /^@frapx\/shader\/(.*)$/,
+        replacement: resolve(__dirname, "../../packages/shader/src/$1.ts")
+      }
+    ]
   }
 });

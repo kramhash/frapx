@@ -11,6 +11,10 @@
     "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@frapx/shader": ["./packages/shader/src/index.ts"],
+      "@frapx/shader/*": ["./packages/shader/src/*.ts"]
+    }
   }
 }
