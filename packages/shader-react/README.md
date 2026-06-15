@@ -1,5 +1,7 @@
 # @frapx/shader-react
 
+[![npm version](https://img.shields.io/npm/v/@frapx/shader-react.svg)](https://www.npmjs.com/package/@frapx/shader-react)
+
 React bindings for `@frapx/shader`.
 
 This package is a thin lifecycle adapter. It does not replace the core render

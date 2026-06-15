@@ -1,5 +1,7 @@
 # @frapx/shader-noise
 
+[![npm version](https://img.shields.io/npm/v/@frapx/shader-noise.svg)](https://www.npmjs.com/package/@frapx/shader-noise)
+
 Lightweight GLSL 3D noise helpers for `@frapx/shader`.
 
 This package is intentionally separate from `@frapx/shader` so the core runtime stays small. It exports GLSL strings that can be embedded in fragment shaders.

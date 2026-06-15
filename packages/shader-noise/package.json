@@ -21,6 +21,8 @@
   },
   "files": [
     "dist",
+    "README.md",
+    "CHANGELOG.md",
     "LICENSES"
   ],
   "scripts": {

@@ -1,5 +1,7 @@
 # @frapx/shader
 
+[![npm version](https://img.shields.io/npm/v/@frapx/shader.svg)](https://www.npmjs.com/package/@frapx/shader)
+
 Lightweight WebGL1 shader background runtime for websites.
 
 This is not a scene, camera, or mesh abstraction. It creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in and custom uniforms.
