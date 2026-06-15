@@ -1,0 +1,51 @@
+{
+  "name": "@frapx/shader-react",
+  "version": "0.1.0",
+  "description": "React bindings for @frapx/shader.",
+  "keywords": [
+    "webgl",
+    "shader",
+    "react",
+    "canvas",
+    "background",
+    "visual-effects"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@frapx/shader": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^27.3.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "directory": "packages/shader-react"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

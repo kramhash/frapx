@@ -14,7 +14,8 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@frapx/shader": ["./packages/shader/src/index.ts"],
-      "@frapx/shader/*": ["./packages/shader/src/*.ts"]
+      "@frapx/shader/*": ["./packages/shader/src/*.ts"],
+      "@frapx/shader-react": ["./packages/shader-react/src/index.ts"]
     }
   }
 }
