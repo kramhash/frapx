@@ -39,6 +39,13 @@ import {
 
 const MAX_DELTA_SECONDS = 0.1;
 
+// A "closed" gate suppresses the render loop. The instance runs only when the
+// user intends it to (start()) AND every gate is open (the set is empty).
+// "offscreen"/"hidden" are visibility gates: they suppress all rendering.
+// "reducedMotion" is a motion gate: it stops the loop but allows one static
+// frame, and only applies to the continuous (non-demand) render mode.
+type Gate = "offscreen" | "hidden" | "reducedMotion";
+
 export const createShaderBackground = <
   TUniforms extends UniformInputMap = UniformInputMap
 >(
@@ -72,7 +79,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   private running = false;
   private inRender = false;
   private destroyed = false;
-  private onscreen = true;
+  private gates = new Set<Gate>();
+  private reducedMotionActive = false;
   private frame = 0;
   private elapsed = 0;
   private lastTimestamp = 0;
@@ -118,20 +126,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   start(): void {
     if (this.destroyed || this.currentStatus === "unsupported") return;
     this.running = true;
-
-    if (!this.onscreen && (this.options.pauseWhenOffscreen ?? true)) {
-      this.currentStatus = "paused";
-      return;
-    }
-
-    if (this.options.renderMode === "demand") {
-      this.currentStatus = "running";
-      this.render();
-      return;
-    }
-
-    this.currentStatus = "running";
-    this.scheduleFrame();
+    this.reconcile();
   }
 
   stop(): void {
@@ -142,13 +137,81 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
+  // A visibility gate ("offscreen"/"hidden") suppresses all rendering.
+  private get hasVisibilityBlock(): boolean {
+    return this.gates.has("offscreen") || this.gates.has("hidden");
+  }
+
+  // The motion gate only stops the continuous loop; demand mode has no loop to
+  // throttle, so reduced motion does not apply there.
+  private get hasMotionBlock(): boolean {
+    return (
+      this.gates.has("reducedMotion") && this.options.renderMode !== "demand"
+    );
+  }
+
+  // Open or close a gate, then reconcile the runtime to the new gate set.
+  private setGate(gate: Gate, closed: boolean): void {
+    if (closed === this.gates.has(gate)) return;
+    if (closed) this.gates.add(gate);
+    else this.gates.delete(gate);
+    this.reconcile();
+  }
+
+  // Single source of truth: derive the runtime state from intent + gates.
+  // Every lifecycle event funnels through here so the result is consistent
+  // regardless of which event (start, visibility, reduced-motion) triggered it.
+  private reconcile(): void {
+    if (
+      this.destroyed ||
+      this.currentStatus === "unsupported" ||
+      this.currentStatus === "error" ||
+      this.currentStatus === "context-lost"
+    ) {
+      return;
+    }
+
+    if (this.running) {
+      if (this.hasVisibilityBlock) {
+        this.cancelFrame();
+        this.currentStatus = "paused";
+        return;
+      }
+
+      if (this.hasMotionBlock) {
+        // Reduced motion: hold a single static frame instead of animating.
+        this.cancelFrame();
+        this.currentStatus = "paused";
+        this.renderStaticFrame();
+        return;
+      }
+
+      this.currentStatus = "running";
+      if (this.options.renderMode === "demand") this.render();
+      else this.scheduleFrame();
+      return;
+    }
+
+    // Not running: in demand mode keep the static frame fresh when visible
+    // (e.g. scrolled back on screen). render() no-ops if a visibility gate is
+    // closed, so this is safe to call unconditionally.
+    if (this.options.renderMode === "demand") this.render();
+  }
+
+  // Render one frame at the current (frozen) time without scheduling more.
+  private renderStaticFrame(): void {
+    if (this.hasVisibilityBlock) return;
+    this.setBuiltInTime(0);
+    this.render();
+  }
+
   render(): void {
     if (
       this.destroyed ||
       !this.dom ||
       !this.program ||
       this.currentStatus === "unsupported" ||
-      (this.options.pauseWhenOffscreen ?? true) && !this.onscreen
+      this.hasVisibilityBlock
     ) {
       return;
     }
@@ -257,7 +320,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     if (
       this.options.renderMode === "demand" &&
       !this.inRender &&
-      this.onscreen
+      !this.hasVisibilityBlock
     ) {
       this.render();
     }
@@ -308,7 +371,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       if (
         this.options.renderMode === "demand" &&
         !this.inRender &&
-        this.onscreen
+        !this.hasVisibilityBlock
       ) {
         this.render();
       }
@@ -424,21 +487,23 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     if (this.options.pauseWhenOffscreen ?? true) {
       this.intersectionObserver = new IntersectionObserver((entries) => {
         const entry = entries[0];
-        this.onscreen = Boolean(entry?.isIntersecting);
-        if (!this.onscreen) {
-          this.cancelFrame();
-          if (this.running) this.currentStatus = "paused";
-          return;
-        }
-
-        if (this.running) {
-          this.start();
-        } else if (this.options.renderMode === "demand") {
-          this.render();
-        }
+        this.setGate("offscreen", !entry?.isIntersecting);
       });
       this.intersectionObserver.observe(this.dom.target);
     }
+
+    if (this.options.pauseWhenHidden ?? true) {
+      if (document.hidden) this.gates.add("hidden");
+      const onVisibility = () => {
+        this.setGate("hidden", document.hidden);
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+      this.removeListeners.push(() => {
+        document.removeEventListener("visibilitychange", onVisibility);
+      });
+    }
+
+    this.setupMotionObserver();
 
     const onPointerMove = (event: Event) => {
       if (!this.dom) return;
@@ -466,6 +531,35 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       this.dom?.target.removeEventListener("pointermove", onPointerMove);
       this.dom?.target.removeEventListener("pointerenter", onPointerMove);
       this.dom?.target.removeEventListener("pointerleave", onPointerLeave);
+    });
+  }
+
+  // Track the OS "prefers reduced motion" setting and keep it live: the
+  // u_reducedMotion uniform always reflects the current value, and when
+  // respectReducedMotion is enabled the motion gate opens/closes with it.
+  private setupMotionObserver(): void {
+    if (typeof window.matchMedia !== "function") return;
+
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.reducedMotionActive = query.matches;
+    if (this.options.respectReducedMotion && query.matches) {
+      this.gates.add("reducedMotion");
+    }
+
+    const onChange = (event: MediaQueryListEvent) => {
+      this.reducedMotionActive = event.matches;
+      if (this.options.respectReducedMotion) {
+        this.setGate("reducedMotion", event.matches);
+      } else if (this.options.renderMode === "demand") {
+        // Reflect the new uniform value in the static frame immediately;
+        // the continuous loop picks it up on the next frame on its own.
+        this.render();
+      }
+    };
+
+    query.addEventListener("change", onChange);
+    this.removeListeners.push(() => {
+      query.removeEventListener("change", onChange);
     });
   }
 
@@ -548,7 +642,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       pixelRatio: this.pixelRatio,
       pointer: [this.pointer.x, this.pointer.y],
       pointerUv: [this.pointer.uvX, this.pointer.uvY],
-      pointerActive: this.pointer.active
+      pointerActive: this.pointer.active,
+      reducedMotion: this.reducedMotionActive ? 1 : 0
     };
 
     for (const [name, value] of Object.entries(builtIns)) {
@@ -654,7 +749,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       height: this.height,
       viewportWidth: this.viewportWidth,
       viewportHeight: this.viewportHeight,
-      pixelRatio: this.pixelRatio
+      pixelRatio: this.pixelRatio,
+      reducedMotion: this.reducedMotionActive
     };
   }
 
