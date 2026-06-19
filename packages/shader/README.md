@@ -165,12 +165,15 @@ createShaderBackground({
 uniform vec2 u_resolution;     // drawing buffer px
 uniform vec2 u_viewportSize;   // CSS px
 uniform float u_pixelRatio;
-uniform float u_time;          // seconds, paused offscreen
+uniform float u_time;          // seconds, paused offscreen/hidden
 uniform float u_delta;         // seconds, clamped to 0.1
 uniform vec2 u_pointer;        // drawing buffer px, bottom-left origin
 uniform vec2 u_pointerUv;      // 0..1, bottom-left origin
 uniform float u_pointerActive; // 0 or 1
+uniform float u_reducedMotion; // 1 when the OS prefers reduced motion, else 0
 ```
+
+`u_reducedMotion` is always supplied. Use it to soften or stop motion yourself when you do not want the library to pause the loop (see `respectReducedMotion` below).
 
 ## Options
 
@@ -185,6 +188,8 @@ createShaderBackground({
   layer: "background",
   autoStart: true,
   pauseWhenOffscreen: true,
+  pauseWhenHidden: true,
+  respectReducedMotion: false,
   renderMode: "always",
   dpr: "auto",
   maxDpr: 2,
@@ -203,6 +208,14 @@ createShaderBackground({
 ```
 
 `layer: "background"` inserts the canvas as the first child with `z-index: 0`. `layer: "overlay"` inserts it as the last child with `z-index: 1`. Existing child styles are not changed.
+
+### Lifecycle & accessibility
+
+The render loop is paused whenever it is not worth running, and resumes automatically:
+
+- `pauseWhenOffscreen` (default `true`) — pause while the target scrolls out of view.
+- `pauseWhenHidden` (default `true`) — pause while the document is hidden (e.g. a background tab).
+- `respectReducedMotion` (default `false`) — when enabled, hold a single static frame while the OS "prefers reduced motion" setting is on, and resume if the user turns it off. The `u_reducedMotion` uniform and `state.reducedMotion` are supplied regardless of this flag, so you can also handle reduced motion inside the shader. In `renderMode: "demand"` the motion gate does not apply (there is no loop to throttle).
 
 ## Instance API
 

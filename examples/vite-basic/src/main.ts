@@ -1,4 +1,5 @@
 import { createShaderBackground, glsl } from "@frapx/shader";
+import type { ShaderBackgroundInstance } from "@frapx/shader";
 import "./styles.css";
 
 declare global {
@@ -7,6 +8,7 @@ declare global {
       frames: number;
       pixel: number[] | null;
     };
+    __frapxShader?: ShaderBackgroundInstance;
   }
 }
 
@@ -14,6 +16,9 @@ window.__frapxShaderSample = {
   frames: 0,
   pixel: null
 };
+
+// Lets the E2E suite drive feature flags without separate fixture pages.
+const params = new URLSearchParams(window.location.search);
 
 const fragment = glsl`
 precision highp float;
@@ -41,6 +46,7 @@ const fx = createShaderBackground({
     progress: 0
   },
   debug: true,
+  respectReducedMotion: params.get("reducedMotion") === "1",
   onAfterRender({ gl, width, height }) {
     const pixel = new Uint8Array(4);
     gl.readPixels(
@@ -58,6 +64,8 @@ const fx = createShaderBackground({
     };
   }
 });
+
+window.__frapxShader = fx;
 
 const progress = document.querySelector<HTMLInputElement>("[data-progress]");
 progress?.addEventListener("input", () => {

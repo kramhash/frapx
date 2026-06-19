@@ -117,7 +117,11 @@ class Canvas {
 
 const stubBrowserGlobals = () => {
   vi.stubGlobal("window", { devicePixelRatio: 1 });
-  vi.stubGlobal("document", {});
+  vi.stubGlobal("document", {
+    hidden: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  });
   vi.stubGlobal("HTMLImageElement", class {});
   vi.stubGlobal("HTMLCanvasElement", Canvas);
 };

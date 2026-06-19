@@ -77,6 +77,8 @@ export type RenderState<TUniforms extends UniformInputMap = UniformInputMap> = {
   viewportWidth: number;
   viewportHeight: number;
   pixelRatio: number;
+  /** Whether the OS "prefers reduced motion" setting is currently enabled. */
+  reducedMotion: boolean;
 };
 
 export type CreateShaderBackgroundOptions<
@@ -91,6 +93,17 @@ export type CreateShaderBackgroundOptions<
   layer?: ShaderLayer;
   autoStart?: boolean;
   pauseWhenOffscreen?: boolean;
+  /**
+   * Pause the render loop while the document is hidden (e.g. a background tab).
+   * Defaults to `true`.
+   */
+  pauseWhenHidden?: boolean;
+  /**
+   * When `true`, automatically hold a single static frame while the user's OS
+   * "prefers reduced motion" setting is enabled. Defaults to `false`. The
+   * `u_reducedMotion` uniform (0/1) is always supplied regardless of this flag.
+   */
+  respectReducedMotion?: boolean;
   renderMode?: RenderMode;
   dpr?: DprOption;
   maxDpr?: number;
