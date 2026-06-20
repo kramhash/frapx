@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - 2026-06-20
+
+### Added
+
+- Added `feedback` prop passthrough for the core `@frapx/shader` previous-frame feedback option.
+
 ## 0.1.0 - 2026-06-15
 
 ### Added

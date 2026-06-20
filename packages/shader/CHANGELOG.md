@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 - 2026-06-20
+
+### Added
+
+- Added `feedback: true | FeedbackOptions` to expose the previous rendered frame as a managed `u_previousFrame` texture backed by internal ping-pong framebuffers.
+- Added `examples/vite-feedback` as an interactive feedback demo.
+
 ## 0.5.0 - 2026-06-20
 
 ### Added
