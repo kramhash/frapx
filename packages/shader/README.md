@@ -217,6 +217,30 @@ The render loop is paused whenever it is not worth running, and resumes automati
 - `pauseWhenHidden` (default `true`) — pause while the document is hidden (e.g. a background tab).
 - `respectReducedMotion` (default `false`) — when enabled, hold a single static frame while the OS "prefers reduced motion" setting is on, and resume if the user turns it off. The `u_reducedMotion` uniform and `state.reducedMotion` are supplied regardless of this flag, so you can also handle reduced motion inside the shader. In `renderMode: "demand"` the motion gate does not apply (there is no loop to throttle).
 
+### WebGL2 / GLSL ES 3.00
+
+Start your fragment shader with `#version 300 es` and the library automatically requests a WebGL2 context:
+
+```glsl
+#version 300 es
+precision highp float;
+
+in vec2 v_uv;
+out vec4 fragColor;
+
+uniform float u_time;
+
+void main() {
+  fragColor = vec4(v_uv, abs(sin(u_time)), 1.0);
+}
+```
+
+The internal vertex shader switches to a `#version 300 es` / `in`/`out` variant automatically. The `v_uv` varying name is the same as in WebGL1. **You are responsible for writing `precision`, `in vec2 v_uv;`, and `out vec4`** — the library does not inject any preamble.
+
+If WebGL2 is unavailable on the device, the instance transitions to `status: "unsupported"` and `onError` receives an `UnsupportedError`. No automatic downgrade is attempted.
+
+Shaders without `#version 300 es` continue to use WebGL1 exactly as before.
+
 ## Instance API
 
 ```ts

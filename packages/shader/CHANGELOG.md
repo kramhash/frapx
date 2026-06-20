@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 - 2026-06-20
+
+### Added
+
+- Added WebGL2 / GLSL ES 3.00 support: starting your fragment shader with `#version 300 es` automatically requests a `webgl2` context and selects a matching internal vertex shader (`in`/`out` syntax). No configuration needed. Shaders without this directive continue to use WebGL1 unchanged.
+- Added `GLContext` exported type (`WebGLRenderingContext | WebGL2RenderingContext`). The `gl` getter and `RenderState.gl` now reflect the actual context type. This is a minor breaking change for callers typed as `WebGLRenderingContext`.
+- When `#version 300 es` is detected but WebGL2 is unavailable, the instance transitions to `status: "unsupported"` and `onError` receives an `UnsupportedError` with a descriptive message. No downgrade to WebGL1 is attempted.
+
 ## 0.4.0 - 2026-06-20
 
 ### Added

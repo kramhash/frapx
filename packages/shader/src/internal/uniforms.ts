@@ -1,4 +1,4 @@
-import type { ExplicitUniformInput, UniformInput, UniformType } from "../types";
+import type { ExplicitUniformInput, GLContext, UniformInput, UniformType } from "../types";
 import { toUniformName } from "./names";
 
 export type NormalizedUniform = {
@@ -33,7 +33,7 @@ export const normalizeUniform = (input: UniformInput): NormalizedUniform => {
 };
 
 export const applyUniform = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   location: WebGLUniformLocation,
   uniform: NormalizedUniform
 ): void => {
@@ -68,7 +68,7 @@ export const applyUniform = (
 };
 
 export const applyProgramUniform = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   program: WebGLProgram,
   location: WebGLUniformLocation,
   uniform: NormalizedUniform
@@ -78,7 +78,7 @@ export const applyProgramUniform = (
 };
 
 export const collectUniformLocations = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   program: WebGLProgram
 ): Map<string, WebGLUniformLocation> => {
   const locations = new Map<string, WebGLUniformLocation>();

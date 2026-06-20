@@ -1,3 +1,4 @@
+import type { GLContext } from "../types";
 import { ShaderCompileError } from "./errors";
 
 export const defaultVertexShader = `
@@ -10,8 +11,21 @@ void main() {
 }
 `;
 
+export const defaultVertexShader300 = `#version 300 es
+in vec2 a_position;
+out vec2 v_uv;
+
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`;
+
+export const isGLSL300 = (src: string): boolean =>
+  /^\s*#version\s+300\s+es\b/.test(src);
+
 export const createProgram = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   vertexSource: string,
   fragmentSource: string
 ): WebGLProgram => {
@@ -41,7 +55,7 @@ export const createProgram = (
 };
 
 export const createFullscreenBuffer = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   program: WebGLProgram
 ): WebGLBuffer => {
   const buffer = gl.createBuffer();
@@ -66,7 +80,7 @@ export const createFullscreenBuffer = (
 };
 
 const compileShader = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   type: number,
   source: string
 ): WebGLShader => {

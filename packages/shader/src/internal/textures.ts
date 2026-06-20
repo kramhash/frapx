@@ -1,4 +1,4 @@
-import type { TextureInput, TextureOptions, TextureSource } from "../types";
+import type { GLContext, TextureInput, TextureOptions, TextureSource } from "../types";
 import { TextureLoadError } from "./errors";
 import { toUniformName } from "./names";
 
@@ -12,7 +12,7 @@ export type LoadedTexture = {
 };
 
 export const loadTextures = async (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   textures: Record<string, TextureInput> | undefined,
   isDestroyed: () => boolean
 ): Promise<LoadedTexture[]> => {
@@ -29,7 +29,7 @@ export const loadTextures = async (
 };
 
 export const loadTexture = async (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   name: string,
   input: TextureInput,
   unit: number
@@ -94,7 +94,7 @@ const resolveSource = async (
 };
 
 const getWrap = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   wrap: NonNullable<TextureOptions["wrap"]>
 ): number => {
   if (wrap === "repeat") return gl.REPEAT;
@@ -103,7 +103,7 @@ const getWrap = (
 };
 
 const getFilter = (
-  gl: WebGLRenderingContext,
+  gl: GLContext,
   filter: NonNullable<TextureOptions["filter"]>
 ): number => (filter === "nearest" ? gl.NEAREST : gl.LINEAR);
 

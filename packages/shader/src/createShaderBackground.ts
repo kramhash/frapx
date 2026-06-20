@@ -1,5 +1,6 @@
 import type {
   CreateShaderBackgroundOptions,
+  GLContext,
   RenderState,
   ShaderBackgroundInstance,
   ShaderStatus,
@@ -34,7 +35,9 @@ import {
 import {
   createFullscreenBuffer,
   createProgram,
-  defaultVertexShader
+  defaultVertexShader,
+  defaultVertexShader300,
+  isGLSL300
 } from "./internal/webgl";
 
 const MAX_DELTA_SECONDS = 0.1;
@@ -65,6 +68,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   private readyResolve: (() => void) | null = null;
   private readyReject: ((error: Error) => void) | null = null;
   private dom: DomSetup | null = null;
+  private context: GLContext | null = null;
   private program: WebGLProgram | null = null;
   private buffer: WebGLBuffer | null = null;
   private attribLocation = -1;
@@ -111,8 +115,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     return this.dom?.canvas ?? null;
   }
 
-  get gl(): WebGLRenderingContext | null {
-    return this.dom?.canvas.getContext("webgl") ?? null;
+  get gl(): GLContext | null {
+    return this.context;
   }
 
   get status(): ShaderStatus {
@@ -216,7 +220,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       return;
     }
 
-    const gl = this.dom.canvas.getContext("webgl");
+    const gl = this.context;
     if (!gl) return;
 
     this.inRender = true;
@@ -271,7 +275,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     for (const remove of this.removeListeners) remove();
     this.removeListeners = [];
 
-    const gl = this.dom?.canvas.getContext("webgl");
+    const gl = this.context;
     if (gl) {
       for (const texture of this.textures.values()) {
         gl.deleteTexture(texture.texture);
@@ -279,6 +283,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       if (this.buffer) gl.deleteBuffer(this.buffer);
       if (this.program) gl.deleteProgram(this.program);
     }
+    this.context = null;
 
     if (this.dom?.createdCanvas) {
       this.dom.canvas.remove();
@@ -304,7 +309,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     const uniformName = toUniformName(name);
     this.uniformCache.set(uniformName, normalizeUniform(value));
 
-    const gl = this.dom?.canvas.getContext("webgl");
+    const gl = this.context;
     const location = this.uniformLocations.get(uniformName);
     if (gl && this.program && location) {
       applyProgramUniform(
@@ -335,11 +340,11 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   async setTexture(name: string, input: TextureInput): Promise<void> {
     if (this.destroyed) return;
 
-    let gl = this.dom?.canvas.getContext("webgl");
+    let gl = this.context;
     if (!gl) {
       await this.ready;
       if (this.destroyed) return;
-      gl = this.dom?.canvas.getContext("webgl");
+      gl = this.context;
     }
 
     if (!gl) {
@@ -406,20 +411,30 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       return;
     }
 
-    const gl = this.dom.canvas.getContext("webgl", {
+    const want300 = isGLSL300(this.options.fragment);
+    const contextType = want300 ? "webgl2" : "webgl";
+    const attrs = {
       alpha: true,
       antialias: false,
       depth: false,
       stencil: false,
       premultipliedAlpha: true,
       preserveDrawingBuffer: false
-    });
+    };
+    const gl = this.dom.canvas.getContext(contextType, attrs) as GLContext | null;
 
     if (!gl) {
-      this.failUnsupported(new UnsupportedError("WebGL is not supported."));
+      this.failUnsupported(
+        want300
+          ? new UnsupportedError(
+              "WebGL2 (GLSL ES 3.00) is not supported on this device."
+            )
+          : new UnsupportedError("WebGL is not supported.")
+      );
       return;
     }
 
+    this.context = gl;
     this.currentStatus = "loading";
 
     try {
@@ -445,13 +460,16 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
-  private setupProgram(gl: WebGLRenderingContext): void {
+  private setupProgram(gl: GLContext): void {
     if (this.program) gl.deleteProgram(this.program);
     if (this.buffer) gl.deleteBuffer(this.buffer);
 
+    const defaultVertex = isGLSL300(this.options.fragment)
+      ? defaultVertexShader300
+      : defaultVertexShader;
     this.program = createProgram(
       gl,
-      this.options.vertex ?? defaultVertexShader,
+      this.options.vertex ?? defaultVertex,
       this.options.fragment
     );
     gl.useProgram(this.program);
@@ -462,7 +480,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
   // Re-bind the core's program, fullscreen geometry, textures and uniforms so a
   // draw is correct regardless of GL state changed by onBeforeRender/onAfterRender.
-  private prepareDrawState(gl: WebGLRenderingContext): void {
+  private prepareDrawState(gl: GLContext): void {
     if (!this.program) return;
     gl.useProgram(this.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
@@ -570,14 +588,17 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       event.preventDefault();
       this.contextRestoredShouldRun = this.running;
       this.cancelFrame();
+      this.context = null;
       this.currentStatus = "context-lost";
       this.options.onError?.(new UnsupportedError("WebGL context lost."));
     };
 
     const onRestored = () => {
       if (!this.dom || this.destroyed) return;
-      const gl = this.dom.canvas.getContext("webgl");
+      const contextType = isGLSL300(this.options.fragment) ? "webgl2" : "webgl";
+      const gl = this.dom.canvas.getContext(contextType) as GLContext | null;
       if (!gl) return;
+      this.context = gl;
 
       try {
         this.setupProgram(gl);
@@ -635,7 +656,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     this.uniformCache.set("u_delta", { type: "float", value: [delta] });
   }
 
-  private applyBuiltInUniforms(gl: WebGLRenderingContext): void {
+  private applyBuiltInUniforms(gl: GLContext): void {
     const builtIns: Record<string, UniformInput> = {
       resolution: [this.width, this.height],
       viewportSize: [this.viewportWidth, this.viewportHeight],
@@ -666,7 +687,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     };
     this.uniformCache.set(texture.sizeUniformName, uniform);
 
-    const gl = this.dom?.canvas.getContext("webgl");
+    const gl = this.context;
     const location = this.uniformLocations.get(texture.sizeUniformName);
     if (gl && this.program && location) {
       applyProgramUniform(gl, this.program, location, uniform);
@@ -675,7 +696,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
-  private applyCachedUniforms(gl: WebGLRenderingContext): void {
+  private applyCachedUniforms(gl: GLContext): void {
     for (const [name, uniform] of this.uniformCache) {
       const location = this.uniformLocations.get(name);
       if (!location) {
@@ -686,7 +707,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
-  private applyTextures(gl: WebGLRenderingContext): void {
+  private applyTextures(gl: GLContext): void {
     for (const texture of this.textures.values()) {
       const unit = this.textureUnits.get(texture.name);
       if (unit === undefined) continue;
@@ -702,7 +723,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     }
   }
 
-  private async loadTextureInputs(gl: WebGLRenderingContext): Promise<void> {
+  private async loadTextureInputs(gl: GLContext): Promise<void> {
     const loadedTextures = new Map<string, LoadedTexture>();
 
     for (const [name, input] of this.textureInputs) {
@@ -717,7 +738,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     this.textures = loadedTextures;
   }
 
-  private resolveTextureUnit(gl: WebGLRenderingContext, name: string): number {
+  private resolveTextureUnit(gl: GLContext, name: string): number {
     const existing = this.textureUnits.get(name);
     if (existing !== undefined) return existing;
 
@@ -736,7 +757,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   }
 
   private createRenderState(
-    gl: WebGLRenderingContext
+    gl: GLContext
   ): RenderState<TUniforms> {
     return {
       instance: this,

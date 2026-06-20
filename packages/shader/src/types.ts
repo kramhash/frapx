@@ -1,3 +1,5 @@
+export type GLContext = WebGLRenderingContext | WebGL2RenderingContext;
+
 export type ShaderLayer = "background" | "overlay";
 export type RenderMode = "always" | "demand";
 export type ShaderStatus =
@@ -67,7 +69,7 @@ export type TextureMap = Record<string, TextureInput>;
 
 export type RenderState<TUniforms extends UniformInputMap = UniformInputMap> = {
   instance: ShaderBackgroundInstance<TUniforms>;
-  gl: WebGLRenderingContext;
+  gl: GLContext;
   canvas: HTMLCanvasElement;
   time: number;
   delta: number;
@@ -121,7 +123,7 @@ export type ShaderBackgroundInstance<
   TUniforms extends UniformInputMap = UniformInputMap,
 > = {
   readonly canvas: HTMLCanvasElement | null;
-  readonly gl: WebGLRenderingContext | null;
+  readonly gl: GLContext | null;
   readonly status: ShaderStatus;
   readonly supported: boolean;
   readonly ready: Promise<void>;
