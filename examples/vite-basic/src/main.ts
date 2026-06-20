@@ -61,11 +61,63 @@ void main() {
 }
 `;
 
-const fragment = params.get("webgl2") === "1" ? fragment300 : fragment100;
+const feedbackFragment100 = glsl`
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform vec2 u_pointerUv;
+uniform float u_pointerActive;
+uniform float u_time;
+uniform float u_progress;
+uniform sampler2D u_previousFrame;
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  vec4 history = texture2D(u_previousFrame, uv) * 0.94;
+  float wave = sin((uv.x + u_progress) * 16.0 + u_time * 2.0) * 0.5 + 0.5;
+  float pointer = smoothstep(0.28, 0.0, distance(uv, u_pointerUv)) * u_pointerActive;
+  vec3 spark = vec3(0.1, 0.55, 0.8) * wave + vec3(0.9, 0.95, 1.0) * pointer;
+  gl_FragColor = vec4(max(history.rgb, spark * 0.38), 1.0);
+}
+`;
+
+const feedbackFragment300 = glsl`#version 300 es
+precision highp float;
+
+in vec2 v_uv;
+out vec4 fragColor;
+
+uniform vec2 u_resolution;
+uniform vec2 u_pointerUv;
+uniform float u_pointerActive;
+uniform float u_time;
+uniform float u_progress;
+uniform sampler2D u_previousFrame;
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  vec4 history = texture(u_previousFrame, uv) * 0.94;
+  float wave = sin((uv.x + u_progress) * 16.0 + u_time * 2.0) * 0.5 + 0.5;
+  float pointer = smoothstep(0.28, 0.0, distance(uv, u_pointerUv)) * u_pointerActive;
+  vec3 spark = vec3(0.1, 0.55, 0.8) * wave + vec3(0.9, 0.95, 1.0) * pointer;
+  fragColor = vec4(max(history.rgb, spark * 0.38), 1.0);
+}
+`;
+
+const useWebGL2 = params.get("webgl2") === "1";
+const useFeedback = params.get("feedback") === "1";
+const fragment = useFeedback
+  ? useWebGL2
+    ? feedbackFragment300
+    : feedbackFragment100
+  : useWebGL2
+    ? fragment300
+    : fragment100;
 
 const fx = createShaderBackground({
   target: "[data-hero]",
   fragment,
+  feedback: useFeedback,
   uniforms: {
     progress: 0
   },

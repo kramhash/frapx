@@ -67,6 +67,18 @@ export type TextureOptions = {
 export type TextureInput = TextureSource | TextureOptions;
 export type TextureMap = Record<string, TextureInput>;
 
+export type FeedbackOptions = {
+  /**
+   * Suffix name for the generated sampler uniform. Defaults to
+   * "previousFrame", which creates `u_previousFrame` and
+   * `u_previousFrameSize`.
+   */
+  uniform?: string;
+  filter?: "nearest" | "linear";
+  wrap?: "clamp" | "repeat" | "mirror";
+  clearColor?: UniformVec4;
+};
+
 export type RenderState<TUniforms extends UniformInputMap = UniformInputMap> = {
   instance: ShaderBackgroundInstance<TUniforms>;
   gl: GLContext;
@@ -92,6 +104,7 @@ export type CreateShaderBackgroundOptions<
   vertex?: string;
   uniforms?: TUniforms;
   textures?: TextureMap;
+  feedback?: boolean | FeedbackOptions;
   layer?: ShaderLayer;
   autoStart?: boolean;
   pauseWhenOffscreen?: boolean;

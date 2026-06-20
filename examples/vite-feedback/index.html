@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frapx Shader Feedback Example</title>
+  </head>
+  <body>
+    <main class="app">
+      <section class="stage" data-stage></section>
+      <aside class="controls" aria-label="Feedback controls">
+        <div class="controls__header">
+          <div>
+            <p class="eyebrow">Example</p>
+            <h1>Feedback</h1>
+          </div>
+          <span class="status" data-status>Running</span>
+        </div>
+
+        <label class="control">
+          <span>
+            <span>Decay</span>
+            <output data-decay-output>0.960</output>
+          </span>
+          <input
+            data-decay
+            type="range"
+            min="0.82"
+            max="0.995"
+            step="0.001"
+            value="0.96"
+          />
+        </label>
+
+        <label class="control">
+          <span>
+            <span>Flow</span>
+            <output data-flow-output>1.00</output>
+          </span>
+          <input
+            data-flow
+            type="range"
+            min="0"
+            max="2"
+            step="0.01"
+            value="1"
+          />
+        </label>
+
+        <fieldset class="swatches">
+          <legend>Color</legend>
+          <button
+            class="swatch is-active"
+            data-color="#22d3ee"
+            type="button"
+            aria-label="Cyan"
+          ></button>
+          <button
+            class="swatch"
+            data-color="#fb7185"
+            type="button"
+            aria-label="Rose"
+          ></button>
+          <button
+            class="swatch"
+            data-color="#a3e635"
+            type="button"
+            aria-label="Lime"
+          ></button>
+        </fieldset>
+
+        <button class="toggle" data-toggle type="button">Pause</button>
+      </aside>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

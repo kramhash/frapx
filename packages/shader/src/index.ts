@@ -6,6 +6,8 @@ export type {
   CreateShaderBackgroundOptions,
   DprOption,
   ExplicitUniformInput,
+  FeedbackOptions,
+  GLContext,
   RenderMode,
   RenderState,
   ShaderBackgroundInstance,
@@ -18,6 +20,11 @@ export type {
   UniformInput,
   UniformInputMap,
   UniformRuntimeValue,
+  UniformScalar,
+  UniformType,
+  UniformVec2,
+  UniformVec3,
+  UniformVec4,
 } from "./types";
 export {
   DestroyedError,

@@ -2,9 +2,9 @@
 
 [![npm version](https://img.shields.io/npm/v/@frapx/shader.svg)](https://www.npmjs.com/package/@frapx/shader)
 
-Lightweight WebGL1 shader background runtime for websites.
+Lightweight WebGL shader background runtime for websites.
 
-This is not a scene, camera, or mesh abstraction. It creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in and custom uniforms.
+This is not a scene, camera, mesh, or full rendering-engine abstraction. It creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in uniforms, custom uniforms, textures, and optional previous-frame feedback.
 
 ## Install
 
@@ -56,6 +56,12 @@ createShaderBackground({
 
 The shader must declare `uniform float u_progress;`, not `uniform float progress;`.
 Uniforms set before `ready` are cached and applied on the first render.
+
+## Examples
+
+- `examples/vite-basic` - minimal Vite usage and integration checks.
+- `examples/vite-feedback` - interactive previous-frame feedback demo.
+- `examples/vite-react` - React binding example.
 
 ## Color Uniforms
 
@@ -126,6 +132,69 @@ If a runtime texture update fails, the previous texture remains active and the
 returned promise rejects. In `"demand"` render mode, successful texture updates
 request a render.
 
+## Feedback
+
+Enable feedback when a shader needs to read the previous rendered frame:
+
+```ts
+createShaderBackground({
+  target: ".hero",
+  fragment,
+  feedback: true
+});
+```
+
+This creates a managed ping-pong framebuffer pair and exposes the previous rendered frame as a sampler:
+
+```glsl
+uniform vec2 u_resolution;
+uniform sampler2D u_previousFrame;
+uniform vec2 u_previousFrameSize;
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  vec4 history = texture2D(u_previousFrame, uv);
+  gl_FragColor = mix(vec4(0.0), history, 0.96);
+}
+```
+
+For GLSL ES 3.00 shaders, use the same uniform names with `texture()`:
+
+```glsl
+#version 300 es
+precision highp float;
+
+out vec4 fragColor;
+uniform vec2 u_resolution;
+uniform sampler2D u_previousFrame;
+uniform vec2 u_previousFrameSize;
+
+void main() {
+  fragColor = texture(u_previousFrame, gl_FragCoord.xy / u_resolution);
+}
+```
+
+`feedback: true` uses `u_previousFrame` and `u_previousFrameSize`. To customize the generated suffix name:
+
+```ts
+feedback: {
+  uniform: "history",
+  filter: "linear",
+  wrap: "clamp",
+  clearColor: [0, 0, 0, 0]
+}
+```
+
+The suffix must be a valid GLSL identifier without the `u_` prefix. For example, `uniform: "history"` creates `u_history` and `u_historySize`. A user texture with the same name is rejected.
+
+The feedback texture always follows the canvas drawing-buffer size, and `u_previousFrameSize` reports that size in pixels. The first frame and any resize reset the texture to `clearColor` (transparent black by default). Alpha is preserved from the fragment output; the texture represents shader output before DOM compositing.
+
+In `renderMode: "demand"`, `u_previousFrame` is the result of the previous demand render. Enabling feedback does not start a continuous render loop by itself.
+
+When feedback is enabled, `onBeforeRender` and `onAfterRender` wrap the main shader draw into the internal framebuffer. The copy to the visible canvas happens after `onAfterRender`.
+
+See `examples/vite-feedback` for a small interactive feedback demo.
+
 ## External Uniforms
 
 Scroll is intentionally not built in. Use any scroll or animation library and push values into uniforms.
@@ -185,6 +254,7 @@ createShaderBackground({
   vertex,
   uniforms,
   textures,
+  feedback: false,
   layer: "background",
   autoStart: true,
   pauseWhenOffscreen: true,
@@ -284,4 +354,4 @@ The package is safe to import during SSR. Calling `createShaderBackground()` wit
 
 ## Browser Support
 
-v1 targets WebGL1 / GLSL ES 1.00. WebGL2-only shader syntax is out of scope.
+Shaders without `#version 300 es` use WebGL1 / GLSL ES 1.00. Shaders that start with `#version 300 es` request WebGL2 / GLSL ES 3.00 automatically. WebGL2 support is additive and does not change the WebGL1 default path.

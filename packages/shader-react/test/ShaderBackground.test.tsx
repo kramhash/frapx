@@ -103,6 +103,23 @@ describe("ShaderBackground", () => {
     expect(shaderMock.instance.setTextures).toHaveBeenCalledWith(nextTextures);
   });
 
+  it("passes feedback options to the core instance", async () => {
+    await act(async () => {
+      root.render(
+        <ShaderBackground
+          fragment="void main() {}"
+          feedback={{ clearColor: [0, 0, 0, 0] }}
+        />
+      );
+    });
+
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        feedback: { clearColor: [0, 0, 0, 0] }
+      })
+    );
+  });
+
   it("exposes an imperative handle", async () => {
     const ref = { current: null as ShaderBackgroundHandle | null };
 

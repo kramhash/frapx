@@ -62,6 +62,7 @@ const ShaderBackgroundInner = <
     vertex,
     uniforms,
     textures,
+    feedback,
     renderMode,
     canvasClass,
     canvasStyle,
@@ -84,6 +85,7 @@ const ShaderBackgroundInner = <
     vertex,
     uniforms,
     textures,
+    feedback,
     renderMode,
     canvasClass,
     canvasStyle,
@@ -103,6 +105,7 @@ const ShaderBackgroundInner = <
   const { ref, instance } = useShaderBackground(options, [
     fragment,
     vertex,
+    feedback,
     renderMode,
     canvasClass,
     canvasStyle,

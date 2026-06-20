@@ -39,6 +39,16 @@ The component renders a wrapper `div` and mounts the shader canvas into it.
 The wrapper defaults to `position: relative` and `overflow: hidden`; layout,
 height, and visual styling are controlled by your app.
 
+Core shader options pass through as props, including `feedback`:
+
+```tsx
+<ShaderBackground fragment={feedbackFragment} feedback />;
+```
+
+Initialization options such as `fragment`, `vertex`, `feedback`, `renderMode`,
+`dpr`, and canvas settings recreate the underlying shader instance when they
+change. Runtime `uniforms` and `textures` update the existing instance.
+
 ## Hook
 
 ```tsx
@@ -50,9 +60,10 @@ export function ShaderPanel({ intensity }: { intensity: number }) {
   const { ref, instance, error } = useShaderBackground(
     {
       fragment,
-      uniforms
+      uniforms,
+      feedback: true
     },
-    [fragment]
+    [fragment, true]
   );
 
   return <div ref={ref} />;
@@ -61,8 +72,8 @@ export function ShaderPanel({ intensity }: { intensity: number }) {
 
 Pass recreation dependencies as the second argument. `uniforms` and `textures`
 are updated on the existing instance with `setUniforms()` and `setTextures()`;
-shader source and other initialization options should be included in the
-recreation dependency array when they change.
+shader source and other initialization options, including `feedback`, should be
+included in the recreation dependency array when they change.
 
 ## Imperative Handle
 

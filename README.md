@@ -31,3 +31,11 @@ Release policy and manual publish steps are documented in
 ```sh
 pnpm dev
 ```
+
+Run a specific example with a workspace filter:
+
+```sh
+pnpm --filter @frapx/example-vite-basic dev
+pnpm --filter @frapx/example-vite-feedback dev
+pnpm --filter @frapx/example-vite-react dev
+```
