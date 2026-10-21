@@ -19,17 +19,17 @@ frapx とステップシーケンサー [vixeq](https://github.com/kramhash/vixe
 
 | ID | Issue | リポジトリ | 時期 | 内容 | 依存 |
 | --- | --- | --- | --- | --- | --- |
-| X1 | #X1 | frapx | — | realtime clock に外部の時刻源を渡せるようにし、ゲート（offscreen / hidden / reduced-motion）を残す（F3・F15） | なし |
-| X2 | #X2 | frapx | — | `destroy()` で `ready` が reject されたとき、未処理の rejection にしない（F7） | なし |
-| X3 | #X3 | frapx | — | `frapx-render` に dist ディレクトリを渡したとき、サブルートの指定と SPA fallback を使えるようにする（F8） | なし |
-| X4 | #X4 | frapx | — | `frapx-render --audio` で音を mux し、音の長さとグリッドを検査する（F9・F14） | なし |
-| X5 | #X5 | frapx | — | docs のレシピ「シーケンサーで uniform を動かす」（F10・F17） | V3 |
-| V1 | vixeq#V1 | vixeq | 1.0.0-rc.1 | track id を呼び出し側が指定でき、自動で振る id もプロジェクト内で決まるようにする（F2） | なし |
-| V2 | vixeq#V2 | vixeq | 1.0.0-rc.1 | 負の `startPositionMs` を扱う（F13） | なし |
-| V3 | vixeq#V3 | vixeq | 1.1.0 | 時刻から値を引く純関数一式（単一パターン用のサンプラー、直前のステップの問い合わせ、attack と先読みを持つ包絡、hold イージング）（F1・F5・F6・F17） | なし |
-| V4 | vixeq#V4 | vixeq | 1.1.0 | transport で音の出力遅延を補正する（F4） | なし |
-| V5 | vixeq#V5 | vixeq | 1.1.0 | playground を `@frapx/fx-canvas` の `bindUniforms` 方式に移行する（F12） | V3 |
-| V6 | vixeq#V6 | vixeq | — | player-react でアレンジメントを編集できるようにする（F16） | 後回し |
+| X1 | [#36](https://github.com/kramhash/frapx/issues/36) | frapx | — | realtime clock に外部の時刻源を渡せるようにし、ゲート（offscreen / hidden / reduced-motion）を残す（F3・F15） | なし |
+| X2 | [#37](https://github.com/kramhash/frapx/issues/37) | frapx | — | `destroy()` で `ready` が reject されたとき、未処理の rejection にしない（F7） | なし |
+| X3 | [#38](https://github.com/kramhash/frapx/issues/38) | frapx | — | `frapx-render` に dist ディレクトリを渡したとき、サブルートの指定と SPA fallback を使えるようにする（F8） | なし |
+| X4 | [#39](https://github.com/kramhash/frapx/issues/39) | frapx | — | `frapx-render --audio` で音を mux し、音の長さとグリッドを検査する（F9・F14） | なし |
+| X5 | [#40](https://github.com/kramhash/frapx/issues/40) | frapx | — | docs のレシピ「シーケンサーで uniform を動かす」（F10・F17） | V3 |
+| V1 | [vixeq#3](https://github.com/kramhash/vixeq/issues/3) | vixeq | 1.0.0-rc.1 | track id を呼び出し側が指定でき、自動で振る id もプロジェクト内で決まるようにする（F2） | なし |
+| V2 | [vixeq#4](https://github.com/kramhash/vixeq/issues/4) | vixeq | 1.0.0-rc.1 | 負の `startPositionMs` を扱う（F13） | なし |
+| V3 | [vixeq#5](https://github.com/kramhash/vixeq/issues/5) | vixeq | 1.1.0 | 時刻から値を引く純関数一式（単一パターン用のサンプラー、直前のステップの問い合わせ、attack と先読みを持つ包絡、hold イージング）（F1・F5・F6・F17） | なし |
+| V4 | [vixeq#6](https://github.com/kramhash/vixeq/issues/6) | vixeq | 1.1.0 | transport で音の出力遅延を補正する（F4） | なし |
+| V5 | [vixeq#7](https://github.com/kramhash/vixeq/issues/7) | vixeq | 1.1.0 | playground を `@frapx/fx-canvas` の `bindUniforms` 方式に移行する（F12） | V3 |
+| V6 | [vixeq#2](https://github.com/kramhash/vixeq/issues/2) | vixeq | — | player-react でアレンジメントを編集できるようにする（F16） | 後回し |
 
 - 並行して進められるのは X1・X2・X3・X4・V1・V2・V4。
 - X5 と V5 は V3 のリリース後に着手する。
