@@ -57,6 +57,15 @@
   - `tool-<name>` — a non-effect tool built on the runtimes, such as offline frame/video export (added 2026-10-10), e.g. `@frapx/tool-capture` (browser) and `@frapx/tool-render` (Node CLI). Keep browser and Node tools in separate packages so browser users never install Node-only dependencies.
 - The offline video export roadmap and its design decisions live in `docs/frapx_export_addon.md`; its "2026-10-10 決定事項" section takes precedence over the body.
 - The adoption plan (entry points, playground, docs and outreach work through 2027-01) lives in `docs/frapx_growth_plan.md`; its "2026-10-20 決定事項" section takes precedence over the body.
+- The frapx × vixeq fix plan (measured pains F1–F17 from the `frapx-vixeq-lab` prototype, the issue map across both repositories, and their order) lives in `docs/frapx_vixeq_integration.md`; its "2026-10-21 決定事項" section takes precedence over the body.
+
+## Issues and Handoff
+
+- Work handed to another session is a GitHub issue. Its body uses the headings Problem / What exists / Proposed change / Tests / Release notes, plus Evidence and Depends on / Order when they apply (see #28–#30 and the issues listed in `docs/frapx_vixeq_integration.md`).
+- Claim an issue before starting: assign it to yourself or comment that you are taking it. Do not work on an issue another session has claimed.
+- Line numbers under "What exists" are as of filing; re-read the current code when they drift.
+- One issue per PR; the PR body says `Closes #N`. Do not start an issue whose "Depends on" items are still open.
+- Items marked "Decide …" under "Proposed change" need a proposal and the user's confirmation before implementation.
 - Core must not depend on extension packages.
 - Extension packages may depend on or peer with `@frapx/fx-canvas` when they need shared helpers or types.
 - Small, broadly useful GLSL helpers may be added to `@frapx/fx-canvas/glsl`, but avoid turning core into a large shader snippet library.
