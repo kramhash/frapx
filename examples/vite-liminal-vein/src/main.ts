@@ -2,14 +2,16 @@ import { createPasses } from "@frapx/fx-passes";
 import type { PassesInstance } from "@frapx/fx-passes";
 import { registerRenderTarget } from "@frapx/tool-capture";
 import { BLOOM, bloomPasses } from "./bloom.glsl";
-import { loopRhythm } from "./rhythm";
+import { songRhythm } from "./rhythm";
 import { LOOP_SECONDS, display, scene } from "./scene.glsl";
+import { createSoundtrack } from "./soundtrack";
 import "./styles.css";
 
 declare global {
   interface Window {
     // Read by verification scripts.
     __liminalVein?: PassesInstance;
+    __liminalVeinTime?: () => number;
   }
 }
 
@@ -24,6 +26,7 @@ const EXPORT_RESOLUTION: [number, number] = [1920, 1080];
 
 const stage = document.querySelector<HTMLElement>("[data-stage]")!;
 const title = document.querySelector<HTMLElement>("[data-title]")!;
+const soundButton = document.querySelector<HTMLButtonElement>("[data-sound]")!;
 const errorMessage = document.querySelector<HTMLElement>("[data-error]")!;
 
 // ?frame=N holds frame N of the 60 fps loop and refines it, to check a frame
@@ -41,11 +44,16 @@ const prefersLightweightRender = (): boolean =>
 
 const quality = () => (exporting || holdsFrame || !prefersLightweightRender() ? 1 : 0);
 
+// The page starts silent; the sound button brings the song in where the loop
+// is, and from then on the song's position is the time.
+const soundtrack = createSoundtrack();
+
 // While playing, every frame draws one sample. A frame that holds still
 // (reduced motion, ?frame=N) refines to SAMPLES by itself.
 const fx = createPasses({
   target: stage,
   clock: holdsFrame ? "manual" : "realtime",
+  timeSource: soundtrack.time,
   // The time wraps every loop, so frame 960 renders exactly like frame 0.
   accumulation: { samples: SAMPLES, shutter: SHUTTER, fps: FPS, loop: LOOP_SECONDS },
   passes: [
@@ -63,6 +71,7 @@ const fx = createPasses({
   onResize: ({ instance }) => instance.setUniform("quality", quality()),
   onReady: () => {
     stage.classList.add("is-ready");
+    soundButton.hidden = holdsFrame;
     window.setTimeout(() => title.classList.add("is-hidden"), 4000);
   },
   onError: (error) => {
@@ -72,8 +81,19 @@ const fx = createPasses({
   }
 });
 
-// The light follows a fixed rhythm per loop; music would bind its own source here.
-fx.bindUniforms(loopRhythm);
+// The light, the camera and the cross-section follow the song.
+fx.bindUniforms(songRhythm);
+
+soundButton.addEventListener("click", () => {
+  soundButton.disabled = true;
+  soundtrack
+    .toggle()
+    .then((playing) => soundButton.setAttribute("aria-pressed", String(playing)))
+    .catch((error: unknown) => console.error(error))
+    .finally(() => {
+      soundButton.disabled = false;
+    });
+});
 
 if (holdsFrame) {
   void fx.ready.then(() => {
@@ -111,3 +131,4 @@ registerRenderTarget(fx, {
 });
 
 window.__liminalVein = fx;
+window.__liminalVeinTime = soundtrack.time;

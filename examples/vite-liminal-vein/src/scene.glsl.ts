@@ -3,11 +3,13 @@ import { raymarch, raymarchCamera } from "@frapx/glsl-raymarch";
 import { sdf3d, sdfOps } from "@frapx/glsl-sdf";
 import { BLOOM, BLOOM_LEVELS } from "./bloom.glsl";
 
-/** Seconds in one seamless loop. */
-export const LOOP_SECONDS = 16;
+/** Seconds in one seamless loop: the song's 8 bars at 128 BPM. */
+export const LOOP_SECONDS = 15;
 
 // A quiet tunnel of ribs, lit only by a few glowing rings and the rare vein,
-// travelled once per loop. Every sample is one ray in linear light;
+// travelled once per loop: drifting through the song's calm, and in its drop
+// thrown forward by every kick while the cross-section turns from circle to
+// hexagon to star. Every sample is one ray in linear light;
 // @frapx/fx-passes sums the samples of a frame in float and hands their mean
 // on to the bloom and display passes. u_time moves within the shutter and
 // u_jitter within the pixel, so the mean is motion blurred and anti-aliased
@@ -25,10 +27,18 @@ uniform float u_pointerActive;
 uniform float u_reducedMotion;
 // 1: ambient occlusion and more march steps; 0: lighter.
 uniform float u_quality;
-// The rhythm the light follows (see rhythm.ts): a beat that flares and fades,
-// and how strongly the tunnel is lit, both 0–1.
+// The song (see rhythm.ts): the kick's flash and afterglow and the hats, each
+// decaying since it fired, the bar's loudness, and the drop, all 0–1.
+uniform float u_flash;
 uniform float u_pulse;
+uniform float u_hat;
 uniform float u_energy;
+uniform float u_drop;
+// How far the camera has come through the loop (0–1), the cross-section
+// (0 circle, 1 hexagon, 2 star, 3 the circle again) and a kick's roll.
+uniform float u_travel;
+uniform float u_shape;
+uniform float u_kickRoll;
 
 #define FRAPX_RAYMARCH_STEPS 144
 #define FRAPX_AO_SAMPLES 4
@@ -115,6 +125,28 @@ float ribRadiusAt(float repeatCell, float breath) {
   return 2.05 + 0.1 * (variation - 0.5) + 0.04 * breath;
 }
 
+// The cross-section's radius at polar angle a, relative to the circle's: the
+// circle, a hexagon and a six-pointed star, each with an edge (or the hollow
+// between two points) along the floor, blended as u_shape turns.
+float sectionScale(float a) {
+  const float SEGMENT = PI / 6.0;
+  float local = mod(a + 0.5 * PI + SEGMENT, 2.0 * SEGMENT) - SEGMENT;
+  float hexagon = 0.93 / cos(local);
+  float star = 0.8 + 0.42 * pow(abs(local) / SEGMENT, 2.0);
+  float shape = floor(u_shape);
+  float blend = fract(u_shape);
+  if (shape < 0.5) return mix(1.0, hexagon, blend);
+  if (shape < 1.5) return mix(hexagon, star, blend);
+  return mix(star, 1.0, blend);
+}
+
+// 0 while the cross-section is a circle, 1 once it is wholly another shape.
+float sectionWarp() {
+  float shape = floor(u_shape);
+  float blend = fract(u_shape);
+  return shape < 0.5 ? blend : shape < 1.5 ? 1.0 : 1.0 - blend;
+}
+
 SceneSample sampleScene(vec3 p) {
   float cycle = fract(p.z / LOOP_DISTANCE);
   float glowRise = band(cycle, 0.1, 0.25, 0.46, 0.62);
@@ -129,7 +161,11 @@ SceneSample sampleScene(vec3 p) {
   float membrane = 0.13 * sin(polar * 5.0 + p.z * 2.0 * Z_FREQUENCY)
     + 0.07 * sin(polar * 9.0 - p.z * Z_FREQUENCY);
   float tunnelRadius = 2.34 + membrane + 0.06 * breath;
-  float wall = tunnelRadius - length(q.xy);
+  // Walls and ribs are drawn around the circle, in a cross-section stretched
+  // by sectionScale() along every angle.
+  float scale = sectionScale(polar);
+  vec2 section = q.xy / scale;
+  float wall = tunnelRadius - length(section);
 
   float repeatCell = repeatCellAt(p.z);
   float cellZ = mod(p.z + 0.5 * CELL_SIZE, CELL_SIZE) - 0.5 * CELL_SIZE;
@@ -137,7 +173,7 @@ SceneSample sampleScene(vec3 p) {
   float ribRadius = ribRadiusAt(repeatCell, breath);
   float ribThickness = mix(0.1, 0.17, variation);
 
-  vec3 ringPoint = vec3(q.x, cellZ, q.y);
+  vec3 ringPoint = vec3(section.x, cellZ, section.y);
   float rib = frapx_sdTorus(ringPoint, vec2(ribRadius, ribThickness));
   rib = max(rib, -(q.y + 1.18 + 0.12 * sin(repeatCell)));
 
@@ -163,8 +199,8 @@ SceneSample sampleScene(vec3 p) {
   if (abs(mod(repeatCell, 3.0) - 1.0) < 0.5) {
     float veinAngle = TAU * (0.12 + 0.68 * variation);
     vec3 longitudinalPoint = vec3(
-      q.x - (tunnelRadius - 0.18) * cos(veinAngle),
-      q.y - (tunnelRadius - 0.18) * sin(veinAngle),
+      section.x - (tunnelRadius - 0.18) * cos(veinAngle),
+      section.y - (tunnelRadius - 0.18) * sin(veinAngle),
       cellZ
     );
     float taper = 1.0 - smoothstep(0.7, 1.6, abs(cellZ));
@@ -187,9 +223,11 @@ SceneSample sampleScene(vec3 p) {
     material = 2.0;
   }
 
-  // The breathing membrane and smooth unions are conservative rather than
-  // exact distances, so shorten every tracing step to avoid overshooting.
-  return SceneSample(nearest * 0.62, material, vec2(cyanVein, purpleVein));
+  // The breathing membrane, smooth unions and the stretched cross-section are
+  // conservative rather than exact distances, so shorten every tracing step
+  // to avoid overshooting; the star's points shorten it the most.
+  float stride = 0.62 * mix(1.0, 0.7, sectionWarp());
+  return SceneSample(nearest * stride, material, vec2(cyanVein, purpleVein));
 }
 
 float frapx_map(vec3 p) {
@@ -235,7 +273,8 @@ vec2 ringLight(vec3 p, vec3 n, vec3 toEye, float ringZ) {
   if (sin(angle) < lowest) {
     angle = cos(angle) > 0.0 ? asin(lowest) : PI - asin(lowest);
   }
-  vec3 source = centre + vec3(radius * cos(angle), radius * sin(angle), 0.0);
+  float reach = radius * sectionScale(angle);
+  vec3 source = centre + vec3(reach * cos(angle), reach * sin(angle), 0.0);
   vec3 toLight = source - p;
   float distanceSquared = max(dot(toLight, toLight), 1e-4);
   vec3 l = toLight * inversesqrt(distanceSquared);
@@ -247,10 +286,8 @@ vec2 ringLight(vec3 p, vec3 n, vec3 toEye, float ringZ) {
 
 void main() {
   // Reduced motion holds the straight stretch after the bend, rings in a row.
-  float phase = u_reducedMotion > 0.5
-    ? 0.875
-    : fract(u_time / LOOP_SECONDS);
-  float cameraZ = phase * LOOP_DISTANCE;
+  float travel = u_reducedMotion > 0.5 ? 0.875 : fract(u_travel);
+  float cameraZ = travel * LOOP_DISTANCE;
   vec2 pointer = (u_pointerUv - 0.5) * u_pointerActive;
 
   vec3 eye = vec3(tunnelPath(cameraZ), cameraZ);
@@ -259,7 +296,7 @@ void main() {
     tunnelPath(cameraZ + lookAhead) + pointer * vec2(0.3, 0.22),
     cameraZ + lookAhead
   );
-  float roll = 0.035 * sin(TAU * phase * 2.0) + pointer.x * 0.018;
+  float roll = 0.035 * sin(TAU * travel * 2.0) + u_kickRoll + pointer.x * 0.018;
   mat3 camera = frapx_lookAt(eye, target, roll);
   vec3 rd = frapx_cameraRay(gl_FragCoord.xy + u_jitter, u_resolution, camera, FOV);
 
@@ -267,8 +304,12 @@ void main() {
   vec3 voidColor = vec3(0.0012, 0.0018, 0.0032);
   vec3 color = voidColor;
 
-  float ringPower = (3.5 + 3.5 * u_energy) * (1.0 + 0.5 * u_pulse);
-  float veinPower = (2.0 + 2.0 * u_energy) * (1.0 + 2.0 * u_pulse);
+  // The calm glows low and only breathes with the kick; the drop is brighter
+  // and flares on every kick, at the beat itself, then afterglows.
+  // Between kicks the drop sinks below the calm, so each kick stands out.
+  float beat = mix(0.35, 1.6, u_drop) * u_pulse + 4.0 * u_drop * u_flash;
+  float ringPower = mix(3.2, 1.9, u_drop) * (1.0 + 0.2 * u_energy) * (1.0 + beat + 0.15 * u_hat);
+  float veinPower = mix(2.2, 1.4, u_drop) * (1.0 + 0.2 * u_energy) * (1.0 + 2.0 * beat + 0.6 * u_hat);
 
   MarchResult hit = marchArtwork(eye, rd);
 

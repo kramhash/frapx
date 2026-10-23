@@ -81,6 +81,39 @@ h1 {
     0 0 72px rgba(168, 85, 247, 0.2);
 }
 
+.sound {
+  position: absolute;
+  z-index: 3;
+  right: 22px;
+  bottom: 20px;
+  padding: 8px 12px;
+  border: 1px solid rgba(236, 254, 255, 0.22);
+  border-radius: 999px;
+  color: rgba(236, 254, 255, 0.62);
+  background: rgba(2, 3, 6, 0.32);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    color 0.3s,
+    border-color 0.3s;
+}
+
+.sound:hover,
+.sound:focus-visible,
+.sound[aria-pressed="true"] {
+  border-color: rgba(103, 232, 249, 0.6);
+  color: rgba(236, 254, 255, 0.92);
+}
+
+.sound:focus-visible {
+  outline: 2px solid rgba(103, 232, 249, 0.8);
+  outline-offset: 3px;
+}
+
 .unsupported {
   position: absolute;
   z-index: 3;
@@ -123,10 +156,16 @@ h1 {
     bottom: 16px;
     left: 16px;
   }
+
+  .sound {
+    right: 16px;
+    bottom: 16px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .title {
+  .title,
+  .sound {
     transition: none;
   }
 }

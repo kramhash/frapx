@@ -3,6 +3,7 @@
   "include": ["src", "vite.config.ts"],
   "compilerOptions": {
     "noEmit": true,
+    "resolveJsonModule": true,
     "types": ["vite/client"]
   }
 }
