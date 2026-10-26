@@ -21,8 +21,14 @@ export default defineConfig({
           href: "https://github.com/kramhash/frapx",
         },
       ],
+      routeMiddleware: "./src/routeData.ts",
       sidebar: [
         { label: "Getting Started", slug: "getting-started" },
+        {
+          label: "はじめに（日本語）",
+          slug: "ja/getting-started",
+          attrs: { lang: "ja" },
+        },
         {
           label: "Packages",
           items: [
@@ -45,6 +51,7 @@ export default defineConfig({
           ],
         },
         { label: "Live Demo", slug: "live-demo" },
+        { label: "Showcase", slug: "showcase" },
         { label: "Migrating from old package names", slug: "migration" },
       ],
     }),

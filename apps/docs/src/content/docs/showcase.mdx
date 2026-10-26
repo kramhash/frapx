@@ -1,0 +1,39 @@
+---
+title: Showcase
+description: Work made with frapx.
+---
+
+import ShowcaseVideo from "../../components/ShowcaseVideo.astro";
+
+Work made with frapx. Client sites will be added here as they ship.
+
+## LIMINAL VEIN
+
+<ShowcaseVideo
+  src="/frapx/showcase/liminal-vein"
+  poster="/frapx/showcase/liminal-vein.jpg"
+  label="LIMINAL VEIN: a camera drifting through a dark tunnel of ribs lit by glowing rings, which turn from circles to hexagons to stars on the beat."
+/>
+
+A seamless 15-second loop, set to its own song, through a tunnel of ribs lit
+only by a few glowing rings. The tunnel is a raymarched signed distance field
+drawn as an [`@frapx/fx-passes`](/frapx/packages/fx-passes/) scene pass that
+accumulates samples, so every frame is anti-aliased and motion blurred; bloom
+and the display pass (vignette, tone curve, dither) run once per frame on the
+mean. The song drives the uniforms — the kick's flash, the hats, each bar's
+loudness and the cross-section turning from circle to hexagon to star — as a
+pure function of time through `bindUniforms()`, so a frame looks the same
+however it is reached. That is what lets
+[`@frapx/tool-render`](/frapx/packages/tool-render/) render the same page frame
+by frame at 1920×1080, 60 fps, with the song.
+
+- **Packages:** [`@frapx/fx-passes`](/frapx/packages/fx-passes/),
+  [`@frapx/glsl-sdf`](/frapx/packages/glsl-sdf/),
+  [`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/),
+  [`@frapx/tool-capture`](/frapx/packages/tool-capture/) and
+  [`@frapx/tool-render`](/frapx/packages/tool-render/)
+- **Source:** [`examples/vite-liminal-vein`](https://github.com/kramhash/frapx/tree/main/examples/vite-liminal-vein)
+  — the page plays live with the song (WebGL2 with `EXT_color_buffer_float`),
+  and its README has the render steps.
+
+The clip above is a muted 720p cut of that render.
