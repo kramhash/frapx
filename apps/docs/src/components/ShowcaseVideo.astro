@@ -1,0 +1,66 @@
+---
+// A muted looping clip for a Showcase entry. It has no autoplay attribute:
+// the script below starts it only when the OS does not prefer reduced motion,
+// so those users (and readers without JS) get the poster and nothing
+// downloads until they press play. Controls stay visible so the loop can
+// always be paused.
+interface Props {
+  /** Path without extension; `.webm` (AV1) and `.mp4` (H.264) must exist. */
+  src: string;
+  poster: string;
+  label: string;
+}
+
+const { src, poster, label } = Astro.props;
+---
+
+<video
+  class="frapx-showcase-video"
+  data-frapx-showcase-video
+  poster={poster}
+  aria-label={label}
+  width="1280"
+  height="720"
+  muted
+  loop
+  playsinline
+  controls
+  preload="none"
+>
+  <source src={`${src}.webm`} type='video/webm; codecs="av01.0.08M.10"' />
+  <source src={`${src}.mp4`} type="video/mp4" />
+</video>
+
+<style>
+  .frapx-showcase-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.5rem;
+    border: 1px solid var(--sl-color-gray-5);
+    background: #000;
+  }
+</style>
+
+<script>
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const videos = document.querySelectorAll<HTMLVideoElement>(
+    "[data-frapx-showcase-video]"
+  );
+
+  function sync() {
+    for (const video of videos) {
+      if (reducedMotion.matches) {
+        video.pause();
+      } else {
+        // Muted playback is allowed without a gesture; a rejection (e.g.
+        // data saver) just leaves the poster and controls in place.
+        video.play().catch(() => {});
+      }
+    }
+  }
+
+  sync();
+  reducedMotion.addEventListener("change", sync);
+</script>

@@ -1,0 +1,43 @@
+# frapx
+
+> frapx puts the GLSL you wrote on a production website: `@frapx/fx-canvas` runs your own fragment shader behind any element in about 11 kB (min+gzip) and handles pausing offscreen and in hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2. Optional packages add GLSL snippets, multipass and particle runtimes (WebGL2), React bindings, and frame export for video.
+
+frapx is a set of small npm packages under the `@frapx` scope, named by category: `fx-*` are effect runtimes you instantiate, `react-*` are React bindings for an `fx-*` package, `glsl-*` are GLSL source strings you concatenate into your own fragment shader, `tool-*` are tools built on the runtimes, and `core` is the internal host the `fx-*` packages share. It is not a scene, camera or mesh engine. Most websites only need `@frapx/fx-canvas`. JS uniform names omit the `u_` prefix that the GLSL declarations use (`setUniform("progress", 1)` sets `uniform float u_progress;`).
+
+## Start here
+
+- [Getting Started](https://kramhash.github.io/frapx/getting-started/): install `@frapx/fx-canvas` and render a first shader background, plus React usage
+- [Home and package decision table](https://kramhash.github.io/frapx/): which package to install for a given task
+- [はじめに（日本語）](https://kramhash.github.io/frapx/ja/getting-started/): Japanese Getting Started, including Astro usage
+
+## Effect runtimes
+
+- [@frapx/fx-canvas](https://kramhash.github.io/frapx/packages/fx-canvas/): lightweight WebGL shader background runtime for websites; built-in uniforms, lifecycle and reduced-motion options, feedback, textures, manual clock and frame capture
+- [@frapx/fx-passes](https://kramhash.github.io/frapx/packages/fx-passes/): WebGL2 multipass runtime for video work — Shadertoy-style buffers, float outputs and deterministic sample accumulation for anti-aliasing and motion blur
+- [@frapx/fx-particles](https://kramhash.github.io/frapx/packages/fx-particles/): WebGL2 GPU particles for website backgrounds — declarative presets, transform-feedback simulation and deterministic fixed-step playback for frame export
+
+## React bindings
+
+- [@frapx/react-canvas](https://kramhash.github.io/frapx/packages/react-canvas/): `<ShaderBackground />` and `useShaderBackground()` for `@frapx/fx-canvas`
+- [@frapx/react-particles](https://kramhash.github.io/frapx/packages/react-particles/): `<Particles />` and `useParticles()` for `@frapx/fx-particles`
+
+## GLSL snippets
+
+- [@frapx/glsl-noise](https://kramhash.github.io/frapx/packages/glsl-noise/): simplex, Perlin, fBm and curl noise
+- [@frapx/glsl-flowmap](https://kramhash.github.io/frapx/packages/glsl-flowmap/): flowmap decode and advection-distortion helpers (GLSL ES 3.00)
+- [@frapx/glsl-sdf](https://kramhash.github.io/frapx/packages/glsl-sdf/): signed distance functions — 2D and 3D primitives, smooth booleans and domain operators
+- [@frapx/glsl-raymarch](https://kramhash.github.io/frapx/packages/glsl-raymarch/): sphere tracing, normals, soft shadows, ambient occlusion and camera rays around your own scene function
+
+## Tools
+
+- [@frapx/tool-capture](https://kramhash.github.io/frapx/packages/tool-capture/): deterministic 8-bit or 16-bit PNG sequence export in the browser, to a folder or a ZIP
+- [@frapx/tool-render](https://kramhash.github.io/frapx/packages/tool-render/): the `frapx-render` Node CLI — renders a page in headless Chrome to a resumable PNG sequence, with optional ProRes or H.264 encoding through ffmpeg
+- [@frapx/tool-dev](https://kramhash.github.io/frapx/packages/tool-dev/): on-page overlay for shader compile errors, for hot reloading with `setFragment()`
+
+## Optional
+
+- [@frapx/core](https://kramhash.github.io/frapx/packages/core/): the shared WebGL runtime host used internally by the `fx-*` packages; not imported directly
+- [Live Demo](https://kramhash.github.io/frapx/live-demo/): a real `@frapx/fx-canvas` shader running on the page, with its source
+- [Showcase](https://kramhash.github.io/frapx/showcase/): work made with frapx, with how it was built
+- [Migrating from old package names](https://kramhash.github.io/frapx/migration/): mapping from the pre-2026-07-12 package names
+- [GitHub repository](https://github.com/kramhash/frapx): source, examples and changelogs

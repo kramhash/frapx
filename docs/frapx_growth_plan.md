@@ -34,6 +34,10 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
   - LIMINAL VEIN（`examples/vite-liminal-vein`）を完成させた（PR #31）。
   - 作品で見つかったライブラリの痛み #28〜#30 を解消した（PR #32〜#34）。
   - 次の版を公開した: core 0.5.1、fx-canvas 0.10.1、fx-passes 0.3.0、tool-capture 0.3.0、tool-render 0.2.0。
+- **Phase 1 — 入口の整備（進行中）**
+  - README のヒーローと価値提案（PR #49）、npm メタデータとコミュニティの最小セット（PR #50）、GitHub の description / topics / homepage と Discussions を済ませた。good first issue は #51〜#53、#56 を起票した。
+  - docs サイト（#58）: Showcase（LIMINAL VEIN。レンダーから 720p60 の AV1 webm 1.5 MB と H.264 mp4 2.0 MB を書き出し、reduced motion のときは自動再生しない）、日本語の Getting Started（`/ja/getting-started/`。トップの hero とサイドバーからリンク）、`llms.txt` を置いた。
+  - 残りは 1.0 の材料（API の棚卸し）。
 
 ## Phase 1 — 入口の整備と 1.0 の材料集め（11 月前半）
 
