@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { join } from "node:path";
 import { audioDurationMismatch, ffmpegArgs, parseAudioProbe, videoFileName } from "../src/encode";
 
 describe("ffmpegArgs", () => {
@@ -92,7 +93,13 @@ describe("audioDurationMismatch", () => {
 
 describe("videoFileName", () => {
   it("names the video after the output directory", () => {
-    expect(videoFileName("/renders/poolrooms-4k", "prores")).toBe("/renders/poolrooms-4k/poolrooms-4k.mov");
-    expect(videoFileName("/renders/poolrooms-4k/", "h264")).toBe("/renders/poolrooms-4k/poolrooms-4k.mp4");
+    // Expected paths are built with node:path, not hardcoded "/" separators:
+    // videoFileName() joins with the platform separator, so a "/" literal
+    // fails on Windows (reported in #55). The expected value must use the
+    // same join() as the implementation, not resolve(): on Windows a
+    // root-relative input resolves to a drive letter the join never adds.
+    const out = "/renders/poolrooms-4k";
+    expect(videoFileName(out, "prores")).toBe(join(out, "poolrooms-4k.mov"));
+    expect(videoFileName(`${out}/`, "h264")).toBe(join(out, "poolrooms-4k.mp4"));
   });
 });
