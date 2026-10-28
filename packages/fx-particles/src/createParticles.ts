@@ -212,6 +212,10 @@ class Particles implements ParticlesInstance {
     return this.host.clock;
   }
 
+  get time(): number {
+    return this.host.time;
+  }
+
   get maxParticles(): number {
     return this.config.pool;
   }

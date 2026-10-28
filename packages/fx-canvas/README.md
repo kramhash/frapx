@@ -448,6 +448,7 @@ Shaders without `#version 300 es` continue to use WebGL1 exactly as before.
 ```ts
 fx.ready;
 fx.clock; // "realtime" | "manual"
+fx.time; // current time in seconds; the last sampled value with a timeSource
 fx.start();
 fx.stop();
 fx.render();

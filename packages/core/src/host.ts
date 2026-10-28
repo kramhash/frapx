@@ -118,6 +118,16 @@ class RuntimeHost implements RuntimeHostInstance {
     return this.clockMode;
   }
 
+  /**
+   * The time of the last frame drawn, before any `accumulation.loop`
+   * wrapping: the value `setTime()` would need to reproduce that frame.
+   * While gated it is the time the loop stopped at, and with a time source
+   * it is the last value read from the source.
+   */
+  get time(): number {
+    return this.elapsed;
+  }
+
   get timeSource(): TimeSource | null {
     return this.source;
   }

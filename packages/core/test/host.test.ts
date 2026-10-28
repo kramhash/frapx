@@ -248,6 +248,17 @@ describe("manual clock", () => {
     expect(frames).toHaveLength(0);
   });
 
+  it("reads back the time of the last frame drawn", async () => {
+    const { host } = create({ clock: "manual" });
+    await host.ready;
+
+    expect(host.time).toBe(0);
+    host.setTime(3);
+    expect(host.time).toBe(3);
+    host.setTime(7.5);
+    expect(host.time).toBe(7.5);
+  });
+
   it("reports a neutral pointer and no reduced motion", async () => {
     mediaMatches = true;
     const { host, frames, canvas } = create({ clock: "manual" });
@@ -333,6 +344,38 @@ describe("setClock", () => {
 });
 
 describe("realtime setTime", () => {
+  it("reads back the advancing realtime clock", async () => {
+    const { host, frames } = create();
+    await host.ready;
+
+    tick(1000);
+    expect(host.time).toBe(0);
+    tick(1050);
+    expect(host.time).toBeCloseTo(0.05);
+    expect(host.time).toBe(frames.at(-1)?.time);
+    tick(1100);
+    expect(host.time).toBeCloseTo(0.1);
+    expect(host.time).toBe(frames.at(-1)?.time);
+  });
+
+  it("keeps the last frame's time while a gate stops the loop", async () => {
+    const { host, frames } = create();
+    await host.ready;
+
+    tick(1000);
+    tick(1050);
+    expect(host.time).toBeCloseTo(0.05);
+    const stoppedTime = host.time;
+    const drawn = frames.length;
+
+    setHidden(true);
+    tick(2000);
+
+    expect(host.status).toBe("paused");
+    expect(frames).toHaveLength(drawn);
+    expect(host.time).toBe(stoppedTime);
+  });
+
   it("seeks the running clock", async () => {
     const { host, frames } = create();
     await host.ready;
@@ -348,6 +391,23 @@ describe("realtime setTime", () => {
 });
 
 describe("time source", () => {
+  it("reads back the last sampled source value without sampling again", async () => {
+    let now = 4;
+    const source = vi.fn(() => now);
+    const { host } = create({ timeSource: source });
+    await host.ready;
+
+    tick(1000);
+    expect(host.time).toBe(4);
+    now = 17.5;
+    expect(host.time).toBe(4);
+    expect(source).toHaveBeenCalledTimes(1);
+
+    tick(1050);
+    expect(host.time).toBe(17.5);
+    expect(source).toHaveBeenCalledTimes(2);
+  });
+
   it("warns under debug that demand mode never reads the source", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { host } = create({ renderMode: "demand", debug: true, timeSource: () => 1 });

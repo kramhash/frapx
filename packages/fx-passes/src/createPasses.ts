@@ -238,6 +238,10 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
     return this.host.clock;
   }
 
+  get time(): number {
+    return this.host.time;
+  }
+
   get accumulation(): ResolvedAccumulation {
     return this.settings;
   }

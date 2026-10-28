@@ -206,6 +206,11 @@ export type ShaderBackgroundInstance<
   /** The active clock mode. */
   readonly clock: ClockMode;
   /**
+   * The time of the last frame drawn, before any `accumulation.loop`
+   * wrapping. Reads back where the picture is.
+   */
+  readonly time: number;
+  /**
    * The feedback format actually allocated (after any fallback), or `null`
    * without feedback or before initialization.
    */

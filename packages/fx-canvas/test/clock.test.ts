@@ -169,6 +169,17 @@ describe("clock option", () => {
     ]);
   });
 
+  it("reads the current time back from the instance", async () => {
+    const canvas = new Canvas();
+    const fx = create(canvas, { clock: "manual" });
+    await fx.ready;
+
+    expect(fx.time).toBe(0);
+    fx.setTime(4);
+    fx.render();
+    expect(fx.time).toBe(4);
+  });
+
   it("switches clocks with setClock", async () => {
     const canvas = new Canvas();
     const fx = create(canvas);

@@ -22,6 +22,14 @@ const collectUnhandled = async (run: () => void): Promise<unknown[]> => {
 };
 
 describe("createParticles ready", () => {
+  it("forwards the current time from the host", () => {
+    const fx = createParticles();
+
+    fx.setTime(17.5);
+    expect(fx.time).toBe(17.5);
+    fx.destroy();
+  });
+
   it("does not surface an unawaited ready on destroy", async () => {
     let fx!: ReturnType<typeof createParticles>;
     const reasons = await collectUnhandled(() => {

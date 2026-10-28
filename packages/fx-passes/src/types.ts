@@ -177,6 +177,11 @@ export type PassesInstance<
   readonly supported: boolean;
   readonly ready: Promise<void>;
   readonly clock: ClockMode;
+  /**
+   * The time of the last frame drawn, before any `accumulation.loop`
+   * wrapping. Reads back where the picture is.
+   */
+  readonly time: number;
   readonly accumulation: ResolvedAccumulation;
   /** Samples of the current frame drawn so far. */
   readonly samplesDrawn: number;

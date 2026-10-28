@@ -252,6 +252,12 @@ export type RuntimeHostInstance = {
   readonly supported: boolean;
   readonly ready: Promise<void>;
   readonly clock: ClockMode;
+  /**
+   * The time of the last frame drawn, before any `accumulation.loop`
+   * wrapping. Use it to read back where the picture is, for example to
+   * start audio at the same position or to render a frame counter.
+   */
+  readonly time: number;
   readonly timeSource: TimeSource | null;
   start(): void;
   stop(): void;

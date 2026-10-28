@@ -206,6 +206,10 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     return this.host.clock;
   }
 
+  get time(): number {
+    return this.host.time;
+  }
+
   get feedbackFormat(): FeedbackFormat | null {
     // Feedback only ever requests rgba8 or rgba16f, and falls back to rgba8.
     return (this.feedbackState?.targets.format as FeedbackFormat | undefined) ?? null;

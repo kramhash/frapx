@@ -213,6 +213,11 @@ export type ParticlesInstance = {
   readonly supported: boolean;
   readonly ready: Promise<void>;
   readonly clock: ClockMode;
+  /**
+   * The time of the last frame drawn, before any `accumulation.loop`
+   * wrapping. Reads back where the picture is.
+   */
+  readonly time: number;
   /** Size of the particle pool. */
   readonly maxParticles: number;
   readonly simulationRate: number;
