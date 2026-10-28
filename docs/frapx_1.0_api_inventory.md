@@ -2,9 +2,45 @@
 
 Oct 28, 2026 · @mark
 
-`docs/frapx_growth_plan.md` の Phase 1「1.0 の材料」の成果物。`@frapx/fx-canvas` と `@frapx/react-canvas` の公開 API を一覧にし、既知の不満と 1.0 で入れたい破壊的変更の候補を並べた。1.0 の grill はこれを入力にする。grill の結論はこのドキュメントの冒頭に「決定事項」節として足し、本文より優先する。
+`docs/frapx_growth_plan.md` の Phase 1「1.0 の材料」の成果物。`@frapx/fx-canvas` と `@frapx/react-canvas` の公開 API を一覧にし、既知の不満と 1.0 で入れたい破壊的変更の候補を並べた。これを入力に 1.0 の grill を開き、その結論を次の「決定事項」節に置いた。決定事項は本文より優先する。
 
 行番号は 2026-10-28 時点（main 3a8c6ed）。ずれていたら現在のコードを読み直す。「推測」と書いた項目はコードを読んだだけで、実行して確かめていない。
+
+## 2026-10-28 決定事項（本文より優先）
+
+1. **1.0 にするのは fx-canvas と react-canvas だけ。** core は 0.x の内部のまま。fx-canvas が公開する型と関数は fx-canvas が持ち、core の変更が fx-canvas の公開 API に漏れないようにする。
+2. **WebGL ヘルパー（`createBlitter` / `createPingPong` / `createRenderTarget` / `supportsRenderTargetFormat` と型）は fx-canvas から外す。** 0.12 で `@deprecated` を付け、1.0 で削除する。必要な人は `@frapx/core` から import する（core は 0.x で、安定の約束は無いと明記する）。
+3. **公開型は fx-canvas が自前で宣言し、値（`keyframes`、エラークラス 6 種、`glsl`、`glslUtils`、`hexToRgb(a)`）だけ core から再エクスポートする。** エラークラスは `instanceof` のため core の実体をそのまま出す。core の型との互換は vitest の `expectTypeOf` で型テストにし、CI で守る。新しい依存は足さない。
+4. **時刻の getter は `time` で、巻き戻す前の値を返す。** PR #62 のレビューで確定済み。1.0 の前提。
+5. **名前は fx-canvas を正とする。** fx-canvas の今の名前をそのまま凍結する。passes / particles は、それぞれの次の minor で合わせる（意味が違う particles の `reset` は残す）。1.0 の作業には含めない。
+6. **React の `onShaderReady` / `onShaderError` は残す。** README の理由を「`onError` は div の DOM イベントと衝突する」に直す。
+7. **react-canvas の作り直しを react-particles と同じ契約にする。** 作り直しが要る options を hook の中で値比較（plain は深い比較、関数と要素は参照）し、hook でも component でも自動で作り直す。`recreateDeps` と `recreateKey` は逃げ道として残す。
+8. **core の host と fx-canvas に `onStatusChange(status)` を足し、hook の `status` をそれで追従させる。** react-particles は後で合わせる（範囲外）。
+9. **`data-frapx-shader-canvas` は 1.0 で外し、`data-frapx-canvas` を公開 API として README に載せる。** ログの接頭辞は `[frapx/fx-canvas]` / `[frapx/core]` に直す。
+10. **`respectReducedMotion` の既定を 1.0 で `true` にする。** react-canvas も同じ既定になる。
+11. **`setUniform` の素の string オーバーロードは残す。** タイプミスは `debug: true` の警告で拾う。
+12. **`dpr` は指定値を尊重する。** `"auto"` だけを `maxDpr`（既定 2）で頭打ちにする。数値と関数は、`maxDpr` を明示したときだけ頭打ちにする。1 未満も許す（0 以下と非有限値は `RangeError`）。実体は core なので、passes / particles にも効く。
+13. **`canvas` / `gl` は nullable のまま。** 描画中は `RenderState.gl` を使う、と README に書く。
+14. **`status` の 9 値と `supported` はそのまま凍結する。** README に各値の意味と遷移、`supported` の定義を書く。1.x で値を足すのは破壊的変更として扱う。
+15. **react-canvas の既定の `aria-hidden="true"` は残す。** 意味のある絵にするときは `role="img"` と `aria-label` を書き、`aria-hidden={false}` で上書きする、と README に書く。
+16. **`Rgb` / `Rgba` は書き換え可能なタプルのまま。**
+17. **WebGL1 / GLSL ES 1.00 互換を既定のまま 1.0 にする。** `gl` は union 型のまま。
+18. **公開はプレイグラウンドの前（11 月前半）。** 0.12（破壊しない追加と `@deprecated`）→ 1.0（破壊的変更）の順に出す。プレイグラウンドは最初から 1.0 の導入コードを生成する。告知は Phase 3 でまとめる。
+19. **破壊しない追加のうち、1.0 に必須なのは 3 つ。** (a) README / docs の穴とずれ、(b) テストの穴、(c) React の handle の `setTimeSource` / `setFragment`。(d) `useShaderBackground` の example、(e) 予約済み uniform 名の警告、(f) README の推奨オプションは 1.x で足す（good first issue の候補）。
+20. **作業は GitHub のマイルストーン「fx-canvas 1.0」の issue で進める。** 1 issue 1 PR。
+
+### 作業単位
+
+| Issue | 内容 | 版 | 依存 | 状態 |
+|---|---|---|---|---|
+| [#62](https://github.com/kramhash/frapx/pull/62)（#48） | `time` getter | core / fx-canvas / fx-passes / fx-particles の minor | なし | 変更依頼中 |
+| [#66](https://github.com/kramhash/frapx/issues/66) | core と fx-canvas に `onStatusChange`、ログの接頭辞の改名 | core minor / fx-canvas 0.12 | なし | 未着手 |
+| [#67](https://github.com/kramhash/frapx/issues/67) | fx-canvas の公開型を自前で宣言、core との互換の型テスト、ヘルパーに `@deprecated` | fx-canvas 0.12 | なし | 未着手 |
+| [#68](https://github.com/kramhash/frapx/issues/68) | react-canvas: 作り直しの値比較、`status` の追従、handle に `setTimeSource` / `setFragment` | react-canvas 0.9 | #66 | 未着手 |
+| [#69](https://github.com/kramhash/frapx/issues/69) | README / docs の穴とずれ、テストの穴 | — | #66〜#68（依存しない部分は先行してよい） | 未着手 |
+| [#70](https://github.com/kramhash/frapx/issues/70) | 1.0 の破壊的変更、移行ガイド、リリース | fx-canvas 1.0 / react-canvas 1.0 / core minor | #62、#66〜#69 | 未着手 |
+
+マイルストーンの外（1.0 の後）: passes / particles の名前を fx-canvas に合わせる、react-particles の `status` の追従、決定 19 の (d)(e)(f)。
 
 ## 現行バージョン（npm、2026-10-28）
 

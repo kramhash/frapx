@@ -37,7 +37,7 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
 - **Phase 1 — 入口の整備（進行中）**
   - README のヒーローと価値提案（PR #49）、npm メタデータとコミュニティの最小セット（PR #50）、GitHub の description / topics / homepage と Discussions を済ませた。good first issue は #51〜#53、#56 を起票した。
   - docs サイト（#58）: Showcase（LIMINAL VEIN。レンダーから 720p60 の AV1 webm 1.5 MB と H.264 mp4 2.0 MB を書き出し、reduced motion のときは自動再生しない）、日本語の Getting Started（`/ja/getting-started/`。トップの hero とサイドバーからリンク）、`llms.txt` を置いた。
-  - 1.0 の材料として、fx-canvas と react-canvas の API を棚卸しした（`docs/frapx_1.0_api_inventory.md`）。残りは 1.0 の grill。
+  - 1.0 の材料として、fx-canvas と react-canvas の API を棚卸しした（`docs/frapx_1.0_api_inventory.md`）。2026-10-28 に 1.0 の grill を済ませた。決定事項と作業単位（マイルストーン「fx-canvas 1.0」、#66〜#70）は同じドキュメントにある。1.0 はプレイグラウンドの前に出す。
 
 ## Phase 1 — 入口の整備と 1.0 の材料集め（11 月前半）
 
