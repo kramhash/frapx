@@ -53,9 +53,10 @@
   - `core` — the shared internal WebGL runtime host (`@frapx/core`). Not installed directly by end users.
   - `fx-<name>` — an effect runtime users instantiate directly, e.g. `@frapx/fx-canvas`, `@frapx/fx-passes`, `@frapx/fx-particles`.
   - `react-<name>` — the React binding for an `fx-<name>` package, e.g. `@frapx/react-canvas`, `@frapx/react-particles`.
-  - `glsl-<name>` — a GLSL snippet package meant to be concatenated into a fragment shader string, e.g. `@frapx/glsl-noise`, `@frapx/glsl-flowmap`, `@frapx/glsl-sdf`, `@frapx/glsl-raymarch`.
+  - `glsl-<name>` — a GLSL snippet package meant to be concatenated into a fragment shader string, e.g. `@frapx/glsl-noise`, `@frapx/glsl-flowmap`, `@frapx/glsl-sdf`, `@frapx/glsl-raymarch`. A glsl- package may also ship a small loader for the data its GLSL samples (e.g. the planned `@frapx/glsl-sdf-volume`, which reads baked SDF KTX2 files).
   - `tool-<name>` — a non-effect tool built on the runtimes, such as offline frame/video export (added 2026-10-10), e.g. `@frapx/tool-capture` (browser) and `@frapx/tool-render` (Node CLI). Keep browser and Node tools in separate packages so browser users never install Node-only dependencies.
 - The offline video export roadmap and its design decisions live in `docs/frapx_export_addon.md`; its "2026-10-10 決定事項" section takes precedence over the body.
+- The plan for baked 3D SDF textures (generic 3D data textures in core, `@frapx/glsl-sdf-volume`, the fx-particles `sdf` option, and the KTX2 schema the Blender `3dsdf-texture` extension writes) lives in `docs/frapx_sdf_volume.md`; its "2026-10-28 決定事項" section takes precedence over the body. The work is tracked in the GitHub milestone "SDF volume".
 - The adoption plan (entry points, playground, docs and outreach work through 2027-01) lives in `docs/frapx_growth_plan.md`; its "2026-10-20 決定事項" section takes precedence over the body.
 - The frapx × vixeq fix plan (measured pains F1–F17 from the `frapx-vixeq-lab` prototype, the issue map across both repositories, and their order) lives in `docs/frapx_vixeq_integration.md`; its "2026-10-21 決定事項" section takes precedence over the body.
 
