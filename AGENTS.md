@@ -57,6 +57,7 @@
   - `tool-<name>` — a non-effect tool built on the runtimes, such as offline frame/video export (added 2026-10-10), e.g. `@frapx/tool-capture` (browser) and `@frapx/tool-render` (Node CLI). Keep browser and Node tools in separate packages so browser users never install Node-only dependencies.
 - The offline video export roadmap and its design decisions live in `docs/frapx_export_addon.md`; its "2026-10-10 決定事項" section takes precedence over the body.
 - The adoption plan (entry points, playground, docs and outreach work through 2027-01) lives in `docs/frapx_growth_plan.md`; its "2026-10-20 決定事項" section takes precedence over the body.
+- The 1.0 API inventory of `@frapx/fx-canvas` and `@frapx/react-canvas` (exports, known pains, breaking-change candidates; the input for the 1.0 grill) lives in `docs/frapx_1.0_api_inventory.md`; once the grill adds a decisions section, that section takes precedence over the body.
 - The frapx × vixeq fix plan (measured pains F1–F17 from the `frapx-vixeq-lab` prototype, the issue map across both repositories, and their order) lives in `docs/frapx_vixeq_integration.md`; its "2026-10-21 決定事項" section takes precedence over the body.
 
 ## Issues and Handoff
