@@ -33,7 +33,7 @@ Oct 28, 2026 · @mark
 
 | Issue | 内容 | 版 | 依存 | 状態 |
 |---|---|---|---|---|
-| [#62](https://github.com/kramhash/frapx/pull/62)（#48） | `time` getter | core / fx-canvas / fx-passes / fx-particles の minor | なし | 変更依頼中 |
+| [#62](https://github.com/kramhash/frapx/pull/62)（#48） | `time` getter | core / fx-canvas / fx-passes / fx-particles の minor | なし | マージ済み（2026-10-28） |
 | [#66](https://github.com/kramhash/frapx/issues/66) | core と fx-canvas に `onStatusChange`、ログの接頭辞の改名 | core minor / fx-canvas 0.12 | なし | 未着手 |
 | [#67](https://github.com/kramhash/frapx/issues/67) | fx-canvas の公開型を自前で宣言、core との互換の型テスト、ヘルパーに `@deprecated` | fx-canvas 0.12 | なし | 未着手 |
 | [#68](https://github.com/kramhash/frapx/issues/68) | react-canvas: 作り直しの値比較、`status` の追従、handle に `setTimeSource` / `setFragment` | react-canvas 0.9 | #66 | 未着手 |
