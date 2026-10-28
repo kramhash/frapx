@@ -63,6 +63,8 @@ A URL works too (`frapx-render http://127.0.0.1:5173/music --out …`; put the r
 | `--headed` | | Show the browser window. |
 | `--allow-software` | | Render on a software WebGL renderer such as SwiftShader. |
 | `--timeout <seconds>` | `60` | How long to wait for `registerRenderTarget()`. |
+| `-h, --help` | | Print the usage text and exit. |
+| `-v, --version` | | Print the version and exit. |
 
 Progress goes to stderr with the time per frame and an estimate of the time left. Ctrl-C stops after closing the browser (press it again to quit at once) and exits with 130.
 
