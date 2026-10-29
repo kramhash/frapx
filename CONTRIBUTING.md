@@ -23,8 +23,11 @@ work on the same thing.
 
 ## Development setup
 
-Requirements: Node.js 22 or later and [pnpm](https://pnpm.io/) (the version is
-pinned in `package.json` under `packageManager`; `corepack enable` picks it up).
+Requirements: Node.js 22 or later and [pnpm](https://pnpm.io/). The pnpm
+version is pinned in `package.json` under `packageManager`; any pnpm 9.7 or
+later switches to that version on its own, so an existing install needs no
+extra step. Without pnpm, install it with one of the methods on
+[pnpm.io/installation](https://pnpm.io/installation).
 
 ```sh
 pnpm install
@@ -59,6 +62,10 @@ This is a pnpm monorepo. Packages are named by category:
 - **Importing must stay safe during SSR** — no `window` or `document` access at
   module load.
 - **No new production dependencies** without discussing it in an issue first.
+  When you add any dependency with an install script, allow (`true`) or deny
+  (`false`) it under `allowBuilds` in `pnpm-workspace.yaml`; otherwise
+  `pnpm install` fails with `ERR_PNPM_IGNORED_BUILDS`. pnpm also does not
+  resolve versions published less than a day ago (`minimumReleaseAge`).
 - **Avoid breaking public API.** Exports from each package's `src/index.ts` are
   public; if a change affects them, update the package README and the docs
   page in `apps/docs` too.

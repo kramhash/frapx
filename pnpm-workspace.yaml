@@ -2,3 +2,9 @@ packages:
   - "packages/*"
   - "examples/*"
   - "apps/*"
+
+# esbuild and sharp ship prebuilt binaries via optionalDependencies, so their
+# install scripts are not needed (pnpm 10 skipped them silently; pnpm 12 fails).
+allowBuilds:
+  esbuild: false
+  sharp: false
