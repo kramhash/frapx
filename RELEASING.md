@@ -156,18 +156,21 @@ workflow:
 
 To release a package:
 
-1. Update `package.json` version and `CHANGELOG.md` as described above,
+1. Check for a newer pnpm patch in the pinned major (`npm view pnpm@12
+   version`). If there is one, first raise `packageManager` in the root
+   `package.json`, run `pnpm install`, and merge that in its own PR.
+2. Update `package.json` version and `CHANGELOG.md` as described above,
    respecting internal dependency publish order (`@frapx/core` before
    `@frapx/fx-canvas`, `@frapx/fx-canvas` before `@frapx/react-canvas`).
-2. Commit the release metadata and push to `main`.
-3. Tag and push:
+3. Commit the release metadata and push to `main`.
+4. Tag and push:
 
    ```sh
    git tag -a "@frapx/fx-canvas@0.6.2" -m "@frapx/fx-canvas@0.6.2"
    git push origin "@frapx/fx-canvas@0.6.2"
    ```
 
-4. Watch the `Publish Package` run in GitHub Actions. If it fails before the
+5. Watch the `Publish Package` run in GitHub Actions. If it fails before the
    publish step, no npm package or GitHub Release is created — fix the issue,
    delete the tag (`git push origin :refs/tags/<tag>` and
    `git tag -d <tag>`), and re-tag once the commit is corrected.
