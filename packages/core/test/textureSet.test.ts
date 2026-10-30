@@ -24,8 +24,10 @@ const loaded = (name: string, id: string): LoadedTexture => ({
   uniformName: `u_${name}`,
   sizeUniformName: `u_${name}Size`,
   texture: { id } as unknown as WebGLTexture,
+  target: 3553,
   width: 1,
-  height: 1
+  height: 1,
+  depth: null
 });
 
 const createMockGl = (maxUnits = 4) =>

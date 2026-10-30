@@ -41,7 +41,7 @@ createShaderBackground({
 - **Lifecycle & a11y** — pauses the render loop offscreen, on hidden tabs, and (opt-in) under `prefers-reduced-motion`. Always supplies `u_reducedMotion` so you can react in-shader too.
 - **Built-in uniforms** — `u_time`, `u_delta`, `u_resolution`, `u_viewportSize`, `u_pixelRatio`, `u_pointer`, `u_pointerUv`, `u_pointerActive`, `u_reducedMotion`.
 - **WebGL1 and WebGL2** — start your fragment with `#version 300 es` to opt into GLSL ES 3.00; everything else stays WebGL1 by default.
-- **Textures** — image URL / `HTMLImageElement` / `HTMLCanvasElement` sources, with runtime updates via `setTexture()` / `setTextures()`.
+- **Textures** — image URL / `HTMLImageElement` / `HTMLCanvasElement` sources, with runtime updates via `setTexture()` / `setTextures()`. On WebGL2, a texture can also be a 3D volume from raw data — `{ data, size: [nx, ny, nz], format: "r8" | "r16f" | "r32f" }` — sampled as `sampler3D` with a vec3 `u_<name>Size`.
 - **Feedback** — `feedback: true` gives you a managed ping-pong framebuffer exposed as `u_previousFrame` for effects that need to read the previous frame. `feedback: { format: "rgba16f" }` uses half-float buffers on WebGL2 for accumulation without banding.
 - **Deterministic rendering** — `clock: "manual"` + `setTime()` / `render()` draws exactly when you ask, and `resolution` fixes the render size, for frame-accurate output such as video frames.
 - **External time** — `timeSource` makes the realtime loop follow an audio transport or any other clock, keeping the lifecycle gates.

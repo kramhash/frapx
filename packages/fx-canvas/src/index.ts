@@ -26,6 +26,8 @@ export type {
   ShaderLayer,
   ShaderStage,
   ShaderStatus,
+  DataTextureFormat,
+  DataTextureOptions,
   TextureInput,
   TextureMap,
   TextureOptions,

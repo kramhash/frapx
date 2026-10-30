@@ -38,7 +38,30 @@ export type TextureOptions = {
   flipY?: boolean;
 };
 
-export type TextureInput = TextureSource | TextureOptions;
+/**
+ * Storage format of a 3D data texture: one channel, read as `.r`. `r16f` data
+ * holds half-float bits in a `Uint16Array`.
+ */
+export type DataTextureFormat = "r8" | "r16f" | "r32f";
+
+/**
+ * A 3D texture uploaded from raw data, sampled as `sampler3D`. WebGL2 only.
+ * `data` is x-fastest (`[z][y][x]`) and holds `nx * ny * nz` values:
+ * `Uint8Array` for `r8`, `Uint16Array` for `r16f`, `Float32Array` for `r32f`.
+ * `u_<name>Size` is a vec3 `[nx, ny, nz]`. `r32f` is sampled with nearest
+ * filtering unless `OES_texture_float_linear` is available.
+ */
+export type DataTextureOptions = {
+  data: Uint8Array | Uint16Array | Float32Array;
+  size: readonly [number, number, number];
+  format: DataTextureFormat;
+  /** Defaults to `"linear"`. */
+  filter?: "nearest" | "linear";
+  /** Defaults to `"clamp"`. */
+  wrap?: "clamp" | "repeat" | "mirror";
+};
+
+export type TextureInput = TextureSource | TextureOptions | DataTextureOptions;
 export type TextureMap = Record<string, TextureInput>;
 
 export type UniformScalar = number;

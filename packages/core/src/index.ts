@@ -31,10 +31,10 @@ export {
   resizeCanvasToTarget
 } from "./internal/dom";
 export type { DomSetup } from "./internal/dom";
-export { loadTexture } from "./internal/textures";
-export type { LoadedTexture } from "./internal/textures";
+export { getTextureSizeUniform, loadTexture } from "./internal/textures";
+export type { LoadedTexture, TextureWarn } from "./internal/textures";
 export { createTextureSet } from "./internal/textureSet";
-export type { TextureSet } from "./internal/textureSet";
+export type { TextureSet, TextureSetOptions } from "./internal/textureSet";
 export {
   applyProgramUniform,
   applyUniform,
@@ -80,6 +80,8 @@ export type {
   ShaderStatus,
   TextureSource,
   TextureOptions,
+  DataTextureFormat,
+  DataTextureOptions,
   TextureInput,
   TextureMap,
   UniformScalar,

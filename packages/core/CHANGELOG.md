@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- 3D data textures: a texture input `{ data, size: [nx, ny, nz], format: "r8" | "r16f" | "r32f", filter?, wrap? }` uploads a single-channel `TEXTURE_3D` (WebGL2 only; a WebGL1 context fails with `TextureLoadError`). `data` is x-fastest; its array type and length are checked against `format` and `size`. `u_<name>Size` is a vec3 for these (`getTextureSizeUniform()`). `r32f` falls back to nearest filtering without `OES_texture_float_linear` and reports it through the new `createTextureSet(inputs, { warn })` option. New types `DataTextureFormat`, `DataTextureOptions`, `TextureSetOptions`, `TextureWarn`.
+- `LoadedTexture` has `target` (`TEXTURE_2D` or `TEXTURE_3D`) and `depth` (`null` for 2D).
+
 ## 0.8.0 - 2026-10-30
 
 ### Changed

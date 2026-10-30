@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- 3D data textures, as in `@frapx/fx-canvas`: `textures`, `setTexture()` and `setTextures()` accept `{ data, size: [nx, ny, nz], format }`, sampled as `sampler3D` with a vec3 `u_<name>Size`. New types `DataTextureFormat` and `DataTextureOptions`.
+
 ## 0.7.0 - 2026-10-30
 
 ### Added
