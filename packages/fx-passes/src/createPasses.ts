@@ -13,6 +13,7 @@ import {
   createTextureSet,
   createUniformBindings,
   createUniformCache,
+  getTextureSizeUniform,
   normalizeUniform,
   supportsRenderTargetFormat,
   toUniformName,
@@ -121,7 +122,11 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
     this.plans = planPasses(options.passes);
     this.settings = resolveAccumulation(options.accumulation);
     this.uniformCache = createUniformCache(options.uniforms);
-    this.textureSet = createTextureSet(options.textures);
+    this.textureSet = createTextureSet(options.textures, {
+      warn: (message) => {
+        if (options.debug) console.warn(`[frapx/fx-passes] ${message}`);
+      }
+    });
     for (const name of Object.keys(options.textures ?? {})) {
       this.assertTextureName(name);
     }
@@ -860,10 +865,7 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
   }
 
   private setTextureSizeUniform(texture: LoadedTexture): void {
-    this.uniformCache.set(texture.sizeUniformName, {
-      type: "vec2",
-      value: [texture.width, texture.height]
-    });
+    this.uniformCache.set(texture.sizeUniformName, getTextureSizeUniform(texture));
   }
 
   private assertTextureName(name: string): void {

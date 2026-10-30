@@ -47,7 +47,7 @@ Passes are drawn in order every frame, and the last one is shown and captured.
 | `filter` / `wrap` | How readers sample the output |
 | `accumulate` | Draw the pass `accumulation.samples` times per frame and pass the mean on |
 
-Uniforms and textures are shared: every pass that declares one receives it.
+Uniforms and textures are shared: every pass that declares one receives it. Textures take the same forms as `@frapx/fx-canvas`, including 3D data textures (`{ data, size: [nx, ny, nz], format }`).
 
 ## Accumulation
 

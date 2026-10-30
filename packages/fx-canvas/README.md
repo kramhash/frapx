@@ -151,6 +151,38 @@ uniform vec2 u_imageSize;
 
 Supported v1 sources are image URL, `HTMLImageElement`, and `HTMLCanvasElement`.
 
+### 3D data textures
+
+A texture can also be a 3D volume uploaded from raw data, such as a baked
+signed distance field. It needs WebGL2, so the shader must be `#version 300 es`;
+on a WebGL1 context it fails with `TextureLoadError`.
+
+```ts
+const fx = createShaderBackground({
+  target: ".hero",
+  fragment, // #version 300 es
+  textures: {
+    volume: {
+      data, // nx * ny * nz values, x fastest ([z][y][x])
+      size: [64, 64, 64],
+      format: "r16f", // "r8" (Uint8Array) | "r16f" (Uint16Array of half-float bits) | "r32f" (Float32Array)
+      filter: "linear", // default
+      wrap: "clamp" // default
+    }
+  }
+});
+```
+
+```glsl
+uniform highp sampler3D u_volume;
+uniform vec3 u_volumeSize; // [nx, ny, nz]
+```
+
+The volume has one channel, read as `.r`. `r32f` is sampled with nearest
+filtering unless the GPU has `OES_texture_float_linear` (a `debug` warning says
+so). The data is kept and uploaded again after a context restore. `setTexture()`
+and `setTextures()` accept the same form.
+
 Textures can be updated at runtime. Updates are async because URL sources must
 load before they can be uploaded to WebGL.
 

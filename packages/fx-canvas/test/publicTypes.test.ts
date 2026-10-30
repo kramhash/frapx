@@ -40,6 +40,8 @@ describe("public types match @frapx/core", () => {
   it("textures", () => {
     expectTypeOf<fx.TextureSource>().toEqualTypeOf<core.TextureSource>();
     expectTypeOf<fx.TextureOptions>().toEqualTypeOf<core.TextureOptions>();
+    expectTypeOf<fx.DataTextureFormat>().toEqualTypeOf<core.DataTextureFormat>();
+    expectTypeOf<fx.DataTextureOptions>().toEqualTypeOf<core.DataTextureOptions>();
     expectTypeOf<fx.TextureInput>().toEqualTypeOf<core.TextureInput>();
     expectTypeOf<fx.TextureMap>().toEqualTypeOf<core.TextureMap>();
   });

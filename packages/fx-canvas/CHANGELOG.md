@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- 3D data textures: `textures`, `setTexture()` and `setTextures()` accept `{ data, size: [nx, ny, nz], format: "r8" | "r16f" | "r32f" }`, sampled as `sampler3D` in a `#version 300 es` shader with a vec3 `u_<name>Size`. WebGL2 only. New types `DataTextureFormat` and `DataTextureOptions`.
+
 ## 1.0.1 - 2026-10-30
 
 ### Fixed

@@ -18,6 +18,8 @@ export type {
   SampleProgress,
   ShaderLayer,
   ShaderStatus,
+  DataTextureFormat,
+  DataTextureOptions,
   TextureInput,
   TimeSource,
   TextureMap,

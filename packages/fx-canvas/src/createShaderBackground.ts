@@ -28,6 +28,7 @@ import {
   createTextureSet,
   createUniformBindings,
   createUniformCache,
+  getTextureSizeUniform,
   isGLSL300,
   isWebGL2Context,
   normalizeUniform,
@@ -96,7 +97,11 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     this.options = options;
     this.fragment = options.fragment;
     this.uniformCache = createUniformCache(options.uniforms);
-    this.textureSet = createTextureSet(options.textures);
+    this.textureSet = createTextureSet(options.textures, {
+      warn: (message) => {
+        if (options.debug) console.warn(`[frapx/fx-canvas] ${message}`);
+      }
+    });
 
     this.host = createRuntimeHost({
       ...(options.target !== undefined && { target: options.target }),
@@ -580,10 +585,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   }
 
   private applyTextureSizeUniform(texture: LoadedTexture): void {
-    const uniform = {
-      type: "vec2" as const,
-      value: [texture.width, texture.height]
-    };
+    const uniform = getTextureSizeUniform(texture);
     this.uniformCache.set(texture.sizeUniformName, uniform);
 
     const gl = this._gl;

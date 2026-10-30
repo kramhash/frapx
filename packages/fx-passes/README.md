@@ -37,7 +37,7 @@ Passes are drawn in order every frame. The last pass is shown on the canvas and 
 - `scale` sizes the output relative to the canvas, and `u_resolution` is the pass' own size.
 - `filter` and `wrap` set how readers sample the output.
 
-Pass names must be GLSL identifiers and may not shadow built-in uniforms. User uniforms (`uniforms`, `setUniform`) and textures (`textures`, `setTexture`) go to every pass that declares them.
+Pass names must be GLSL identifiers and may not shadow built-in uniforms. User uniforms (`uniforms`, `setUniform`) and textures (`textures`, `setTexture`) go to every pass that declares them. Textures accept the same forms as `@frapx/fx-canvas`, including 3D data textures (`{ data, size: [nx, ny, nz], format }`, sampled as `sampler3D` with a vec3 `u_<name>Size`).
 
 ## Accumulation
 

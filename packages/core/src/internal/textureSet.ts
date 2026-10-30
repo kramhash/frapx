@@ -1,6 +1,6 @@
 import type { GLContext, TextureInput, TextureMap } from "../types";
 import { TextureLoadError } from "./errors";
-import { loadTexture, type LoadedTexture } from "./textures";
+import { loadTexture, type LoadedTexture, type TextureWarn } from "./textures";
 
 export type TextureSet = {
   /** The textures loaded so far, by name. */
@@ -43,11 +43,19 @@ export type TextureSet = {
   dispose(gl: GLContext): void;
 };
 
+export type TextureSetOptions = {
+  /** Receives warnings about textures loaded differently than asked. */
+  warn?: TextureWarn;
+};
+
 /**
- * Tracks named image textures and the texture units they occupy, for a
- * runtime that binds them to one or more programs.
+ * Tracks named image and data textures and the texture units they occupy, for
+ * a runtime that binds them to one or more programs.
  */
-export const createTextureSet = (inputs: TextureMap = {}): TextureSet => {
+export const createTextureSet = (
+  inputs: TextureMap = {},
+  options: TextureSetOptions = {}
+): TextureSet => {
   const textureInputs = new Map<string, TextureInput>(Object.entries(inputs));
   let textures = new Map<string, LoadedTexture>();
   const units = new Map<string, number>();
@@ -87,7 +95,7 @@ export const createTextureSet = (inputs: TextureMap = {}): TextureSet => {
       for (const [name, input] of textureInputs) {
         if (isCancelled()) break;
         const unit = reserveUnit(gl, name);
-        loaded.set(name, await loadTexture(gl, name, input, unit));
+        loaded.set(name, await loadTexture(gl, name, input, unit, options.warn));
       }
 
       for (const texture of textures.values()) {
@@ -102,7 +110,7 @@ export const createTextureSet = (inputs: TextureMap = {}): TextureSet => {
 
       try {
         const unit = reserveUnit(gl, name);
-        const loaded = await loadTexture(gl, name, input, unit);
+        const loaded = await loadTexture(gl, name, input, unit, options.warn);
 
         if (isCancelled() || versions.get(name) !== version) {
           gl.deleteTexture(loaded.texture);
@@ -133,7 +141,7 @@ export const createTextureSet = (inputs: TextureMap = {}): TextureSet => {
         }
 
         gl.activeTexture(gl.TEXTURE0 + unit);
-        gl.bindTexture(gl.TEXTURE_2D, texture.texture);
+        gl.bindTexture(texture.target, texture.texture);
         gl.uniform1i(location, unit);
       }
     },
