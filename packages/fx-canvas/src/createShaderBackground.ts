@@ -166,6 +166,9 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
       onContextLost: () => {
         this.feedbackState = null;
+        // Every GL object died with the context; drop the reference so the
+        // restore path never disposes stale objects against the new context.
+        this.shaderProgram = null;
       },
 
       onContextRestored: async (gl, width, height) => {
