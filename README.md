@@ -17,9 +17,15 @@ fragment shader behind any element in about 11 kB (min+gzip, including
 hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2.
 
 frapx started from wanting a fragment shader on a page without shipping a 3D
-engine. The same full-screen shader is about 133 kB with three.js and 45 kB
-with Babylon.js, against 11 kB with fx-canvas (min+gzip, 2026-10-30,
-[how this was measured](https://github.com/kramhash/frapx-bench)).
+engine. Here is the same full-screen shader with each:
+
+| Library | min+gzip |
+| --- | ---: |
+| `@frapx/fx-canvas` | 11 kB |
+| Babylon.js | 45 kB |
+| three.js | 133 kB |
+
+<sub>Measured 2026-10-30 · [how](https://github.com/kramhash/frapx-bench)</sub>
 
 ```sh
 pnpm add @frapx/fx-canvas

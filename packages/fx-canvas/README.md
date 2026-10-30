@@ -15,7 +15,15 @@
 
 **Put the GLSL you wrote on a production website.** `@frapx/fx-canvas` runs your fragment shader behind any element in about 11 kB (min+gzip, including `@frapx/core`) and handles what bites in production: pausing offscreen and in hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2.
 
-frapx started from wanting a fragment shader on a page without shipping a 3D engine. The same full-screen shader is about 133 kB with three.js and 45 kB with Babylon.js, against 11 kB with fx-canvas (min+gzip, 2026-10-30, [how this was measured](https://github.com/kramhash/frapx-bench)).
+frapx started from wanting a fragment shader on a page without shipping a 3D engine. Here is the same full-screen shader with each:
+
+| Library | min+gzip |
+| --- | ---: |
+| `@frapx/fx-canvas` | 11 kB |
+| Babylon.js | 45 kB |
+| three.js | 133 kB |
+
+<sub>Measured 2026-10-30 · [how](https://github.com/kramhash/frapx-bench)</sub>
 
 **Try it:** [Live demo](https://kramhash.github.io/frapx/live-demo/) · [Getting started](https://kramhash.github.io/frapx/getting-started/) · [Documentation](https://kramhash.github.io/frapx/)
 
