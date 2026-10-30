@@ -103,7 +103,7 @@ describe("public types match @frapx/core", () => {
     expectTypeOf<fx.KeyframeTrack>().toEqualTypeOf<core.KeyframeTrack>();
     expectTypeOf<fx.KeyframeOptions>().toEqualTypeOf<core.KeyframeOptions>();
     // keyframes() is core's own: our types must go in and come out of it.
-    expectTypeOf<core.UniformSource>().toEqualTypeOf<ReturnType<typeof fx.keyframes>>();
+    expectTypeOf<fx.UniformSource>().toEqualTypeOf<ReturnType<typeof fx.keyframes>>();
     expectTypeOf<typeof fx.keyframes>()
       .parameter(1)
       .toEqualTypeOf<fx.KeyframeOptions | undefined>();

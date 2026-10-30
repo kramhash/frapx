@@ -16,6 +16,7 @@ export type ShaderErrorLine = {
   context: ReadonlyArray<{ line: number; source: string }>;
 };
 
+/** `"link"` for program link errors, which carry no line numbers. */
 export type ShaderStage = "vertex" | "fragment" | "link";
 
 export type GLContext = WebGLRenderingContext | WebGL2RenderingContext;
