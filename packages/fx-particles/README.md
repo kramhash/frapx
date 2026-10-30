@@ -72,7 +72,7 @@ Lengths are in viewport heights (1 is the canvas' height) and times in seconds. 
 | `seed` | 1 | Seed for every random choice |
 | `format` | `"rgba8"` | `"rgba16f"` draws into a half-float buffer for 16-bit capture (needs `EXT_color_buffer_float`; `formatFallback: false` fails instead of falling back) |
 
-The host options are the same as `fx-canvas`: `target`, `canvas`, `layer`, `resolution`, `dpr`, `maxDpr`, `autoResize`, `autoStart`, `pauseWhenOffscreen`, `pauseWhenHidden`, `respectReducedMotion`, `clock`, `timeSource`, `debug`, `canvasClass`, `canvasStyle`, `onReady` and `onError`. Under `respectReducedMotion`, a reduced-motion user sees a still frame: on load, the prewarmed first one.
+The host options are the same as `fx-canvas`: `target`, `canvas`, `layer`, `resolution`, `dpr`, `maxDpr`, `autoResize`, `autoStart`, `pauseWhenOffscreen`, `pauseWhenHidden`, `respectReducedMotion`, `clock`, `timeSource`, `debug`, `canvasClass`, `canvasStyle`, `onReady`, `onError` and `onStatusChange`. `respectReducedMotion` defaults to `true`, as in `fx-canvas`: a reduced-motion user sees a still frame, on load the prewarmed first one. Pass `respectReducedMotion: false` to keep animating. `onStatusChange(status)` runs with the new value each time `status` changes, with the same rules as `fx-canvas`.
 
 Which forces exist, the pool, the sprite, `sizeOverLife` and `tumble` are compiled into the shaders, so changing them means creating a new instance.
 

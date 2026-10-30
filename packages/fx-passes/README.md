@@ -84,6 +84,10 @@ Accumulating passes must come first in the list. They may only read passes liste
 
 `onResize(state)` runs whenever the render size actually changes, as in `@frapx/fx-canvas`: not on setup, but also after `setResolution()`, and after the capture when requested during `captureFrame()`. `state` carries the instance, `gl`, the canvas and its new `width` / `height`. The pass buffers take the new size on the next draw.
 
+`onStatusChange(status)` runs with the new value each time `status` changes (for example `"paused"` in a hidden tab, or `"context-lost"`), with the same rules as `@frapx/fx-canvas`: never for the initial `"idle"`, nor before `createPasses()` returns, and calling `destroy()` from it is safe.
+
+`respectReducedMotion` defaults to `true`, as in `@frapx/fx-canvas`: while the OS "reduce motion" setting is on, the loop holds a still frame (still refined up to `accumulation.samples`). Pass `respectReducedMotion: false` to keep animating.
+
 ## Requirements
 
 WebGL2 with `EXT_color_buffer_float`. Without it, `status` is `"unsupported"` and `ready` rejects with `UnsupportedError`. Shaders may be GLSL ES 1.00 or 3.00, chosen per pass. Samples are summed with additive blending when `EXT_float_blend` is available, and with an extra pass otherwise.

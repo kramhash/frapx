@@ -25,9 +25,10 @@ import {
 } from "./internal/uniformSources";
 import { useLatestRef } from "./internal/useLatestRef";
 
+// onStatusChange is held back until the hook follows it for `status` (#86).
 export type UseParticlesOptions = Omit<
   CreateParticlesOptions,
-  "target" | "onReady" | "onError"
+  "target" | "onReady" | "onError" | "onStatusChange"
 > & {
   onParticlesReady?: (instance: ParticlesInstance) => void;
   onParticlesError?: (error: Error) => void;

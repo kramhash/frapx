@@ -141,6 +141,11 @@ export type CreatePassesOptions<
   autoStart?: boolean;
   pauseWhenOffscreen?: boolean;
   pauseWhenHidden?: boolean;
+  /**
+   * When `true`, hold a single static frame while the user's OS "prefers
+   * reduced motion" setting is enabled. Defaults to `true`, as in
+   * `@frapx/fx-canvas`.
+   */
   respectReducedMotion?: boolean;
   renderMode?: RenderMode;
   /** Defaults to `"realtime"`. See `@frapx/fx-canvas`. */
@@ -157,6 +162,13 @@ export type CreatePassesOptions<
   canvasStyle?: Partial<CSSStyleDeclaration>;
   onReady?: (instance: PassesInstance<TUniforms>) => void;
   onError?: (error: Error) => void;
+  /**
+   * Called synchronously each time `status` changes value, with the new
+   * value. Not called for the initial `"idle"`, and never before
+   * `createPasses` returns: initialization starts on a microtask after
+   * creation. The callback may call `destroy()`; the transition stops there.
+   */
+  onStatusChange?: (status: ShaderStatus) => void;
   /** Called after every accumulated sample, in previews and captures. */
   onSample?: (progress: SampleProgress) => void;
   /**
