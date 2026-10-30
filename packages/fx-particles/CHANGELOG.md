@@ -1,10 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 - 2026-10-30
 
 ### Added
 
 - `time` on the instance: the time of the last frame drawn — the value `setTime()` would need to reproduce that frame. While gated it is the time the loop stopped at, and with a `timeSource` it is the last value read from the source. Lets a page read back where the picture is, for example to start audio at the same position or to render a frame counter.
+
+### Changed
+
+- Uses `@frapx/core` 0.7.0: a context restored while the page is hidden or offscreen goes straight to `paused` instead of passing through `running`, and core's debug warnings start with `[frapx/core]`.
 
 ## 0.2.0 - 2026-10-23
 

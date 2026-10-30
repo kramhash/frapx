@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 - 2026-10-30
+
+### Changed
+
+- Depends on `@frapx/fx-particles` ^0.3.0, which follows `@frapx/core` 0.7.0, so an app using it with `@frapx/fx-canvas` 0.12 installs one core.
+
 ## 0.2.0 - 2026-10-23
 
 ### Added
