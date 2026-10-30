@@ -104,9 +104,11 @@ ref.current?.setUniform("intensity", 1);
 ```
 
 The handle forwards commands to the latest shader instance, so it remains useful
-when React recreates the underlying runtime. `setTimeSource(source | null)` and
-`setFragment(fragment)` act on the current instance until the matching prop
-changes; `setFragment` returns the compile error, or `null`.
+when React recreates the underlying runtime. `setFragment(fragment)` swaps the
+shader until the `fragment` prop changes and returns the compile error, or
+`null`; only a prop change clears an earlier error. `setTimeSource(source | null)`
+holds until the `timeSource` prop is added or removed, or the instance is
+recreated (swapping one prop function for another does not undo it).
 
 ### Deterministic rendering
 

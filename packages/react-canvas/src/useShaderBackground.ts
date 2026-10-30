@@ -113,12 +113,12 @@ export const useShaderBackground = <
       textures,
       onReady(readyInstance: ShaderBackgroundInstance<TUniforms>) {
         if (disposed || !mountedRef.current) return;
-        onShaderReady?.(readyInstance);
+        latestOptionsRef.current.onShaderReady?.(readyInstance);
       },
       onError(nextError: Error) {
         if (disposed || !mountedRef.current) return;
         setError(nextError);
-        onShaderError?.(nextError);
+        latestOptionsRef.current.onShaderError?.(nextError);
       },
       onStatusChange(nextStatus: ShaderStatus) {
         if (!disposed && mountedRef.current) setStatus(nextStatus);

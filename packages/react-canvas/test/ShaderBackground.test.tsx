@@ -563,6 +563,52 @@ describe("ShaderBackground", () => {
     ref.current?.setTimeSource(source);
     expect(shaderMock.instance.setTimeSource).toHaveBeenLastCalledWith(source);
     expect(ref.current?.setFragment("void main() { }")).toBeNull();
+    const failure = new Error("compile failed");
+    shaderMock.instance.setFragment.mockReturnValueOnce(failure);
+    expect(ref.current?.setFragment("broken")).toBe(failure);
     expect(shaderMock.instance.setFragment).toHaveBeenCalledWith("void main() { }");
+  });
+
+  it("keeps the new instance's status when the old one reports destroyed", async () => {
+    const seen: string[] = [];
+    const Panel = ({ format }: { format: "rgba8" | "rgba16f" }) => {
+      const { ref, status } = useShaderBackground({
+        fragment: "void main() {}",
+        feedback: { format }
+      });
+      seen.push(status);
+      return <div ref={ref} />;
+    };
+    const statusOf = (call: number) =>
+      (shaderMock.createShaderBackground.mock.calls[call] as unknown as [
+        { onStatusChange: (status: string) => void }
+      ])[0].onStatusChange;
+
+    await act(async () => root.render(<Panel format="rgba8" />));
+    const first = statusOf(0);
+    shaderMock.instance.destroy.mockImplementationOnce(() => first("destroyed"));
+    await act(async () => root.render(<Panel format="rgba16f" />));
+    await act(async () => statusOf(1)("running"));
+
+    expect(seen[seen.length - 1]).toBe("running");
+  });
+
+  it("calls the latest onShaderError, not the one from creation", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" onShaderError={first} />);
+    });
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" onShaderError={second} />);
+    });
+    const [options] = shaderMock.createShaderBackground.mock.calls[0] as unknown as [
+      { onError: (error: Error) => void }
+    ];
+    await act(async () => options.onError(new Error("lost")));
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
   });
 });

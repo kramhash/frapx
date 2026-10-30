@@ -40,14 +40,18 @@ export type ShaderBackgroundHandle<
   setTime(seconds: number): void;
   setClock(clock: ClockMode): void;
   /**
-   * Overrides the `timeSource` prop on the current instance until the prop
-   * changes or the instance is recreated.
+   * Overrides the `timeSource` prop on the current instance until the prop is
+   * added or removed, or the instance is recreated. Swapping one prop function
+   * for another does not undo it: the instance reads the prop through a
+   * stable wrapper.
    */
   setTimeSource(source: TimeSource | null): void;
   /**
    * Swaps the fragment shader on the current instance; the `fragment` prop
    * wins again when it changes. Returns the compile error, or `null` (also
-   * while no instance is mounted).
+   * while no instance is mounted). A compile error still reaches `onError`,
+   * but a successful swap here does not clear an earlier error; only a
+   * `fragment` prop change does.
    */
   setFragment(fragment: string): ShaderCompileError | null;
   setResolution(resolution: Resolution | null): void;

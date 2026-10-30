@@ -11,6 +11,10 @@
 
 - Options that need a new instance are compared by value, in the hook as well as the component: plain objects and arrays by contents, functions and elements by reference. An inline `feedback={{ … }}` or `canvasStyle={{ … }}` no longer recreates the instance on every render, and changing them through `useShaderBackground` now recreates it without listing them in `recreateDeps`. An inline `dpr={() => 1}` still recreates every render. `recreateDeps` (hook) and `recreateKey` (component) remain for forcing a new instance.
 
+### Fixed
+
+- `onShaderReady` / `onShaderError` call the latest prop instead of the one from when the instance was created, like the render callbacks, so a re-rendered handler is not ignored on a later compile error or context loss.
+
 ## 0.8.0 - 2026-10-23
 
 ### Added
