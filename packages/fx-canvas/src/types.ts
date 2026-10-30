@@ -1,11 +1,22 @@
-import type {
-  ShaderCompileError,
-  UniformSource,
-  UniformInput,
-  UniformInputMap,
-  UniformRuntimeValue,
-  UniformVec4
-} from "@frapx/core";
+import type { ShaderCompileError } from "./internal/errors";
+
+// Every public type is declared here rather than re-exported from @frapx/core,
+// which stays 0.x. test/publicTypes.test.ts keeps them equal to core's.
+
+export type Rgb = [number, number, number];
+export type Rgba = [number, number, number, number];
+
+export type ShaderErrorLine = {
+  /** 1-based line in the compiled source (after `glsl` template interpolation). */
+  line: number;
+  message: string;
+  /** That line of the source, or "" when the log points past the end. */
+  source: string;
+  /** Up to two lines either side, with their numbers, the error line included. */
+  context: ReadonlyArray<{ line: number; source: string }>;
+};
+
+export type ShaderStage = "vertex" | "fragment" | "link";
 
 export type GLContext = WebGLRenderingContext | WebGL2RenderingContext;
 
@@ -50,17 +61,76 @@ export type TextureOptions = {
 export type TextureInput = TextureSource | TextureOptions;
 export type TextureMap = Record<string, TextureInput>;
 
-export type {
-  ExplicitUniformInput,
-  UniformInput,
-  UniformInputMap,
-  UniformRuntimeValue,
-  UniformScalar,
-  UniformType,
-  UniformVec2,
-  UniformVec3,
-  UniformVec4
-} from "@frapx/core";
+export type UniformScalar = number;
+export type UniformVec2 = [number, number] | readonly [number, number];
+export type UniformVec3 =
+  | [number, number, number]
+  | readonly [number, number, number];
+export type UniformVec4 =
+  | [number, number, number, number]
+  | readonly [number, number, number, number];
+
+export type UniformType = "float" | "vec2" | "vec3" | "vec4" | "mat3" | "mat4";
+
+export type ExplicitUniformInput = {
+  type: UniformType;
+  value: number[] | Float32Array;
+};
+
+export type UniformInput =
+  | UniformScalar
+  | UniformVec2
+  | UniformVec3
+  | UniformVec4
+  | Float32Array
+  | ExplicitUniformInput;
+
+export type UniformInputMap = Record<string, UniformInput>;
+
+export type UniformRuntimeValue<T> = T extends ExplicitUniformInput
+  ? ExplicitUniformInput
+  : T extends Float32Array
+    ? Float32Array
+    : T extends readonly [number, number]
+      ? UniformVec2
+      : T extends readonly [number, number, number]
+        ? UniformVec3
+        : T extends readonly [number, number, number, number]
+          ? UniformVec4
+          : T extends number
+            ? number
+            : UniformInput;
+
+/**
+ * Supplies uniform values for a time, such as a keyframe timeline. Runtimes
+ * call `get()` with the same time as `u_time` before drawing.
+ */
+export type UniformSource = {
+  get(time: number): Readonly<Record<string, UniformInput>>;
+};
+
+export type KeyframeValue =
+  | number
+  | readonly [number, number]
+  | readonly [number, number, number]
+  | readonly [number, number, number, number];
+
+/** `[time in seconds, value]`. */
+export type Keyframe = readonly [number, KeyframeValue];
+
+/**
+ * How a segment eases from one key to the next: `"linear"`, `"smooth"`
+ * (smoothstep), `"step"` (hold the earlier key), or a function of the
+ * segment's 0–1 progress.
+ */
+export type Ease = "linear" | "smooth" | "step" | ((t: number) => number);
+
+export type KeyframeTrack = readonly Keyframe[] | { keys: readonly Keyframe[]; ease?: Ease };
+
+export type KeyframeOptions = {
+  /** Default ease for tracks that do not set their own. Defaults to `"linear"`. */
+  ease?: Ease;
+};
 
 /**
  * Storage format of the feedback buffers. `rgba16f` (half float) keeps values
