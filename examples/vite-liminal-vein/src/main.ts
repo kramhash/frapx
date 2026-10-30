@@ -44,8 +44,9 @@ const prefersLightweightRender = (): boolean =>
 
 const quality = () => (exporting || holdsFrame || !prefersLightweightRender() ? 1 : 0);
 
-// The page starts silent; the sound button brings the song in where the loop
-// is, and from then on the song's position is the time.
+// The page starts silent, on fx's realtime clock. The sound button brings the
+// song in where the loop is and hands the clock over to it (#48), then returns
+// to realtime when the song stops.
 const soundtrack = createSoundtrack();
 
 // While playing, every frame draws one sample. A frame that holds still
@@ -53,7 +54,6 @@ const soundtrack = createSoundtrack();
 const fx = createPasses({
   target: stage,
   clock: holdsFrame ? "manual" : "realtime",
-  timeSource: soundtrack.time,
   // The time wraps every loop, so frame 960 renders exactly like frame 0.
   accumulation: { samples: SAMPLES, shutter: SHUTTER, fps: FPS, loop: LOOP_SECONDS },
   passes: [
@@ -87,8 +87,16 @@ fx.bindUniforms(songRhythm);
 soundButton.addEventListener("click", () => {
   soundButton.disabled = true;
   soundtrack
-    .toggle()
-    .then((playing) => soundButton.setAttribute("aria-pressed", String(playing)))
+    // Read the instance's time when the song is ready, then hand the
+    // clock over to the song (or back to realtime when it stops). Switching
+    // sources in realtime mode continues from the new source's current value,
+    // so the picture never jumps at either transition.
+    .toggle(() => fx.time)
+    .then((playing) => {
+      const clock = soundtrack.clock();
+      fx.setTimeSource(clock ?? null);
+      soundButton.setAttribute("aria-pressed", String(playing));
+    })
     .catch((error: unknown) => console.error(error))
     .finally(() => {
       soundButton.disabled = false;
@@ -131,4 +139,7 @@ registerRenderTarget(fx, {
 });
 
 window.__liminalVein = fx;
-window.__liminalVeinTime = soundtrack.time;
+window.__liminalVeinTime = () => {
+  const clock = soundtrack.clock();
+  return clock ? clock() : fx.time;
+};
