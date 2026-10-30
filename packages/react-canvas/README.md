@@ -46,8 +46,12 @@ Core shader options pass through as props, including `feedback`:
 ```
 
 Initialization options such as `vertex`, `feedback`, `renderMode`, `dpr`, and
-canvas settings recreate the underlying shader instance when they change.
-Runtime `uniforms` and `textures` update the existing instance, and a new
+canvas settings recreate the underlying shader instance when they change. They
+are compared by value: plain objects and arrays such as `feedback` and
+`canvasStyle` by contents, so an inline literal with the same contents keeps
+the instance, and functions (`dpr`) and elements (`canvas`) by reference, so an
+inline `dpr={() => 1}` recreates on every render. Pass `recreateKey` to force a
+new instance. Runtime `uniforms` and `textures` update the existing instance, and a new
 `fragment` is swapped in place (`setFragment`), keeping the time, uniforms and
 feedback across edits and Fast Refresh. A compile error goes to `error` /
 `onShaderError` while the previous shader keeps drawing; an instance whose first
@@ -61,24 +65,25 @@ import { useShaderBackground } from "@frapx/react-canvas";
 
 export function ShaderPanel({ intensity }: { intensity: number }) {
   const uniforms = useMemo(() => ({ intensity }), [intensity]);
-  const { ref, instance, error } = useShaderBackground(
-    {
-      fragment,
-      uniforms,
-      feedback: true
-    },
-    [true]
-  );
+  const { ref, instance, status, error } = useShaderBackground({
+    fragment,
+    uniforms,
+    feedback: true
+  });
 
   return <div ref={ref} />;
 }
 ```
 
-Pass recreation dependencies as the second argument. `uniforms` and `textures`
-are updated on the existing instance with `setUniforms()` and `setTextures()`,
-and a new `fragment` is swapped in with `setFragment()`; other initialization
-options, including `feedback` and `vertex`, should be included in the
-recreation dependency array when they change.
+The hook recreates the instance on the same value comparison as the component,
+so options such as `feedback` and `vertex` need no extra dependency. `uniforms`
+and `textures` are updated on the existing instance with `setUniforms()` and
+`setTextures()`, and a new `fragment` is swapped in with `setFragment()`. The
+optional second argument lists extra values whose change recreates the instance.
+
+`status` follows the instance live through `onStatusChange`, including
+`"paused"` while offscreen or hidden and `"context-lost"`. An `onStatusChange`
+prop is still called with every change.
 
 ## Imperative Handle
 
@@ -99,7 +104,9 @@ ref.current?.setUniform("intensity", 1);
 ```
 
 The handle forwards commands to the latest shader instance, so it remains useful
-when React recreates the underlying runtime.
+when React recreates the underlying runtime. `setTimeSource(source | null)` and
+`setFragment(fragment)` act on the current instance until the matching prop
+changes; `setFragment` returns the compile error, or `null`.
 
 ### Deterministic rendering
 

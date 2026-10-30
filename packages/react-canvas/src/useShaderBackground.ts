@@ -9,6 +9,7 @@ import {
   type UniformSource
 } from "@frapx/fx-canvas";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDeepStable } from "./internal/equal";
 import { useLatestRef } from "./internal/useLatestRef";
 import { omitUndefined } from "./internal/omitUndefined";
 import {
@@ -18,13 +19,9 @@ import {
   type BoundSources
 } from "./internal/uniformSources";
 
-// onStatusChange is held back until the hook tracks `status` with it (#68).
 export type UseShaderBackgroundOptions<
   TUniforms extends UniformInputMap = UniformInputMap
-> = Omit<
-  CreateShaderBackgroundOptions<TUniforms>,
-  "target" | "onReady" | "onError" | "onStatusChange"
-> & {
+> = Omit<CreateShaderBackgroundOptions<TUniforms>, "target" | "onReady" | "onError"> & {
   onShaderReady?: (instance: ShaderBackgroundInstance<TUniforms>) => void;
   onShaderError?: (error: Error) => void;
   /**
@@ -65,6 +62,9 @@ export const useShaderBackground = <
   // swap shaders in place.
   const [generation, setGeneration] = useState(0);
   const latestOptionsRef = useLatestRef(options);
+  // A real change to an option that cannot be updated in place recreates the
+  // instance; an inline literal with the same contents does not.
+  const structure = useDeepStable(structureOf(options));
   const uniformSources = useStableSources(options.uniformSources);
   const stableSourcesRef = useLatestRef(uniformSources);
 
@@ -97,6 +97,7 @@ export const useShaderBackground = <
       onBeforeRender,
       onAfterRender,
       onResize,
+      onStatusChange,
       uniforms,
       textures,
       uniformSources,
@@ -112,14 +113,16 @@ export const useShaderBackground = <
       textures,
       onReady(readyInstance: ShaderBackgroundInstance<TUniforms>) {
         if (disposed || !mountedRef.current) return;
-        setStatus(readyInstance.status);
         onShaderReady?.(readyInstance);
       },
       onError(nextError: Error) {
         if (disposed || !mountedRef.current) return;
         setError(nextError);
-        setStatus(instanceRef.current?.status ?? "error");
         onShaderError?.(nextError);
+      },
+      onStatusChange(nextStatus: ShaderStatus) {
+        if (!disposed && mountedRef.current) setStatus(nextStatus);
+        latestOptionsRef.current.onStatusChange?.(nextStatus);
       },
       onBeforeRender(state: RenderState<TUniforms>) {
         latestOptionsRef.current.onBeforeRender?.(state);
@@ -144,17 +147,10 @@ export const useShaderBackground = <
     setStatus(fx.status);
     setError(null);
 
-    void fx.ready.then(
-      () => {
-        if (disposed || !mountedRef.current) return;
-        setStatus(fx.status);
-      },
-      (nextError: unknown) => {
-        if (disposed || !mountedRef.current) return;
-        setError(toError(nextError));
-        setStatus(fx.status);
-      }
-    );
+    void fx.ready.catch((nextError: unknown) => {
+      if (disposed || !mountedRef.current) return;
+      setError(toError(nextError));
+    });
 
     return () => {
       disposed = true;
@@ -170,7 +166,7 @@ export const useShaderBackground = <
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, generation, ...recreateDeps]);
+  }, [target, generation, structure, ...recreateDeps]);
 
   // A new fragment swaps in place, keeping time, uniforms and feedback. A
   // compile error reaches `error` through onError and the old shader keeps
@@ -196,7 +192,6 @@ export const useShaderBackground = <
 
     lastUniformsRef.current = uniforms;
     fx.setUniforms(uniforms);
-    setStatus(fx.status);
   }, [options.uniforms]);
 
   useEffect(() => {
@@ -205,17 +200,10 @@ export const useShaderBackground = <
     if (!fx || !textures || lastTexturesRef.current === textures) return;
 
     lastTexturesRef.current = textures;
-    void fx.setTextures(textures).then(
-      () => {
-        if (!mountedRef.current || instanceRef.current !== fx) return;
-        setStatus(fx.status);
-      },
-      (nextError: unknown) => {
-        if (!mountedRef.current || instanceRef.current !== fx) return;
-        setError(toError(nextError));
-        setStatus(fx.status);
-      }
-    );
+    void fx.setTextures(textures).catch((nextError: unknown) => {
+      if (!mountedRef.current || instanceRef.current !== fx) return;
+      setError(toError(nextError));
+    });
   }, [options.textures]);
 
   // A changed source list rebinds in order on the existing instance.
@@ -255,6 +243,37 @@ export const useShaderBackground = <
 };
 
 const SWAPPABLE = new Set<ShaderStatus>(["ready", "running", "paused"]);
+
+// Options updated on the existing instance (or read through the latest ref),
+// so they are left out of the structure that recreates it.
+const IN_PLACE = new Set<string>([
+  "fragment",
+  "uniforms",
+  "textures",
+  "clock",
+  "timeSource",
+  "resolution",
+  "onShaderReady",
+  "onShaderError",
+  "onBeforeRender",
+  "onAfterRender",
+  "onResize",
+  "onStatusChange",
+  "uniformSources"
+]);
+
+/**
+ * Every option a change to which recreates the instance. Plain objects and
+ * arrays (`feedback`, `canvasStyle`) compare by value; functions (`dpr`) and
+ * elements (`canvas`) by identity.
+ */
+const structureOf = (options: object): Record<string, unknown> => {
+  const structure: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(options)) {
+    if (!IN_PLACE.has(key) && value !== undefined) structure[key] = value;
+  }
+  return structure;
+};
 
 const toError = (value: unknown): Error =>
   value instanceof Error ? value : new Error(String(value));
