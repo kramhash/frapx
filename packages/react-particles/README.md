@@ -95,6 +95,10 @@ new instance when one of its values changes. An invalid config (a negative
 `rate`, an unknown preset) reaches `error` instead of throwing; changing a
 value retries.
 
+`status` follows the instance live through `onStatusChange`, including
+`"paused"` while offscreen, hidden or under reduced motion, and
+`"context-lost"`. An `onStatusChange` prop is still called with every change.
+
 ## Imperative Handle
 
 ```tsx

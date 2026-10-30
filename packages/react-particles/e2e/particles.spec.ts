@@ -97,3 +97,15 @@ test("uniformSources drives opacity while bound and hands it back when removed",
   expect(await spread()).toBeLessThan(1.5);
   expect((await state(page)).marked).toBe(true);
 });
+
+test("status follows the runtime, pausing under reduced motion", async ({ page }) => {
+  await open(page);
+  const readout = page.getByTestId("particles-status");
+  await expect(readout).toHaveText("Status: running");
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(readout).toHaveText("Status: paused");
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(readout).toHaveText("Status: running");
+});

@@ -54,6 +54,7 @@ const lastOptions = () =>
   particlesMock.createParticles.mock.calls[created() - 1]![0] as Record<string, unknown> & {
     onError(error: Error): void;
     onReady(instance: unknown): void;
+    onStatusChange(status: string): void;
   };
 
 describe("Particles", () => {
@@ -402,5 +403,58 @@ describe("Particles", () => {
 
     await render(<Particles lifetime={[1, 3]} rate={3} onParticlesError={onParticlesError} />);
     expect(created()).toBe(3);
+  });
+
+  it("follows status through onStatusChange and chains the caller's callback", async () => {
+    const seen: string[] = [];
+    const onStatusChange = vi.fn();
+    const Probe = () => {
+      const { ref, status } = useParticles({ rate: 10, onStatusChange });
+      seen.push(status);
+      return <div ref={ref} />;
+    };
+
+    await render(<Probe />);
+    const report = lastOptions().onStatusChange;
+
+    await act(async () => report("paused"));
+    expect(seen[seen.length - 1]).toBe("paused");
+    await act(async () => report("context-lost"));
+    expect(seen[seen.length - 1]).toBe("context-lost");
+    expect(onStatusChange.mock.calls.flat()).toEqual(["paused", "context-lost"]);
+  });
+
+  it("keeps the new instance's status when the old one reports destroyed", async () => {
+    const seen: string[] = [];
+    const onStatusChange = vi.fn();
+    const Probe = ({ lifetime }: { lifetime: [number, number] }) => {
+      const { ref, status } = useParticles({ lifetime, onStatusChange });
+      seen.push(status);
+      return <div ref={ref} />;
+    };
+
+    await render(<Probe lifetime={[1, 2]} />);
+    const first = lastOptions().onStatusChange;
+    latest().destroy.mockImplementationOnce(() => first("destroyed"));
+    await render(<Probe lifetime={[1, 3]} />);
+    expect(created()).toBe(2);
+    await act(async () => lastOptions().onStatusChange("running"));
+
+    expect(seen[seen.length - 1]).toBe("running");
+    // The caller still hears the old instance go.
+    expect(onStatusChange.mock.calls.flat()).toEqual(["destroyed", "running"]);
+  });
+
+  it("calls the latest onStatusChange without recreating", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+
+    await render(<Particles rate={10} onStatusChange={first} />);
+    await render(<Particles rate={10} onStatusChange={second} />);
+    await act(async () => lastOptions().onStatusChange("paused"));
+
+    expect(created()).toBe(1);
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledWith("paused");
   });
 });
