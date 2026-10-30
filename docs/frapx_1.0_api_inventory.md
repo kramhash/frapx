@@ -40,7 +40,7 @@ Oct 28, 2026 · @mark
 | [#69](https://github.com/kramhash/frapx/issues/69) | README / docs の穴とずれ、テストの穴 | — | #66〜#68（依存しない部分は先行してよい） | マージ済み（2026-10-30、PR #81） |
 | [#70](https://github.com/kramhash/frapx/issues/70) | 1.0 の破壊的変更、移行ガイド、リリース | fx-canvas 1.0 / react-canvas 1.0 / core minor | #62、#66〜#69 | リリース済み（2026-10-30、PR #83） |
 
-マイルストーンの外（1.0 の後）: passes / particles の名前を fx-canvas に合わせる、react-particles の `status` の追従、決定 19 の (d)(e)(f)。
+マイルストーンの外（1.0 の後）: passes / particles の名前を fx-canvas に合わせる、react-particles の `status` の追従、決定 19 の (d)(e)(f)。範囲と issue は「2026-10-30 決定事項（その 2）」で決めた。
 
 ## 2026-10-30 決定事項（本文より優先）
 
@@ -48,6 +48,21 @@ Oct 28, 2026 · @mark
 22. **0.12 は #66・#67・#68 がそろってから、1 回で出す。** 中身は core minor、fx-canvas 0.12、react-canvas 0.9。各 PR に、足した API ぶんの README を含める。1.0 は #69 と #70 の後に出す。
 23. **`respectReducedMotion` の既定 `true`（#70）は、fx-canvas のオプション正規化に置く。** core の既定は `false` のまま残し、passes と particles はそれぞれの次の minor で合わせる（決定 5 と同じ扱い）。#70 の「Decide in the PR」はこれで解消した。
 24. **#69 のうち先行できる部分も、#68 の後にまとめて行う。** README の追記が #66〜#68 と衝突しないようにするため。並行して進めるのは #67 だけ。
+
+## 2026-10-30 決定事項（その 2。本文より優先）
+
+1.0 の後に回したものの範囲。順番は `docs/frapx_growth_plan.md` の決定 15 に従う（積み残し → SDF volume → プレイグラウンド）。
+
+25. **passes / particles と fx-canvas 1.0 の違いは、実際には 3 つしかない。** option 名とメンバー名は既に揃っている。違いは次の 3 つで、これを #85 で直す。
+    - `onStatusChange` が無い。core の host へ転送するだけで足りる。
+    - `respectReducedMotion` の既定が `false`。`true` にして、0.x の minor の破壊的変更として出す。
+    - ログの接頭辞が旧名のまま。`[frapx/fx-passes]` / `[frapx/fx-particles]` に直す。
+
+    機能の差は入れない（particles の `onResize` / `renderMode`、passes の `onBeforeRender` / `onAfterRender`）。要望が出たら別の issue にする。
+26. **react-particles の `status` は `onStatusChange` で追従する（#86、#85 に依存）。** react-canvas と同じ形にする。
+27. **#78（コンテキストの復帰で出る INVALID_OPERATION の警告）は、good first issue だが自分で直す。**
+28. **決定 19 の (d)(e)(f) は good first issue として残す（#87〜#89）。** 自分では着手しない。
+29. **公開は 1 回にまとめる。** fx-canvas 1.0.1、fx-passes 0.7、fx-particles 0.5、react-particles 0.5。
 
 ## 現行バージョン（npm、2026-10-28）
 
