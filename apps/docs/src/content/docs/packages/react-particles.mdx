@@ -66,8 +66,10 @@ const fadeIn = keyframes({ opacity: [[0, 0], [3, 1]] }, { ease: "smooth" });
 ## Hook and handle
 
 `useParticles(options, recreateDeps?)` returns `{ ref, instance, status, error }`
-with the same comparison rules. The component's `ref` exposes the instance's
-methods — `setTime`, `setClock`, `captureFrame`, `reset`, `setUniform`,
+with the same comparison rules. `status` follows the instance live through
+`onStatusChange` (`"paused"` while offscreen, hidden or under reduced motion,
+`"context-lost"`), and an `onStatusChange` prop is still called with every
+change. The component's `ref` exposes the instance's methods — `setTime`, `setClock`, `captureFrame`, `reset`, `setUniform`,
 `bindUniforms`, `setColor` and the rest:
 
 ```tsx

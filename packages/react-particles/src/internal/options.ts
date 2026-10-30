@@ -33,6 +33,7 @@ const NOT_STRUCTURE = new Set<string>([
   "resolution",
   "onParticlesReady",
   "onParticlesError",
+  "onStatusChange",
   "uniformSources"
 ]);
 

@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+
+- `onStatusChange` option (prop and hook), as in `@frapx/react-canvas` 1.0. Changing it never recreates the instance; the latest callback is called.
+
 ### Changed
+
+- `status` now follows the runtime live through `onStatusChange`: `"paused"` while offscreen, hidden or under reduced motion, and `"context-lost"`. Before, it changed only at ready, error and teardown.
 
 - **Breaking:** via `@frapx/fx-particles`, `respectReducedMotion` now defaults to `true`, matching `@frapx/react-canvas` 1.0: a reduced-motion user sees a still frame. Pass `respectReducedMotion={false}` to keep animating.
 

@@ -5,6 +5,7 @@ import {
   keyframes,
   presets,
   type ParticlePresetName,
+  type ShaderStatus,
   type UniformSource
 } from "@frapx/fx-particles";
 import { ShaderBackground } from "@frapx/react-canvas";
@@ -44,6 +45,7 @@ const App = () => {
   const [preset, setPreset] = useState<ParticlePresetName>("snow");
   const [rate, setRate] = useState(() => presetRate("snow"));
   const [breathing, setBreathing] = useState(false);
+  const [status, setStatus] = useState<ShaderStatus>("idle");
 
   // The E2E tests drive the instance through the handle.
   useEffect(() => {
@@ -63,6 +65,7 @@ const App = () => {
         preset={preset}
         rate={rate}
         uniformSources={breathing ? [breathe] : undefined}
+        onStatusChange={setStatus}
       />
       <section className="panel" aria-label="Particle controls">
         <div>
@@ -116,6 +119,10 @@ const App = () => {
             Reset
           </button>
         </div>
+        {/* Follows the runtime live: paused while offscreen, hidden or under reduced motion. */}
+        <p className="control" data-testid="particles-status">
+          Status: {status}
+        </p>
       </section>
     </main>
   );

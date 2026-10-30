@@ -25,10 +25,9 @@ import {
 } from "./internal/uniformSources";
 import { useLatestRef } from "./internal/useLatestRef";
 
-// onStatusChange is held back until the hook follows it for `status` (#86).
 export type UseParticlesOptions = Omit<
   CreateParticlesOptions,
-  "target" | "onReady" | "onError" | "onStatusChange"
+  "target" | "onReady" | "onError"
 > & {
   onParticlesReady?: (instance: ParticlesInstance) => void;
   onParticlesError?: (error: Error) => void;
@@ -105,6 +104,7 @@ export const useParticles = (
     const rest: Record<string, unknown> = { ...latestOptionsRef.current };
     delete rest.onParticlesReady;
     delete rest.onParticlesError;
+    delete rest.onStatusChange;
     delete rest.uniformSources;
     if (rest.timeSource) rest.timeSource = readTimeSource;
 
@@ -116,14 +116,16 @@ export const useParticles = (
           target,
           onReady(readyInstance: ParticlesInstance) {
             if (disposed || !mountedRef.current) return;
-            setStatus(readyInstance.status);
             latestOptionsRef.current.onParticlesReady?.(readyInstance);
           },
           onError(nextError: Error) {
             if (disposed || !mountedRef.current) return;
             setError(nextError);
-            setStatus(instanceRef.current?.status ?? "error");
             latestOptionsRef.current.onParticlesError?.(nextError);
+          },
+          onStatusChange(nextStatus: ShaderStatus) {
+            if (!disposed && mountedRef.current) setStatus(nextStatus);
+            latestOptionsRef.current.onStatusChange?.(nextStatus);
           }
         }) as CreateParticlesOptions
       );
@@ -145,17 +147,10 @@ export const useParticles = (
     setStatus(fx.status);
     setError(null);
 
-    void fx.ready.then(
-      () => {
-        if (disposed || !mountedRef.current) return;
-        setStatus(fx.status);
-      },
-      (nextError: unknown) => {
-        if (disposed || !mountedRef.current) return;
-        setError(toError(nextError));
-        setStatus(fx.status);
-      }
-    );
+    void fx.ready.catch((nextError: unknown) => {
+      if (disposed || !mountedRef.current) return;
+      setError(toError(nextError));
+    });
 
     return () => {
       disposed = true;

@@ -97,6 +97,7 @@ const OPTION_KEYS = [
   "canvasStyle",
   "onParticlesReady",
   "onParticlesError",
+  "onStatusChange",
   "uniformSources",
 ] as const satisfies readonly (keyof UseParticlesOptions)[];
 
