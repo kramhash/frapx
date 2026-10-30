@@ -376,12 +376,14 @@ class RuntimeHost implements RuntimeHostInstance {
     this.reconcile();
   }
 
-  private reconcile(): void {
+  // `restoring` lets a restored context leave "context-lost" straight to what
+  // the gates allow, so the status never passes through a stale value.
+  private reconcile(restoring = false): void {
     if (
       this.destroyed ||
       this.currentStatus === "unsupported" ||
       this.currentStatus === "error" ||
-      this.currentStatus === "context-lost"
+      (this.currentStatus === "context-lost" && !restoring)
     ) {
       return;
     }
@@ -676,6 +678,8 @@ class RuntimeHost implements RuntimeHostInstance {
 
     this.context = gl;
     this.setStatus("loading");
+    // onStatusChange may have destroyed the host.
+    if (this.destroyed) return;
 
     try {
       this.applyObjectFit();
@@ -685,6 +689,7 @@ class RuntimeHost implements RuntimeHostInstance {
       await this.options.onInit(gl, this.width, this.height);
       if (this.destroyed) return;
       this.setStatus("ready");
+      if (this.destroyed) return;
       this.readyResolve?.();
       this.options.onReady?.();
 
@@ -805,6 +810,7 @@ class RuntimeHost implements RuntimeHostInstance {
       this.cancelFrame();
       this.context = null;
       this.setStatus("context-lost");
+      if (this.destroyed) return;
       this.options.onContextLost?.();
       this.options.onError?.(new UnsupportedError("WebGL context lost."));
     };
@@ -818,11 +824,17 @@ class RuntimeHost implements RuntimeHostInstance {
       const afterRestore = async () => {
         try {
           await this.options.onContextRestored?.(gl, this.width, this.height);
+          if (this.destroyed) return;
+          if (this.contextRestoredShouldRun) {
+            // Gates may have closed during the loss; report only their result.
+            this.running = true;
+            this.reconcile(true);
+            return;
+          }
           // A stopped or manual-clock instance would otherwise stay
           // "context-lost", and render() would refuse to draw.
           if (this.currentStatus === "context-lost") this.setStatus(this.statusBeforeLoss);
-          if (this.contextRestoredShouldRun) this.start();
-          else if (!this.isManual) this.render();
+          if (!this.isManual) this.render();
         } catch (error) {
           this.fail(error instanceof Error ? error : new Error(String(error)));
         }

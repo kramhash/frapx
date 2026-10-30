@@ -195,9 +195,10 @@ export type CreateShaderBackgroundOptions<
   onResize?: (state: RenderState<TUniforms>) => void;
   /**
    * Called synchronously each time `status` changes value, with the new
-   * value. Not called for the initial `"idle"`. Initialization starts on a
-   * microtask after creation, so the first call (`"loading"`, `"unsupported"`
-   * or `"destroyed"`) never happens before `createShaderBackground` returns.
+   * value. Not called for the initial `"idle"`, and never before
+   * `createShaderBackground` returns: initialization starts on a microtask
+   * after creation. The callback may call `destroy()`; the transition stops
+   * there.
    */
   onStatusChange?: (status: ShaderStatus) => void;
 };

@@ -4,7 +4,7 @@
 
 ### Added
 
-- `onStatusChange(status)` option, via `@frapx/core`: a page can follow `running` / `paused` / `context-lost` and the rest without polling `status`. Not called for the initial `"idle"`; the first call, `"loading"`, comes after `createShaderBackground()` returns.
+- `onStatusChange(status)` option, via `@frapx/core`: a page can follow `running` / `paused` / `context-lost` and the rest without polling `status`. Not called for the initial `"idle"`, nor before `createShaderBackground()` returns; calling `destroy()` from it is safe.
 - `time` on the instance: the time of the last frame drawn — the value `setTime()` would need to reproduce that frame. While gated it is the time the loop stopped at, and with a `timeSource` it is the last value read from the source. Lets a page read back where the picture is, for example to start audio at the same position or to render a frame counter.
 
 ### Changed
