@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `onStatusChange(status)` option, as in `@frapx/fx-canvas` 1.0: called synchronously with the new value each time `status` changes, never for the initial `"idle"` nor before `createPasses()` returns. Calling `destroy()` from it is safe.
+
+### Changed
+
+- **Breaking:** `respectReducedMotion` now defaults to `true`, matching `@frapx/fx-canvas` 1.0: while the OS "reduce motion" setting is on, the loop holds a still frame (still refined up to `accumulation.samples`). Pass `respectReducedMotion: false` to keep animating.
+- Debug warnings now start with `[frapx/fx-passes]` instead of `[frapx/passes]`.
+
 ## 0.6.0 - 2026-10-30
 
 ### Changed

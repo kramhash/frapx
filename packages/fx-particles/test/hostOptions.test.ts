@@ -1,0 +1,39 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createRuntimeHost } from "@frapx/core";
+import { createParticles } from "../src/createParticles";
+
+// Wraps the real host so a test can read the options the runtime passes it.
+vi.mock("@frapx/core", async (importActual) => {
+  const actual = await importActual<typeof import("@frapx/core")>();
+  return { ...actual, createRuntimeHost: vi.fn(actual.createRuntimeHost) };
+});
+
+const hostOptions = () => vi.mocked(createRuntimeHost).mock.lastCall?.[0];
+
+afterEach(() => {
+  vi.mocked(createRuntimeHost).mockClear();
+});
+
+describe("createParticles host options", () => {
+  it("respects reduced motion by default, as fx-canvas 1.0 does", () => {
+    createParticles().destroy();
+    expect(hostOptions()?.respectReducedMotion).toBe(true);
+  });
+
+  it("lets respectReducedMotion: false opt out", () => {
+    createParticles({ respectReducedMotion: false }).destroy();
+    expect(hostOptions()?.respectReducedMotion).toBe(false);
+  });
+
+  it("reports status changes through onStatusChange", async () => {
+    const onStatusChange = vi.fn();
+    const fx = createParticles({ onStatusChange });
+    expect(onStatusChange).not.toHaveBeenCalled();
+
+    // Node has no window, so the host settles on unsupported.
+    await fx.ready.catch(() => {});
+    fx.destroy();
+
+    expect(onStatusChange.mock.calls.flat()).toEqual(["unsupported", "destroyed"]);
+  });
+});

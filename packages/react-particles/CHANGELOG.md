@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Breaking:** via `@frapx/fx-particles`, `respectReducedMotion` now defaults to `true`, matching `@frapx/react-canvas` 1.0: a reduced-motion user sees a still frame. Pass `respectReducedMotion={false}` to keep animating.
+
 ## 0.4.0 - 2026-10-30
 
 ### Changed

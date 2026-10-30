@@ -138,7 +138,8 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
       ...(options.autoStart !== undefined && { autoStart: options.autoStart }),
       ...(options.pauseWhenOffscreen !== undefined && { pauseWhenOffscreen: options.pauseWhenOffscreen }),
       ...(options.pauseWhenHidden !== undefined && { pauseWhenHidden: options.pauseWhenHidden }),
-      ...(options.respectReducedMotion !== undefined && { respectReducedMotion: options.respectReducedMotion }),
+      // Matches fx-canvas 1.0; core still defaults to false.
+      respectReducedMotion: options.respectReducedMotion ?? true,
       ...(options.renderMode !== undefined && { renderMode: options.renderMode }),
       ...(options.clock !== undefined && { clock: options.clock }),
       ...(options.timeSource !== undefined && { timeSource: options.timeSource }),
@@ -212,7 +213,10 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
       },
 
       onReady: () => options.onReady?.(this),
-      ...(options.onError !== undefined && { onError: options.onError })
+      ...(options.onError !== undefined && { onError: options.onError }),
+      ...(options.onStatusChange !== undefined && {
+        onStatusChange: options.onStatusChange
+      })
     });
 
     this.ready = this.host.ready;
@@ -884,7 +888,7 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
     if (!this.options.debug || this.warnedUniforms.has(name)) return;
     if (this.passes.some((pass) => pass.program.locations.has(name))) return;
     this.warnedUniforms.add(name);
-    console.warn(`[frapx/passes] Uniform not found in any pass or optimized out: ${name}`);
+    console.warn(`[frapx/fx-passes] Uniform not found in any pass or optimized out: ${name}`);
   }
 }
 

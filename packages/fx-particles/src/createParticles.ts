@@ -138,7 +138,8 @@ class Particles implements ParticlesInstance {
       ...(options.autoStart !== undefined && { autoStart: options.autoStart }),
       ...(options.pauseWhenOffscreen !== undefined && { pauseWhenOffscreen: options.pauseWhenOffscreen }),
       ...(options.pauseWhenHidden !== undefined && { pauseWhenHidden: options.pauseWhenHidden }),
-      ...(options.respectReducedMotion !== undefined && { respectReducedMotion: options.respectReducedMotion }),
+      // Matches fx-canvas 1.0; core still defaults to false.
+      respectReducedMotion: options.respectReducedMotion ?? true,
       ...(options.clock !== undefined && { clock: options.clock }),
       ...(options.timeSource !== undefined && { timeSource: options.timeSource }),
       ...(options.resolution !== undefined && { resolution: options.resolution }),
@@ -186,7 +187,10 @@ class Particles implements ParticlesInstance {
       },
 
       onReady: () => options.onReady?.(this),
-      ...(options.onError !== undefined && { onError: options.onError })
+      ...(options.onError !== undefined && { onError: options.onError }),
+      ...(options.onStatusChange !== undefined && {
+        onStatusChange: options.onStatusChange
+      })
     });
 
     this.ready = this.host.ready;
@@ -613,7 +617,7 @@ class Particles implements ParticlesInstance {
   private warn(message: string): void {
     if (!this.options.debug || this.warned.has(message)) return;
     this.warned.add(message);
-    console.warn(`[frapx/particles] ${message}`);
+    console.warn(`[frapx/fx-particles] ${message}`);
   }
 }
 
