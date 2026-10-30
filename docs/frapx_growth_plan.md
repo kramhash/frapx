@@ -36,6 +36,40 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
 13. **作ったきっかけ（3D エンジンを読み込まずにシェーダー 1 枚を載せたかった）を、価値提案の直後に 1 文で書く。** 反映先はルートと fx-canvas の README、docs のトップ、日本語の Getting Started。
 14. **計測は frapx 本体の外（公開の計測リポジトリ）で行う。** frapx に three などの依存は入れない。数字を README に載せ直すときは、計測リポジトリで `pnpm measure` を回し直す。
 
+## 2026-10-30 決定事項（その 2。Phase 2 の本文より優先）
+
+15. **P2 の前に 2 つを済ませる。** 順番は ① 1.0 の積み残しとバグ（#78 は外部の PR #84 でマージ済み、#85、#86）→ ② SDF volume（#71→#72→#73、`docs/frapx_sdf_volume.md`）→ ③ P2。① と ② は別々に公開する。① の範囲は `docs/frapx_1.0_api_inventory.md` の「2026-10-30 決定事項（その 2）」にある。
+16. **v1 の範囲は決定 4 のまま。** feedback、テクスチャ、焼いた SDF（glsl-sdf-volume）は入れない。焼いた SDF のスターターは、公開後の v1.1 の候補にする。glsl-sdf は v1 に入る。
+17. **土台は `apps/playground`（React 19 + Vite）。** flowmap-painter と同じ型で作る。プレビューは `createShaderBackground` を直接使い、編集は `setFragment` で差し替える。作り直すのは `#version` が変わったときだけ。
+18. **エディタは CodeMirror 6。** 2026-10-30 に承認を得た。依存はアプリの中だけ。
+    - 使うのは `codemirror`、`@codemirror/language`、`@codemirror/legacy-modes`（clike の shader モード）、`@codemirror/lint`。
+    - エラーは 2 か所に出す。lint の下線と、プレビュー枠の中の tool-dev のオーバーレイ。
+19. **uniform 注釈は、uniform 宣言と同じ行の行末コメントに書く。**
+    - 例: `uniform float u_speed; // @range 0 2 @default 1 @step 0.01`、`uniform vec3 u_tint; // @color @default #ff8800`。
+    - 対象は float、vec2/3/4（成分ごとのスライダー）、vec3/vec4 の `@color`。
+    - 注釈の無い uniform と組み込みの uniform には UI を出さない。
+20. **スニペットは `// @include <name>` の行で取り込む。**
+    - プレイグラウンドは、その位置にスニペットを展開する。
+    - 導入コードでは `import` を足し、その行を `${name}` に置き換える。
+    - 対象は glsl-noise / glsl-sdf / glsl-raymarch と `glslUtils`。flowmap は外す。
+21. **導入コードは 4 タブ。** HTML（バンドラ無し、jsDelivr の ESM）、Vanilla（npm）、React、Astro。
+    - シェーダーはテンプレート文字列で内包する。
+    - スライダーの値を uniforms の初期値に焼き込む。
+    - `respectReducedMotion` / `pauseWhenHidden` は既定値だが明示し、コメントで意味を添える。`aria-hidden` を付ける。
+22. **共有はハッシュ `#v1=`。** CompressionStream（deflate-raw）で圧縮し、base64url にする。
+    - 載せるのは GLSL の本文とスライダーの値だけ。
+    - 編集のたびに `replaceState` で更新する。コピーのボタンも置く。
+23. **スターターは 4 本。** Waves（既定）、Noise（`@include` を使う）、SDF、Raymarch。
+24. **UI は日本語と英語。**
+    - 自前の辞書を使う。初回は `navigator.language` で選び、選択は localStorage に保存する。
+    - PC ではエディタ・プレビュー・パネルの 3 分割にする。スマホ幅ではプレビューを先頭にして縦に積む。
+25. **flowmap-painter は `/frapx/tools/flowmap-painter/` へ移す。** リダイレクトは作らない。
+    - 導線は次の場所に置く: docs のサイドバー、トップの hero、日本語の Getting Started、2 つの README、`llms.txt`、Live Demo の末尾。
+    - Live Demo のページは残す。
+26. **作業はマイルストーン「Playground v1」の #90→#91→#92→#93 で進める。**
+    - 単体テスト（注釈、`@include`、コード生成、ハッシュ）と e2e（下の検証 5 項目）を付ける。
+    - 「貼ると同じ絵」は手で確かめる。
+
 ## 進捗
 
 - **Phase 0 — 看板作品と痛みの解消（完了、2026-10-20）**
@@ -97,9 +131,9 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
   - URL ハッシュで状態を共有できるようにする。examples からスターターを数本用意する。
   - UI は日本語と英語を切り替えられるようにする。
 - **依存**
-  - エディタ（CodeMirror 6 など）の追加は、着手時にユーザーの承認を得る。
+  - エディタは CodeMirror 6 に決めた（決定 18）。
 - **1.0 との関係**
-  - 1.0 の grill の結論を、プレイグラウンドの公開と揃えるかどうかは、その grill で決める。
+  - 1.0 は 2026-10-30 に公開済み。プレイグラウンドは 1.0 の導入コードを生成する。
 
 検証は dev サーバーを起動し、実際のブラウザで次を確かめる。
 
