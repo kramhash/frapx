@@ -16,6 +16,11 @@ fragment shader behind any element in about 11 kB (min+gzip, including
 `@frapx/core`) and handles what bites in production: pausing offscreen and in
 hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2.
 
+frapx started from wanting a fragment shader on a page without shipping a 3D
+engine. The same full-screen shader is about 133 kB with three.js and 45 kB
+with Babylon.js, against 11 kB with fx-canvas (min+gzip, 2026-10-30,
+[how this was measured](https://github.com/kramhash/frapx-bench)).
+
 ```sh
 pnpm add @frapx/fx-canvas
 ```
@@ -45,6 +50,10 @@ createShaderBackground({
 
 ## Packages
 
+Start with `@frapx/fx-canvas`, then add the pieces you keep reusing — SDF,
+noise, raymarching, flowmaps, multipass/FBO, GPU particles and frame export —
+maintained together in this repository.
+
 Packages are named by category, so the prefix tells you what kind of package it is:
 
 **Effect runtimes** — instantiate directly in your app:
@@ -73,6 +82,20 @@ Packages are named by category, so the prefix tells you what kind of package it 
 Not sure what you need? If you're adding an animated WebGL background, start with
 `@frapx/fx-canvas` (or `@frapx/react-canvas` in a React app) and pull in a `glsl-*`
 package only when you need its GLSL helpers inside your fragment shader.
+
+## When to use something else
+
+- **A 3D scene** — meshes, loaded models, lights, shadows or physics: use
+  [three.js](https://threejs.org/) or [Babylon.js](https://www.babylonjs.com/).
+  frapx draws fragment shaders over a full-screen quad; it is not a scene,
+  camera, mesh or rendering-engine abstraction (3D inside the shader, such as
+  raymarching with `@frapx/glsl-raymarch`, is fine).
+- **Your own thin WebGL layer** — if you want small wrappers over programs and
+  buffers and will write the render loop yourself, [OGL](https://github.com/oframe/ogl)
+  and [twgl.js](https://twgljs.org/) are about the same size
+  ([measurements](https://github.com/kramhash/frapx-bench)). frapx is for when you want the loop,
+  sizing, pausing, reduced motion and context restore handled for you, and the
+  packages above when you need them.
 
 ## Architecture
 

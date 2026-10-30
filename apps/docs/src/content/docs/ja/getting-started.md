@@ -5,6 +5,10 @@ description: 自作の GLSL を @frapx/fx-canvas で本番の Web サイトに�
 
 **自分で書いたフラグメントシェーダーを、そのまま本番のサイトに載せる**。そのための土台が **[`@frapx/fx-canvas`](/frapx/packages/fx-canvas/)** です。指定した要素の中に WebGL の canvas を差し込み、サイズを合わせてシェーダーを描き続けます。ランタイムは約 11 kB（min+gzip、`@frapx/core` 込み）です。
 
+frapx は、「フラグメントシェーダーを 1 枚載せたいだけなのに、3D エンジンまで読み込むのは重い」と感じたところから始まりました。同じ全画面のシェーダーを描くのに、three.js では約 133 kB、Babylon.js では約 45 kB かかります（min+gzip、2026-10-30 に計測。[計測の方法](https://github.com/kramhash/frapx-bench)）。
+
+まず fx-canvas から使い始め、SDF、ノイズ、レイマーチ、マルチパス（FBO）、GPU パーティクル、書き出しといった、よく使う部品が必要になったら足していけます。部品はどれも、このリポジトリでまとめて更新しています。メッシュやモデル、ライトを使う本格的な 3D なら、three.js や Babylon.js が向いています。
+
 本番で手間のかかる部分は fx-canvas が引き受けます。
 
 - 画面外に出たとき・タブが非表示のときに描画を止める
