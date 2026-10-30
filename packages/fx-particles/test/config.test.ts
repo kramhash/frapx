@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { mergeConfig, resolveConfig } from "../src/internal/config";
 import { presets } from "../src/presets";
+import { tinyVolume } from "./sdfVolume";
 
 describe("resolveConfig", () => {
   it("merges options over a preset, forces field by field", () => {
@@ -20,6 +21,31 @@ describe("resolveConfig", () => {
   it("creates force uniforms only for configured forces", () => {
     const config = resolveConfig({ forces: { drag: 0.5 } });
     expect([...config.uniforms.keys()].sort()).toEqual(["drag", "opacity", "perspective", "rate", "twinkle"]);
+  });
+
+  it("creates sdf uniforms for the placement and the configured parts only", () => {
+    const placed = resolveConfig({ sdf: { volume: tinyVolume() } });
+    expect(placed.sdf).toMatchObject({ attract: false, collide: false, emit: null });
+    expect(placed.uniforms.get("sdfCenter")?.value).toEqual([0.5, 0.5, 0.5]);
+    expect(placed.uniforms.get("sdfSize")?.value).toEqual([0.5]);
+    expect(placed.uniforms.get("sdfRotation")?.value).toEqual([0, 0, 0]);
+    expect(placed.uniforms.has("sdfAttractStrength")).toBe(false);
+    expect(placed.uniforms.has("sdfBounce")).toBe(false);
+
+    const full = resolveConfig({
+      sdf: { volume: tinyVolume(), size: 0.3, attract: { falloff: 0.1 }, collide: { bounce: 0.4 }, emit: "surface" }
+    });
+    expect(full.sdf).toMatchObject({ attract: true, collide: true, emit: "surface" });
+    expect(full.uniforms.get("sdfAttractStrength")?.value).toEqual([8]);
+    expect(full.uniforms.get("sdfAttractFalloff")?.value).toEqual([0.1]);
+    expect(full.uniforms.get("sdfBounce")?.value).toEqual([0.4]);
+  });
+
+  it("rejects an invalid sdf", () => {
+    expect(() => resolveConfig({ sdf: { volume: {} as never } })).toThrow("loadSdfVolume()");
+    expect(() => resolveConfig({ sdf: { volume: tinyVolume(), size: 0 } })).toThrow("sdf.size");
+    expect(() => resolveConfig({ sdf: { volume: tinyVolume(), emit: "edge" as never } })).toThrow("sdf.emit");
+    expect(() => resolveConfig({ sdf: { volume: tinyVolume(), collide: { bounce: -1 } } })).toThrow("sdf.collide.bounce");
   });
 
   it("sizes the pool from the rate and longest lifetime", () => {

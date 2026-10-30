@@ -1,7 +1,8 @@
 import { createShaderBackground, glsl } from "@frapx/fx-canvas";
+import { createParticles } from "@frapx/fx-particles";
 import { raymarch, raymarchCamera, raymarchCameraUniforms } from "@frapx/glsl-raymarch";
 import { sdf3d, sdfDomain, sdfOps } from "@frapx/glsl-sdf";
-import { loadSdfVolume, sdfVolume } from "@frapx/glsl-sdf-volume";
+import { loadSdfVolume, sdfVolume, type SdfVolume } from "@frapx/glsl-sdf-volume";
 import { decompress } from "fzstd";
 import "./styles.css";
 
@@ -11,7 +12,13 @@ import "./styles.css";
 //
 // `?still` holds the head still without the sphere, from the camera of
 // 3dsdf-texture's three.js viewer, to compare silhouettes.
-const still = new URLSearchParams(window.location.search).has("still");
+//
+// `?view=particles` shows the same volume driving @frapx/fx-particles: dust
+// from the whole viewport is pulled onto the turning head and kept out of it.
+// `?view=surface` spawns sparks on the surface that drift off.
+const params = new URLSearchParams(window.location.search);
+const still = params.has("still");
+const view = (["particles", "surface"] as const).find((name) => name === params.get("view")) ?? "raymarch";
 
 const fragment = glsl`#version 300 es
 precision highp float;
@@ -100,61 +107,113 @@ const show = (message: string) => {
   tag.textContent = message;
 };
 
+const startRaymarch = (loading: Promise<SdfVolume>) => {
+  const background = loading.then((volume) =>
+    createShaderBackground({
+      target: panel,
+      fragment,
+      textures: { sdf: volume.texture },
+      uniforms: {
+        ...volume.uniforms("sdf"),
+        camPos: cameraPosition(),
+        camTarget: target,
+        fov: (45 * Math.PI) / 180,
+        blend: Number(blend.value),
+        motion: still ? 0 : 1
+      },
+      // Raymarching is expensive; cap the resolution on dense screens.
+      maxDpr: 1.5,
+      onReady: () => {
+        show(still ? "Still view" : "Drag to orbit");
+        panel.dataset.ready = "";
+      },
+      onError: (error) => show(error.message)
+    })
+  );
+
+  let drag: { x: number; y: number; id: number } | null = null;
+
+  panel.addEventListener("pointerdown", (event) => {
+    drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
+    panel.setPointerCapture(event.pointerId);
+    panel.classList.add("is-dragging");
+  });
+
+  panel.addEventListener("pointermove", (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    orbit.yaw -= (event.clientX - drag.x) * 0.008;
+    // Stay clear of straight up/down, where the camera basis is undefined.
+    orbit.pitch = Math.min(1.35, Math.max(-1.35, orbit.pitch + (event.clientY - drag.y) * 0.006));
+    drag.x = event.clientX;
+    drag.y = event.clientY;
+    void background.then((fx) => fx.setUniform("camPos", cameraPosition()));
+  });
+
+  const endDrag = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    drag = null;
+    panel.classList.remove("is-dragging");
+  };
+  panel.addEventListener("pointerup", endDrag);
+  panel.addEventListener("pointercancel", endDrag);
+
+  blend.addEventListener("input", () => {
+    blendOutput.value = Number(blend.value).toFixed(2);
+    void background.then((fx) => fx.setUniform("blend", Number(blend.value)));
+  });
+};
+
+const startParticles = (loading: Promise<SdfVolume>, mode: "particles" | "surface") => {
+  panel.style.cursor = "default";
+  void loading.then((volume) => {
+    const placement = { volume, size: 0.9, center: [0.5, 0.48, 0.5] as const };
+    const particles = createParticles({
+      target: panel,
+      size: [0.003, 0.007],
+      sizeOverLife: "fadeInOut",
+      color: [
+        [0, "#ffd9b8"],
+        [1, "#d98c59"]
+      ],
+      ...(mode === "particles"
+        ? {
+            rate: 2500,
+            lifetime: [8, 12],
+            emitter: { depth: [0, 1] },
+            forces: { drag: 3, curl: { strength: 0.02, scale: 3 } },
+            sdf: { ...placement, attract: { strength: 24 }, collide: { bounce: 0.2 } }
+          }
+        : {
+            rate: 3000,
+            lifetime: [0.8, 1.6],
+            sizeOverLife: "fadeOut",
+            velocity: { min: [-0.004, 0.004, -0.004], max: [0.004, 0.02, 0.004] },
+            forces: { curl: { strength: 0.015, scale: 4 } },
+            sdf: { ...placement, emit: "surface" }
+          }),
+      onReady: () => {
+        show(mode === "particles" ? "Dust gathering on Suzanne" : "Sparks from the surface");
+        panel.dataset.ready = "";
+      },
+      onError: (error) => show(error.message)
+    });
+    // Turn the head; the particles follow through the sdfRotation uniform.
+    const turn = (now: number) => {
+      particles.setUniform("sdfRotation", [0, 0.6 * Math.sin(now / 2400), 0]);
+      requestAnimationFrame(turn);
+    };
+    requestAnimationFrame(turn);
+  });
+};
+
+for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-view]")) {
+  if (link.dataset.view === view) link.setAttribute("aria-current", "page");
+}
+document.querySelector<HTMLElement>("[data-raymarch-only]")!.hidden = view !== "raymarch";
+
 const loading = loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
   zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
 });
-
-const background = loading.then((volume) =>
-  createShaderBackground({
-    target: panel,
-    fragment,
-    textures: { sdf: volume.texture },
-    uniforms: {
-      ...volume.uniforms("sdf"),
-      camPos: cameraPosition(),
-      camTarget: target,
-      fov: (45 * Math.PI) / 180,
-      blend: Number(blend.value),
-      motion: still ? 0 : 1
-    },
-    // Raymarching is expensive; cap the resolution on dense screens.
-    maxDpr: 1.5,
-    onReady: () => {
-      show(still ? "Still view" : "Drag to orbit");
-      panel.dataset.ready = "";
-    },
-    onError: (error) => show(error.message)
-  })
-);
 loading.catch((error: Error) => show(error.message));
-
-let drag: { x: number; y: number; id: number } | null = null;
-
-panel.addEventListener("pointerdown", (event) => {
-  drag = { x: event.clientX, y: event.clientY, id: event.pointerId };
-  panel.setPointerCapture(event.pointerId);
-  panel.classList.add("is-dragging");
-});
-
-panel.addEventListener("pointermove", (event) => {
-  if (!drag || event.pointerId !== drag.id) return;
-  orbit.yaw -= (event.clientX - drag.x) * 0.008;
-  // Stay clear of straight up/down, where the camera basis is undefined.
-  orbit.pitch = Math.min(1.35, Math.max(-1.35, orbit.pitch + (event.clientY - drag.y) * 0.006));
-  drag.x = event.clientX;
-  drag.y = event.clientY;
-  void background.then((fx) => fx.setUniform("camPos", cameraPosition()));
-});
-
-const endDrag = (event: PointerEvent) => {
-  if (!drag || event.pointerId !== drag.id) return;
-  drag = null;
-  panel.classList.remove("is-dragging");
-};
-panel.addEventListener("pointerup", endDrag);
-panel.addEventListener("pointercancel", endDrag);
-
-blend.addEventListener("input", () => {
-  blendOutput.value = Number(blend.value).toFixed(2);
-  void background.then((fx) => fx.setUniform("blend", Number(blend.value)));
-});
+if (view === "raymarch") startRaymarch(loading);
+else startParticles(loading, view);

@@ -206,6 +206,20 @@ test("the gradient points away from the sphere with unit length", async ({ page 
   }
 });
 
+test("outside the box, the gradient is a unit vector pointing away from the sphere", async ({ page }) => {
+  const probes = points(64, -3, 3, 5).filter((p) => boxDistance(p) > 0.001);
+  probes.push([1.05, 0, 0], [0, 1.02, 0.1], [1.1, 1.1, 0]);
+  for (const { p, grad } of await run(page, "r16f", probes)) {
+    const length = Math.hypot(...grad);
+    const r = Math.hypot(...p);
+    const cosine = (grad[0]! * p[0]! + grad[1]! * p[1]! + grad[2]! * p[2]!) / (length * r);
+    expect(Math.abs(length - 1), `at ${p}`).toBeLessThan(1e-3);
+    // It points from the surface point nearest the box point, not from the
+    // nearest surface point, so it leans off the radial direction near corners.
+    expect(cosine, `at ${p}`).toBeGreaterThan(0.8);
+  }
+});
+
 test("r8 decodes through scale and offset near the surface", async ({ page }) => {
   const probes = points(64, -0.95, 0.95, 4).filter((p) => Math.abs(sphere(p)) < 0.3);
   for (const { p, d } of await run(page, "r8", probes)) {

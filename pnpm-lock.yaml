@@ -533,6 +533,9 @@ importers:
       '@frapx/fx-canvas':
         specifier: workspace:*
         version: link:../../packages/fx-canvas
+      '@frapx/fx-particles':
+        specifier: workspace:*
+        version: link:../../packages/fx-particles
       '@frapx/glsl-raymarch':
         specifier: workspace:*
         version: link:../../packages/glsl-raymarch
@@ -595,6 +598,9 @@ importers:
       '@frapx/glsl-noise':
         specifier: workspace:^
         version: link:../glsl-noise
+      '@frapx/glsl-sdf-volume':
+        specifier: workspace:^
+        version: link:../glsl-sdf-volume
     devDependencies:
       '@frapx/tool-capture':
         specifier: workspace:*

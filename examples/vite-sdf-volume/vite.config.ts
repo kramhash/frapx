@@ -31,6 +31,14 @@ export default defineConfig({
         replacement: resolve(__dirname, "../../packages/glsl-sdf/src/index.ts")
       },
       {
+        find: /^@frapx\/fx-particles$/,
+        replacement: resolve(__dirname, "../../packages/fx-particles/src/index.ts")
+      },
+      {
+        find: /^@frapx\/glsl-noise$/,
+        replacement: resolve(__dirname, "../../packages/glsl-noise/src/index.ts")
+      },
+      {
         find: /^@frapx\/glsl-sdf-volume$/,
         replacement: resolve(__dirname, "../../packages/glsl-sdf-volume/src/index.ts")
       }

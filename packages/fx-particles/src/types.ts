@@ -12,7 +12,9 @@ import type {
   UniformInput,
   UniformSource
 } from "@frapx/core";
+import type { SdfVolume } from "@frapx/glsl-sdf-volume";
 
+export type { SdfVolume } from "@frapx/glsl-sdf-volume";
 export type {
   CaptureFormat,
   CaptureOptions,
@@ -101,6 +103,48 @@ export type ForceOptions = {
   pointer?: PointerForce;
 };
 
+/**
+ * A baked SDF the particles follow, from `loadSdfVolume()` of
+ * `@frapx/glsl-sdf-volume`. The shape lives in the particles' space: x and y
+ * in viewport heights around the center, depth in the same units. Which of
+ * `attract`, `collide` and `emit` are present is fixed at creation; the
+ * placement and strengths can change later through the uniforms named on each
+ * field.
+ */
+export type SdfOptions = {
+  volume: SdfVolume;
+  /**
+   * Where the shape's center shows: viewport UV (0–1, y up) and depth.
+   * Uniform `sdfCenter`. Defaults to `[0.5, 0.5, 0.5]`.
+   */
+  center?: Vec3;
+  /** Length of the shape's longest box side, in viewport heights. Uniform `sdfSize`. Defaults to 0.5. */
+  size?: number;
+  /** Euler angles in radians, applied x, then y, then z. Uniform `sdfRotation`. Defaults to `[0, 0, 0]`. */
+  rotation?: Vec3;
+  /**
+   * Pulls particles onto the surface from both sides, like a spring. Pair it
+   * with `forces.drag` so they settle instead of oscillating.
+   */
+  attract?: {
+    /** Acceleration per unit of distance. Uniform `sdfAttractStrength`. Defaults to 8. */
+    strength?: number;
+    /** Distance at which the pull fades out; 0 pulls from anywhere. Uniform `sdfAttractFalloff`. Defaults to 0. */
+    falloff?: number;
+  };
+  /** Keeps particles out of the shape: they are moved onto the surface and lose their inward speed. */
+  collide?: {
+    /** Fraction of the inward speed kept as rebound, 0–1. Uniform `sdfBounce`. Defaults to 0. */
+    bounce?: number;
+  };
+  /**
+   * Spawns on the surface or anywhere inside the shape, instead of in
+   * `emitter`. `"inside"` tries 16 random points in the box; when all miss
+   * (a shape that fills little of its box) the particle spawns on the surface.
+   */
+  emit?: "surface" | "inside";
+};
+
 /** What the particles look like and how they move. */
 export type ParticleConfig = {
   /** Particles spawned per second. Uniform `rate`. */
@@ -136,6 +180,8 @@ export type ParticleConfig = {
    * Uniform `perspective`. Defaults to 1.5.
    */
   perspective?: number;
+  /** Follow a baked SDF: attract to it, collide with it, spawn from it. */
+  sdf?: SdfOptions;
 };
 
 /**
@@ -153,7 +199,13 @@ export type ParticleUniformName =
   | "pointerRadius"
   | "opacity"
   | "twinkle"
-  | "perspective";
+  | "perspective"
+  | "sdfCenter"
+  | "sdfSize"
+  | "sdfRotation"
+  | "sdfAttractStrength"
+  | "sdfAttractFalloff"
+  | "sdfBounce";
 
 export type CreateParticlesOptions = ParticleConfig & {
   target?: string | Element;

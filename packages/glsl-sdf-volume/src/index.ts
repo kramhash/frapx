@@ -20,16 +20,24 @@ const glsl = String.raw;
  * distance changes by at most `b` over `b`), so sphere tracing from outside
  * never steps through the surface.
  *
- * `frapx_sdVolumeGrad` is the gradient from central differences one voxel
- * apart; normalize it for a surface normal.
+ * `frapx_sdVolumeGrad` points away from the surface. Inside the box it is the
+ * gradient from central differences one voxel apart (normalize it for a
+ * surface normal). Outside it is the unit vector from the surface point
+ * nearest the box point to `p`. It is not the gradient of `frapx_sdVolume`
+ * there: `e - b` falls as `p` moves away from the box, so that gradient
+ * points inward near it.
  *
  * To place the shape, transform `p` into volume space before the call and
  * multiply the result by the scale you applied.
  */
 export const sdfVolume = glsl`
+float frapx_sdVolumeSample(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset) {
+  return texture(tex, (clamp(p, bmin, bmax) - bmin) / (bmax - bmin)).r * scale + offset;
+}
+
 float frapx_sdVolume(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset) {
   vec3 q = clamp(p, bmin, bmax);
-  float e = texture(tex, (q - bmin) / (bmax - bmin)).r * scale + offset;
+  float e = frapx_sdVolumeSample(tex, q, bmin, bmax, scale, offset);
   float b = length(p - q);
   return b > 0.0 ? max(b, e - b) : e;
 }
@@ -39,11 +47,18 @@ vec3 frapx_sdVolumeGrad(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float
   vec3 dx = vec3(h.x, 0.0, 0.0);
   vec3 dy = vec3(0.0, h.y, 0.0);
   vec3 dz = vec3(0.0, 0.0, h.z);
-  return vec3(
-    frapx_sdVolume(tex, p + dx, bmin, bmax, scale, offset) - frapx_sdVolume(tex, p - dx, bmin, bmax, scale, offset),
-    frapx_sdVolume(tex, p + dy, bmin, bmax, scale, offset) - frapx_sdVolume(tex, p - dy, bmin, bmax, scale, offset),
-    frapx_sdVolume(tex, p + dz, bmin, bmax, scale, offset) - frapx_sdVolume(tex, p - dz, bmin, bmax, scale, offset)
+  vec3 q = clamp(p, bmin, bmax);
+  vec3 g = vec3(
+    frapx_sdVolumeSample(tex, q + dx, bmin, bmax, scale, offset) - frapx_sdVolumeSample(tex, q - dx, bmin, bmax, scale, offset),
+    frapx_sdVolumeSample(tex, q + dy, bmin, bmax, scale, offset) - frapx_sdVolumeSample(tex, q - dy, bmin, bmax, scale, offset),
+    frapx_sdVolumeSample(tex, q + dz, bmin, bmax, scale, offset) - frapx_sdVolumeSample(tex, q - dz, bmin, bmax, scale, offset)
   ) / (2.0 * h);
+  if (p == q) return g;
+  float len = length(g);
+  vec3 surface = q - (len > 0.0 ? g / len : vec3(0.0)) * frapx_sdVolumeSample(tex, q, bmin, bmax, scale, offset);
+  vec3 away = p - surface;
+  float distance = length(away);
+  return distance > 0.0 ? away / distance : p - q;
 }
 `;
 

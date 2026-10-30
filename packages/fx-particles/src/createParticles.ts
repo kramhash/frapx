@@ -67,7 +67,13 @@ const UNIFORM_NAMES: ReadonlySet<string> = new Set<ParticleUniformName>([
   "pointerRadius",
   "opacity",
   "twinkle",
-  "perspective"
+  "perspective",
+  "sdfCenter",
+  "sdfSize",
+  "sdfRotation",
+  "sdfAttractStrength",
+  "sdfAttractFalloff",
+  "sdfBounce"
 ]);
 
 export const createParticles = (options: CreateParticlesOptions = {}): ParticlesInstance =>
@@ -124,7 +130,20 @@ class Particles implements ParticlesInstance {
     this.palette = this.config.palette;
     this.blend = this.config.blend;
     const sprite = this.config.sprite;
-    this.textureSet = createTextureSet(typeof sprite === "object" ? { sprite: sprite.texture } : {});
+    const sdf = this.config.sdf;
+    if (sdf) {
+      // The volume's box and decode values never change after creation.
+      for (const [name, value] of Object.entries(sdf.volume.uniforms("sdf"))) {
+        this.uniforms.set(toUniformName(name), normalizeUniform(value));
+      }
+    }
+    this.textureSet = createTextureSet(
+      {
+        ...(typeof sprite === "object" && { sprite: sprite.texture }),
+        ...(sdf && { sdfVolume: sdf.volume.texture })
+      },
+      { warn: (message) => this.warn(message) }
+    );
 
     this.host = createRuntimeHost({
       ...(options.target !== undefined && { target: options.target }),
@@ -416,6 +435,7 @@ class Particles implements ParticlesInstance {
       if (location) apply(location);
     };
     applyUniforms(gl, simulation.locations, this.uniforms);
+    this.textureSet.bind(gl, simulation.locations);
     set("u_dt", (l) => gl.uniform1f(l, 1 / config.simulationRate));
     set("u_seed", (l) => gl.uniform1ui(l, config.seed));
     set("u_pool", (l) => gl.uniform1ui(l, particles.pool));

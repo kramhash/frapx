@@ -9,6 +9,7 @@ import type {
   ParticleConfig,
   ParticleUniformName,
   Range,
+  SdfVolume,
   SizeOverLife,
   SpriteShape,
   Vec3
@@ -33,7 +34,13 @@ export const SIMULATION_UNIFORMS: ReadonlySet<ParticleUniformName> = new Set([
   "pointerStrength",
   "pointerRadius",
   // Spawns are placed on screen, so depth scaling moves them in the world.
-  "perspective"
+  "perspective",
+  "sdfCenter",
+  "sdfSize",
+  "sdfRotation",
+  "sdfAttractStrength",
+  "sdfAttractFalloff",
+  "sdfBounce"
 ]);
 
 export type ResolvedForces = {
@@ -41,6 +48,13 @@ export type ResolvedForces = {
   drag: boolean;
   curl: boolean;
   pointer: boolean;
+};
+
+export type ResolvedSdf = {
+  volume: SdfVolume;
+  attract: boolean;
+  collide: boolean;
+  emit: "surface" | "inside" | null;
 };
 
 export type ResolvedConfig = {
@@ -58,6 +72,7 @@ export type ResolvedConfig = {
   spin: Range;
   tumble: boolean;
   blend: BlendMode;
+  sdf: ResolvedSdf | null;
   /** Initial values of the uniforms that exist, by name without `u_`. */
   uniforms: Map<ParticleUniformName, NormalizedUniform>;
   pool: number;
@@ -101,7 +116,8 @@ const pickConfig = (options: CreateParticlesOptions): ParticleConfig => {
     "tumble",
     "twinkle",
     "blend",
-    "perspective"
+    "perspective",
+    "sdf"
   ];
   const config: Record<string, unknown> = {};
   for (const key of keys) {
@@ -199,6 +215,8 @@ export const resolveConfig = (options: CreateParticlesOptions): ResolvedConfig =
     set("pointerRadius", finite("forces.pointer.radius", forces.pointer.radius ?? 0.2, 0));
   }
 
+  const sdf = config.sdf ? resolveSdf(config.sdf, set) : null;
+
   const simulationRate = finite("simulationRate", options.simulationRate ?? 60, 0);
   if (simulationRate <= 0 || simulationRate > 1000) {
     throw new RangeError(`simulationRate must be in (0, 1000], got ${simulationRate}`);
@@ -235,10 +253,40 @@ export const resolveConfig = (options: CreateParticlesOptions): ResolvedConfig =
     spin,
     tumble: config.tumble ?? false,
     blend,
+    sdf,
     uniforms,
     pool,
     simulationRate,
     prewarmSteps: Math.round(prewarm * simulationRate),
     seed: Math.trunc(finite("seed", options.seed ?? 1)) >>> 0
   };
+};
+
+const resolveSdf = (
+  sdf: NonNullable<ParticleConfig["sdf"]>,
+  set: (name: ParticleUniformName, value: UniformInput) => void
+): ResolvedSdf => {
+  const volume = sdf.volume as SdfVolume | undefined;
+  const size = volume?.texture?.size;
+  if (!volume || !Array.isArray(size) || size.length !== 3 || typeof volume.uniforms !== "function") {
+    throw new TypeError("sdf.volume must be a volume from loadSdfVolume() of @frapx/glsl-sdf-volume");
+  }
+  const emit = sdf.emit ?? null;
+  if (emit !== null && emit !== "surface" && emit !== "inside") {
+    throw new RangeError(`Unknown sdf.emit: ${String(emit)}`);
+  }
+  const center = vec3("sdf.center", sdf.center ?? [0.5, 0.5, 0.5]);
+  const sizeValue = finite("sdf.size", sdf.size ?? 0.5, 0);
+  if (sizeValue <= 0) throw new RangeError(`sdf.size must be positive, got ${sizeValue}`);
+  set("sdfCenter", center);
+  set("sdfSize", sizeValue);
+  set("sdfRotation", vec3("sdf.rotation", sdf.rotation ?? [0, 0, 0]));
+  if (sdf.attract) {
+    set("sdfAttractStrength", finite("sdf.attract.strength", sdf.attract.strength ?? 8));
+    set("sdfAttractFalloff", finite("sdf.attract.falloff", sdf.attract.falloff ?? 0, 0));
+  }
+  if (sdf.collide) {
+    set("sdfBounce", finite("sdf.collide.bounce", sdf.collide.bounce ?? 0, 0));
+  }
+  return { volume, attract: sdf.attract !== undefined, collide: sdf.collide !== undefined, emit };
 };
