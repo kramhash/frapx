@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createShaderBackground } from "../src";
+import { createShaderBackground, DestroyedError, UnsupportedError } from "../src";
 import type { RenderState } from "../src";
 
 // --- Controllable browser-environment harness -------------------------------
@@ -372,5 +372,102 @@ describe("teardown", () => {
     );
     expect(mediaRemove).toHaveBeenCalledWith("change", expect.any(Function));
     expect(fx.status).toBe("destroyed");
+  });
+});
+
+describe("instance contract", () => {
+  it("reports an unsupported environment without throwing when there is no browser", async () => {
+    vi.stubGlobal("window", undefined);
+    const onError = vi.fn();
+    const onStatusChange = vi.fn();
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+
+    const fx = createShaderBackground({
+      target: ".hero",
+      fragment: "void main() { gl_FragColor = vec4(1.0); }",
+      onError,
+      onStatusChange
+    });
+    expect(fx.status).toBe("idle");
+    expect(fx.supported).toBe(true);
+
+    await Promise.resolve();
+    expect(fx.status).toBe("unsupported");
+    expect(fx.supported).toBe(false);
+    expect(fx.canvas).toBeNull();
+    expect(fx.gl).toBeNull();
+    expect(onStatusChange.mock.calls.flat()).toEqual(["unsupported"]);
+    expect(onError).toHaveBeenCalledWith(expect.any(UnsupportedError));
+
+    // Left unawaited, ready does not surface as an unhandled rejection.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    process.off("unhandledRejection", unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
+    await expect(fx.ready).rejects.toBeInstanceOf(UnsupportedError);
+  });
+
+  it("calls onAfterRender after the draw with the context being drawn with", async () => {
+    const canvas = new Canvas();
+    const onAfterRender = vi.fn((state: RenderState) => {
+      expect(state.gl).toBe(canvas.gl);
+      expect(canvas.gl.drawArrays).toHaveBeenCalledTimes(1);
+    });
+    const fx = createShaderBackground({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      fragment: "void main() { gl_FragColor = vec4(1.0); }",
+      onAfterRender
+    });
+    await fx.ready;
+
+    rafCallbacks.shift()?.(16);
+    expect(onAfterRender).toHaveBeenCalledTimes(1);
+    expect(onAfterRender.mock.calls[0]![0]).toMatchObject({
+      instance: fx,
+      canvas,
+      width: canvas.width,
+      height: canvas.height
+    });
+  });
+
+  it("setUniforms sets every value like setUniform", async () => {
+    const canvas = new Canvas();
+    const gl = Object.assign(canvas.gl, {
+      uniform1f: vi.fn(),
+      uniform3f: vi.fn()
+    }) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+    const names = ["u_progress", "u_color"];
+    gl.getProgramParameter!.mockImplementation((_p: unknown, parameter: number) =>
+      parameter === 35718 ? names.length : true
+    );
+    gl.getActiveUniform!.mockImplementation((_p: unknown, index: number) => ({
+      name: names[index]
+    }));
+    gl.getUniformLocation!.mockImplementation((_p: unknown, name: string) => ({ name }));
+
+    const fx = createShaderBackground({
+      canvas: canvas as unknown as HTMLCanvasElement,
+      fragment: "void main() { gl_FragColor = vec4(1.0); }",
+      autoStart: false
+    });
+    await fx.ready;
+
+    fx.setUniforms({ progress: 0.5, color: [1, 0, 0] });
+    expect(gl.uniform1f).toHaveBeenLastCalledWith({ name: "u_progress" }, 0.5);
+    expect(gl.uniform3f).toHaveBeenLastCalledWith({ name: "u_color" }, 1, 0, 0);
+  });
+
+  it("throws RangeError from setTime for a non-finite value, and ignores calls after destroy", async () => {
+    const fx = create({ clock: "manual" });
+    await fx.ready;
+
+    expect(() => fx.setTime(Number.NaN)).toThrow(RangeError);
+    expect(() => fx.setTime(Number.POSITIVE_INFINITY)).toThrow(RangeError);
+
+    fx.destroy();
+    expect(() => fx.setTime(Number.NaN)).not.toThrow();
+    expect(fx.supported).toBe(false);
+    expect(fx.gl).toBeNull();
+    await expect(fx.captureFrame()).rejects.toBeInstanceOf(DestroyedError);
   });
 });

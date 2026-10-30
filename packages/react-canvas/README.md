@@ -174,8 +174,30 @@ recreated.
   in effect cleanup.
 - Keep `uniforms` and `textures` stable with `useMemo` when they are derived
   from React state.
-- `onShaderReady` and `onShaderError` are used instead of core `onReady` and
-  `onError` to avoid DOM prop naming conflicts.
+- The callbacks are named `onShaderReady` and `onShaderError` instead of
+  `onReady` and `onError` because the component also accepts the wrapper
+  `div`'s props, and `onError` is already the `div`'s DOM error event. The
+  hook uses the same names so code moves between the two unchanged.
+
+## Accessibility
+
+The wrapper `div` has `aria-hidden="true"` by default, because a background
+effect is decoration that screen readers should skip. When the canvas carries
+meaning, such as a chart or the main visual of a page, describe it and
+override the default:
+
+```tsx
+<ShaderBackground
+  fragment={fragment}
+  role="img"
+  aria-label="Cyan rings pulsing outward on a dark background"
+  aria-hidden={false}
+/>
+```
+
+With the hook, put the same attributes on the element you pass `ref` to.
+Consider `respectReducedMotion` as well (see "Lifecycle & accessibility" in the
+`@frapx/fx-canvas` README).
 
 ## License
 
