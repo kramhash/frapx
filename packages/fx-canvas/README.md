@@ -70,10 +70,23 @@ Uniforms set before `ready` are cached and applied on the first render.
 
 ## Examples
 
+With `@frapx/fx-canvas`:
+
 - `examples/vite-basic` - minimal Vite usage and integration checks.
 - `examples/vite-feedback` - interactive previous-frame feedback demo.
 - `examples/vite-capture` - raymarched scene exported as a 4K PNG sequence with `clock: "manual"`, `captureFrame()` and `@frapx/tool-capture`.
-- `examples/vite-react` - React binding example.
+- `examples/vite-hot-reload` - `setFragment()` on Vite HMR with `@frapx/tool-dev`'s error overlay.
+- `examples/vite-flowmap` - flowmap distortion with `@frapx/glsl-flowmap`.
+- `examples/vite-sdf` - signed distance fields with `@frapx/glsl-sdf`.
+- `examples/vite-raymarch` - raymarching with `@frapx/glsl-raymarch`.
+- `examples/vite-react` - React binding example (`@frapx/react-canvas`).
+
+With the other runtimes:
+
+- `examples/vite-passes` - multipass and sample accumulation (`@frapx/fx-passes`).
+- `examples/vite-timeline` - `keyframes()` driving a raymarched camera, rendered with `@frapx/fx-passes`.
+- `examples/vite-particles` / `examples/vite-react-particles` - GPU particles (`@frapx/fx-particles`, `@frapx/react-particles`).
+- `examples/vite-liminal-vein` / `examples/vite-poolrooms` - finished pieces, rendered offline with `@frapx/tool-render`.
 
 ## Color Uniforms
 
@@ -99,6 +112,7 @@ uniform vec4 u_overlayColor;
 
 The helpers support `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, and the same forms without `#`.
 The returned values are sRGB channels normalized to `0..1`. Invalid hex values throw an `Error`.
+The `@frapx/fx-canvas/color` subpath exports just these two and the `Rgb` / `Rgba` types.
 
 ## Textures
 
@@ -140,9 +154,10 @@ await fx.setTextures({
 ```
 
 `setTextures()` is a partial update: omitted texture names are left unchanged.
-If a runtime texture update fails, the previous texture remains active and the
-returned promise rejects. In `"demand"` render mode, successful texture updates
-request a render.
+If a runtime texture update fails, the previous texture remains active, the
+error (usually a `TextureLoadError`) goes to `onError`, and the returned promise
+also rejects with it, so handle one or the other. In `"demand"` render mode,
+successful texture updates request a render.
 
 ## Feedback
 
@@ -280,6 +295,8 @@ fx.bindUniforms({
 
 In `@frapx/fx-passes`, accumulating passes evaluate the source for every sample at the sample's time, so keyframed motion is motion blurred like `u_time`.
 
+**Make `get(time)` a pure function of `time`.** It may be called more than once per frame, for times out of order (a seek, a capture, an accumulated sample), or not at all while paused. Return the same values for the same time and keep no state between calls, such as "the previous value" or a counter. Then a manual clock renders the same frame for the same time, and an export matches the preview. `keyframes()` is pure. The Theatre.js sketch above sets the sequence position from `time` before reading, so it is too.
+
 ## Render Modes
 
 ```ts
@@ -412,7 +429,19 @@ createShaderBackground({
 
 `onStatusChange(status)` is called with the new value each time `fx.status` changes, for example `"paused"` when the tab is hidden or `"context-lost"` when the GPU drops the context, so a page can show a fallback without polling. It is called synchronously at the change and only when the value actually changes. It is never called for the initial `"idle"`, and never before `createShaderBackground()` returns, because initialization starts on a microtask. Calling `destroy()` from the callback is safe: the transition stops there and no later callback fires.
 
-`layer: "background"` inserts the canvas as the first child with `z-index: 0`. `layer: "overlay"` inserts it as the last child with `z-index: 1`. Existing child styles are not changed.
+`onBeforeRender` and `onAfterRender` receive a `RenderState` whose `gl` is the context being drawn with, never `null`. Use `state.gl` there rather than `fx.gl`, which is `null` before initialization, while the context is lost and after `destroy()`.
+
+`layer: "background"` inserts the canvas as the first child with `z-index: 0`. `layer: "overlay"` inserts it as the last child with `z-index: 1`. Existing child styles are not changed. A `target` whose computed `position` is `static` gets `position: relative`, restored on `destroy()`.
+
+### Styling the canvas
+
+Every canvas the library manages carries a `data-frapx-canvas` attribute, including one passed with `canvas`. Use it as a stable selector for styling and tests; it is part of the public API. `canvasClass` adds a class and `canvasStyle` assigns inline styles after the library's own (`position: absolute`, `inset: 0`, `width` / `height: 100%`, `pointer-events: none` and the `z-index` above, which a canvas passed with `canvas` does not get):
+
+```css
+.hero [data-frapx-canvas] {
+  mix-blend-mode: screen;
+}
+```
 
 ### Lifecycle & accessibility
 
@@ -450,6 +479,10 @@ Shaders without `#version 300 es` continue to use WebGL1 exactly as before.
 
 ```ts
 fx.ready;
+fx.status; // see "Status" below
+fx.supported; // false once the environment turned out unsupported, or after destroy()
+fx.canvas; // HTMLCanvasElement | null
+fx.gl; // WebGLRenderingContext | WebGL2RenderingContext | null
 fx.clock; // "realtime" | "manual"
 fx.time; // current time in seconds; the last sampled value with a timeSource
 fx.start();
@@ -472,9 +505,57 @@ fx.setUniform("progress", 0.5);
 fx.setUniforms({ progress: 0.5, color: [1, 0, 0] });
 ```
 
-Unsupported environments return a no-op instance. `ready` rejects and `debug: true` prints warnings.
+`createShaderBackground()` always returns an instance and never throws for the environment, even on the server or without WebGL; it reports problems through `status`, `onError` and `ready` instead. `debug: true` also prints them as warnings.
+
+`canvas` and `gl` are `null` until initialization creates them, and `gl` is `null` again while the context is lost and after `destroy()`. While drawing, use `state.gl` from the render callbacks.
+
+`setTime()` throws a `RangeError` for a value that is not a finite number. After `destroy()`, every method does nothing, except `captureFrame()`, which rejects with `DestroyedError`.
 
 `ready` resolves once the first setup finishes. It rejects with `DestroyedError` when `destroy()` runs first, with `UnsupportedError` when WebGL (or a feature the instance needs) is unavailable, and with the setup error, such as a `ShaderCompileError`, when initialization fails. Leaving `ready` unawaited after `destroy()` or in an unsupported environment does not produce an unhandled rejection, so a React StrictMode effect that destroys the instance in cleanup stays quiet. Setup failures and a missing target still surface as unhandled rejections when `ready` is left unhandled, even with `onError`.
+
+### Status
+
+`fx.status` is one of nine values. `onStatusChange` reports every change.
+
+| Status | Meaning |
+|---|---|
+| `"idle"` | Just created. Initialization starts on a microtask. |
+| `"loading"` | The context exists; shaders, feedback buffers and initial textures are being set up. |
+| `"ready"` | Setup finished. It stays here only with `autoStart: false` until `start()`. |
+| `"running"` | The render loop runs (in `"demand"` mode: it draws on changes). |
+| `"paused"` | Not drawing on its own: after `stop()`, under a manual clock, or while a gate is closed (offscreen, hidden, or reduced motion with `respectReducedMotion`). |
+| `"context-lost"` | The GPU dropped the context. When it is restored, the status returns to what `start()` / `stop()` and the gates allow. |
+| `"error"` | Setup failed, for example the first shader did not compile or an initial texture did not load, or rebuilding after a context restore failed. Final: create a new instance. |
+| `"unsupported"` | No browser (SSR), no WebGL (or WebGL2 for a GLSL ES 3.00 shader), a `target` that was not found, or a size or format the GPU cannot provide. Final. |
+| `"destroyed"` | `destroy()` was called. Final. |
+
+A typical life is `idle → loading → ready → running`, then `running ⇄ paused` as gates open and close, with `context-lost` in between when the GPU resets. `error`, `unsupported` and `destroyed` are final, apart from `destroy()` moving the first two to `destroyed`.
+
+`fx.supported` is `false` when the status is `"unsupported"` or `"destroyed"`, and `true` otherwise, including before initialization has finished. To know whether the effect actually runs, wait for `ready` or watch `onStatusChange`.
+
+From 1.0 on, these nine values are fixed: adding one is a breaking change.
+
+### Errors
+
+Every error the library creates extends `ShaderError`, so `error instanceof ShaderError` tells them apart from errors thrown by your own code. They reach `onError` (and the `ready` rejection for setup failures):
+
+| Error | When |
+|---|---|
+| `UnsupportedError` | No browser, no WebGL / WebGL2, a `resolution` above the GPU's limits, float feedback with `formatFallback: false` on a device without it, `captureFrame({ format: "rgba16f" })` without float feedback. Also passed to `onError` when the context is lost. |
+| `TargetNotFoundError` | `target` (a selector or element) did not resolve. |
+| `ShaderCompileError` | A shader failed to compile or link. `stage` and `lines` locate it (see "Hot reloading"). |
+| `TextureLoadError` | A texture failed to load or upload, ran out of texture units, or its name collides with the feedback uniform (or the feedback `uniform` suffix is invalid). |
+| `DestroyedError` | `ready` and `captureFrame()` after `destroy()`. |
+
+Which call reports what:
+
+- `createShaderBackground()` throws only a `RangeError` for an invalid `resolution`. Everything else is reported asynchronously through `status`, `onError` and `ready`.
+- `setFragment()` never throws: it returns the `ShaderCompileError` (also passed to `onError`) or `null`.
+- `setTexture()` / `setTextures()` reject and also call `onError`.
+- `setResolution()` throws `RangeError` for an invalid size, `UnsupportedError` above the GPU's limits, and `TypeError` for `null` on an instance without a target.
+- `setTime()` throws `RangeError` for a non-finite value.
+- `captureFrame()` rejects with `RangeError` for an unknown format, and with the errors in the table above.
+- `keyframes()` throws `TypeError` / `RangeError` for an empty track, mixed value sizes, non-finite keys or an unknown ease. `hexToRgb()` / `hexToRgba()` throw `Error` for an invalid color.
 
 ### Hot reloading
 
@@ -498,6 +579,14 @@ if (import.meta.hot) {
 
 ## GLSL Helpers
 
+`glsl` is a template tag that returns the shader source as a plain string, like `String.raw`: interpolated values are inserted as text and backslashes are kept as written. `glslUtils` holds three small snippets to interpolate into a shader. Each declares one function and works in GLSL ES 1.00 and 3.00:
+
+| Snippet | Declares | Use |
+|---|---|---|
+| `glslUtils.coverUv` | `vec2 coverUv(vec2 uv, vec2 viewportSize, vec2 textureSize)` | Fill the viewport with a texture, cropping it, like `background-size: cover`. |
+| `glslUtils.containUv` | `vec2 containUv(vec2 uv, vec2 viewportSize, vec2 textureSize)` | Fit the whole texture inside the viewport, like `contain`. The result leaves 0–1 outside the image, so mask it there. |
+| `glslUtils.rotate2d` | `mat2 rotate2d(float angle)` | Rotate a 2D vector by `angle` radians: `p * rotate2d(a)` turns `p` counter-clockwise, `rotate2d(a) * p` clockwise. |
+
 ```ts
 import { glsl, glslUtils } from "@frapx/fx-canvas/glsl";
 
@@ -516,13 +605,15 @@ void main() {
 `;
 ```
 
+`glsl` and `glslUtils` are also exported from `@frapx/fx-canvas`.
+
 ## Scope
 
 `@frapx/fx-canvas` creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in uniforms, custom uniforms, textures, and optional previous-frame feedback. It is not a scene, camera, mesh, or full rendering-engine abstraction.
 
 ## SSR Notes
 
-The package is safe to import during SSR. Calling `createShaderBackground()` without a browser returns a no-op instance whose `ready` promise rejects.
+The package is safe to import during SSR: importing it touches no browser API. Calling `createShaderBackground()` without a browser still returns a normal instance. On the next microtask its `status` becomes `"unsupported"`, `onError` receives an `UnsupportedError`, and `ready` rejects with it. Leaving that `ready` unawaited does not log an unhandled rejection. Create instances in client-only code (an effect, a client script) to avoid the round trip.
 
 ## Browser Support
 

@@ -611,4 +611,103 @@ describe("ShaderBackground", () => {
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledTimes(1);
   });
+
+  it("forwards the latest render and resize callbacks without recreating", async () => {
+    const first = { onBeforeRender: vi.fn(), onAfterRender: vi.fn(), onResize: vi.fn() };
+    const second = { onBeforeRender: vi.fn(), onAfterRender: vi.fn(), onResize: vi.fn() };
+
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" {...first} />);
+    });
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" {...second} />);
+    });
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+
+    const [options] = shaderMock.createShaderBackground.mock.calls[0] as unknown as [
+      Record<keyof typeof first, (state: object) => void>
+    ];
+    const state = { time: 1 };
+    options.onBeforeRender(state);
+    options.onAfterRender(state);
+    options.onResize(state);
+
+    for (const callback of Object.values(first)) expect(callback).not.toHaveBeenCalled();
+    for (const callback of Object.values(second)) expect(callback).toHaveBeenCalledWith(state);
+  });
+
+  it("passes layer and recreates when it changes", async () => {
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" layer="overlay" />);
+    });
+    expect(shaderMock.createShaderBackground).toHaveBeenLastCalledWith(
+      expect.objectContaining({ layer: "overlay" })
+    );
+    expect(container.firstElementChild!.hasAttribute("layer")).toBe(false);
+
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" layer="background" />);
+    });
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+    expect(shaderMock.createShaderBackground).toHaveBeenLastCalledWith(
+      expect.objectContaining({ layer: "background" })
+    );
+  });
+
+  it("recreates when recreateKey changes and not when it stays", async () => {
+    const render = (recreateKey: number) =>
+      root.render(<ShaderBackground fragment="void main() {}" recreateKey={recreateKey} />);
+
+    await act(async () => render(1));
+    await act(async () => render(1));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+
+    await act(async () => render(2));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+    expect(shaderMock.instance.destroy).toHaveBeenCalledTimes(1);
+    expect(container.firstElementChild!.hasAttribute("recreateKey")).toBe(false);
+  });
+
+  it("passes canvas and recreates only for a different element", async () => {
+    const canvasA = document.createElement("canvas");
+    const canvasB = document.createElement("canvas");
+    const render = (canvas: HTMLCanvasElement) =>
+      root.render(<ShaderBackground fragment="void main() {}" canvas={canvas} />);
+
+    await act(async () => render(canvasA));
+    expect(shaderMock.createShaderBackground).toHaveBeenLastCalledWith(
+      expect.objectContaining({ canvas: canvasA })
+    );
+    await act(async () => render(canvasA));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+
+    await act(async () => render(canvasB));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+    expect(shaderMock.createShaderBackground).toHaveBeenLastCalledWith(
+      expect.objectContaining({ canvas: canvasB })
+    );
+  });
+
+  it("hides the wrapper from assistive technology unless told otherwise", async () => {
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" />);
+    });
+    expect(container.firstElementChild!.getAttribute("aria-hidden")).toBe("true");
+
+    await act(async () => {
+      root.render(
+        <ShaderBackground
+          fragment="void main() {}"
+          role="img"
+          aria-label="Cyan rings"
+          aria-hidden={false}
+        />
+      );
+    });
+    const div = container.firstElementChild!;
+    expect(div.getAttribute("aria-hidden")).toBe("false");
+    expect(div.getAttribute("role")).toBe("img");
+    expect(div.getAttribute("aria-label")).toBe("Cyan rings");
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+  });
 });

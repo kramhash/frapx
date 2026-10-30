@@ -131,6 +131,25 @@ const timeline = keyframes({ glow: [[0, 0], [2, 1]] });
 - React 18+ is supported.
 - Safe to import during SSR — WebGL work starts only after mount.
 - StrictMode double-mounting is handled by destroying the previous instance in effect cleanup.
-- Use `onShaderReady` / `onShaderError` instead of core `onReady` / `onError` (avoids a DOM prop naming conflict).
+- Use `onShaderReady` / `onShaderError` instead of core `onReady` / `onError`.
+  The component also accepts the wrapper `div`'s props, and `onError` is the
+  `div`'s DOM error event. The hook uses the same names.
+
+## Accessibility
+
+The wrapper `div` is `aria-hidden="true"` by default, since a background effect
+is decoration. When the canvas carries meaning, describe it and override the
+default:
+
+```tsx
+<ShaderBackground
+  fragment={fragment}
+  role="img"
+  aria-label="Cyan rings pulsing outward on a dark background"
+  aria-hidden={false}
+/>
+```
+
+With the hook, put the same attributes on the element you pass `ref` to.
 
 Full prop and hook reference: [package README](https://github.com/kramhash/frapx/blob/main/packages/react-canvas/README.md) on GitHub.
