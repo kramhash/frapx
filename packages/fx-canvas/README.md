@@ -353,7 +353,6 @@ To keep a realtime shader in step with audio (or any transport that knows its po
 const fx = createShaderBackground({
   target: ".hero",
   fragment,
-  respectReducedMotion: true,
   timeSource: () => transport.getPositionMs() / 1000 // seconds
 });
 ```
@@ -412,7 +411,7 @@ createShaderBackground({
   autoStart: true,
   pauseWhenOffscreen: true,
   pauseWhenHidden: true,
-  respectReducedMotion: false,
+  respectReducedMotion: true,
   renderMode: "always",
   clock: "realtime",
   // timeSource: () => audio.currentTime,
@@ -443,6 +442,8 @@ createShaderBackground({
 
 `layer: "background"` inserts the canvas as the first child with `z-index: 0`. `layer: "overlay"` inserts it as the last child with `z-index: 1`. Existing child styles are not changed. A `target` whose computed `position` is `static` gets `position: relative`, restored on `destroy()`.
 
+`dpr` sets drawing-buffer pixels per CSS pixel. `"auto"` (the default) follows `devicePixelRatio`, capped by `maxDpr` (default 2). A number or a function is used as given and capped only when you also pass `maxDpr`, so `dpr: 3` draws at 3 and `dpr: 0.5` draws at half resolution. A value `<= 0` or non-finite throws `RangeError` (from `createShaderBackground()` for a number, and fails initialization for a function).
+
 ### Styling the canvas
 
 Every canvas the library manages carries a `data-frapx-canvas` attribute, including one passed with `canvas`. Use it as a stable selector for styling and tests; it is part of the public API. `canvasClass` adds a class and `canvasStyle` assigns inline styles after the library's own (`position: absolute`, `inset: 0`, `width` / `height: 100%`, `pointer-events: none` and the `z-index` above, which a canvas passed with `canvas` does not get):
@@ -459,7 +460,7 @@ The render loop is paused whenever it is not worth running, and resumes automati
 
 - `pauseWhenOffscreen` (default `true`) — pause while the target scrolls out of view.
 - `pauseWhenHidden` (default `true`) — pause while the document is hidden (e.g. a background tab).
-- `respectReducedMotion` (default `false`) — when enabled, hold a single static frame while the OS "prefers reduced motion" setting is on, and resume if the user turns it off. The `u_reducedMotion` uniform and `state.reducedMotion` are supplied regardless of this flag, so you can also handle reduced motion inside the shader. In `renderMode: "demand"` the motion gate does not apply (there is no loop to throttle).
+- `respectReducedMotion` (default `true`) — hold a single static frame while the OS "prefers reduced motion" setting is on, and resume if the user turns it off. Pass `false` to keep animating and handle reduced motion yourself. The `u_reducedMotion` uniform and `state.reducedMotion` are supplied regardless of this flag, so you can also handle reduced motion inside the shader. In `renderMode: "demand"` the motion gate does not apply (there is no loop to throttle).
 
 ### WebGL2 / GLSL ES 3.00
 
@@ -533,7 +534,7 @@ fx.setUniforms({ progress: 0.5, color: [1, 0, 0] });
 | `"loading"` | The context exists; shaders, feedback buffers and initial textures are being set up. |
 | `"ready"` | Setup finished. It stays here only with `autoStart: false` until `start()`. |
 | `"running"` | The render loop runs (in `"demand"` mode: it draws on changes). |
-| `"paused"` | Not drawing on its own: after `stop()`, under a manual clock, or while a gate is closed (offscreen, hidden, or reduced motion with `respectReducedMotion`). |
+| `"paused"` | Not drawing on its own: after `stop()`, under a manual clock, or while a gate is closed (offscreen, hidden, or reduced motion unless `respectReducedMotion: false`). |
 | `"context-lost"` | The GPU dropped the context. When it is restored, the status returns to what `start()` / `stop()` and the gates allow. |
 | `"error"` | Setup failed, for example the first shader did not compile or an initial texture did not load, or rebuilding after a context restore failed. Final: create a new instance. |
 | `"unsupported"` | No browser (SSR), no WebGL (or WebGL2 for a GLSL ES 3.00 shader), a `target` that was not found, or a size or format the GPU cannot provide. Final. |

@@ -192,7 +192,9 @@ export type RuntimeHostOptions = {
   target?: string | Element;
   canvas?: HTMLCanvasElement;
   layer?: ShaderLayer;
+  /** Defaults to `"auto"`. Resolved by `resolveDpr()`. */
   dpr?: DprOption;
+  /** Caps `"auto"` (default 2); caps a number or function `dpr` only when set. */
   maxDpr?: number;
   autoResize?: boolean;
   canvasClass?: string;

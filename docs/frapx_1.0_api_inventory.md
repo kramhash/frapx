@@ -37,8 +37,8 @@ Oct 28, 2026 · @mark
 | [#66](https://github.com/kramhash/frapx/issues/66) | core と fx-canvas に `onStatusChange`、ログの接頭辞の改名 | core minor / fx-canvas 0.12 | なし | マージ済み（2026-10-30、PR #77） |
 | [#67](https://github.com/kramhash/frapx/issues/67) | fx-canvas の公開型を自前で宣言、core との互換の型テスト、ヘルパーに `@deprecated` | fx-canvas 0.12 | なし | マージ済み（2026-10-30、PR #80） |
 | [#68](https://github.com/kramhash/frapx/issues/68) | react-canvas: 作り直しの値比較、`status` の追従、handle に `setTimeSource` / `setFragment` | react-canvas 0.9 | #66 | マージ済み（2026-10-30、PR #79） |
-| [#69](https://github.com/kramhash/frapx/issues/69) | README / docs の穴とずれ、テストの穴 | — | #66〜#68（依存しない部分は先行してよい） | 作業中（2026-10-30） |
-| [#70](https://github.com/kramhash/frapx/issues/70) | 1.0 の破壊的変更、移行ガイド、リリース | fx-canvas 1.0 / react-canvas 1.0 / core minor | #62、#66〜#69 | 未着手 |
+| [#69](https://github.com/kramhash/frapx/issues/69) | README / docs の穴とずれ、テストの穴 | — | #66〜#68（依存しない部分は先行してよい） | マージ済み（2026-10-30、PR #81） |
+| [#70](https://github.com/kramhash/frapx/issues/70) | 1.0 の破壊的変更、移行ガイド、リリース | fx-canvas 1.0 / react-canvas 1.0 / core minor | #62、#66〜#69 | 作業中（2026-10-30） |
 
 マイルストーンの外（1.0 の後）: passes / particles の名前を fx-canvas に合わせる、react-particles の `status` の追従、決定 19 の (d)(e)(f)。
 

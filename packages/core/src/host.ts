@@ -15,6 +15,7 @@ import type {
 import { DestroyedError, TargetNotFoundError, UnsupportedError } from "./internal/errors";
 import { canvasToPng, readPixels } from "./internal/capture";
 import {
+  assertDprOptions,
   resolveDpr,
   resizeCanvasToResolution,
   resizeCanvasToTarget,
@@ -86,6 +87,7 @@ class RuntimeHost implements RuntimeHostInstance {
     this.clockMode = options.clock ?? "realtime";
     this.source = options.timeSource ?? null;
     this.warnIfSourceUnread();
+    assertDprOptions(options.dpr, options.maxDpr);
     this.fixedResolution = options.resolution
       ? normalizeResolution(options.resolution)
       : null;

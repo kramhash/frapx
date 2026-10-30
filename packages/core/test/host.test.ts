@@ -665,6 +665,32 @@ describe("fixed resolution", () => {
   });
 });
 
+describe("dpr", () => {
+  it("uses a numeric dpr as given without maxDpr", async () => {
+    const { host, frames } = create({ clock: "manual", dpr: 3 });
+    await host.ready;
+    host.render();
+
+    // 200x100 target; the default cap of 2 applies only to "auto".
+    expect(frames[0]?.width).toBe(600);
+    expect(frames[0]?.pixelRatio).toBe(3);
+  });
+
+  it("rejects an invalid number or maxDpr when created", () => {
+    expect(() => create({ dpr: 0 })).toThrow(RangeError);
+    expect(() => create({ maxDpr: Number.NaN })).toThrow(RangeError);
+  });
+
+  it("fails initialization when a dpr function returns an invalid value", async () => {
+    const onError = vi.fn();
+    const { host } = create({ dpr: () => 0, onError });
+
+    await expect(host.ready).rejects.toThrow(RangeError);
+    expect(host.status).toBe("error");
+    expect(onError).toHaveBeenCalledWith(expect.any(RangeError));
+  });
+});
+
 describe("onResize", () => {
   it("calls onResize when a frame picks up a new size before the resize observer", async () => {
     // Browsers run animation frames before resize observations, so a running

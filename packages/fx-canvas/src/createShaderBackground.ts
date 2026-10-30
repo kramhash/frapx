@@ -110,7 +110,8 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       ...(options.autoStart !== undefined && { autoStart: options.autoStart }),
       ...(options.pauseWhenOffscreen !== undefined && { pauseWhenOffscreen: options.pauseWhenOffscreen }),
       ...(options.pauseWhenHidden !== undefined && { pauseWhenHidden: options.pauseWhenHidden }),
-      ...(options.respectReducedMotion !== undefined && { respectReducedMotion: options.respectReducedMotion }),
+      // fx-canvas defaults to true; core and the other runtimes still default to false.
+      respectReducedMotion: options.respectReducedMotion ?? true,
       ...(options.renderMode !== undefined && { renderMode: options.renderMode }),
       ...(options.clock !== undefined && { clock: options.clock }),
       ...(options.timeSource !== undefined && { timeSource: options.timeSource }),
@@ -143,9 +144,6 @@ class ShaderBackground<TUniforms extends UniformInputMap>
 
       onInit: async (gl, width, height) => {
         this._gl = gl;
-        if (this.host.canvas) {
-          this.host.canvas.dataset.frapxShaderCanvas = "";
-        }
         this.feedbackOptions = normalizeFeedbackOptions(options.feedback);
         this.initProgram(gl);
         this.assertNoFeedbackTextureConflict();

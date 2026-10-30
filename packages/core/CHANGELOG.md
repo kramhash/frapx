@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- `dpr` is used as given: `"auto"` follows `devicePixelRatio` capped by `maxDpr` (default 2), and a number or function is capped only when `maxDpr` is set. Values below 1 are allowed, including `"auto"` on a zoomed-out page; previously every value was clamped to `[1, maxDpr ?? 2]`. `dpr` or `maxDpr` `<= 0` or non-finite throws `RangeError`: from `createRuntimeHost()` for a number, and as an initialization failure for a function.
+
 ## 0.7.0 - 2026-10-30
 
 ### Added

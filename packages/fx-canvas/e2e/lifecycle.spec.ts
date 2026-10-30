@@ -11,11 +11,11 @@ const status = (page: import("@playwright/test").Page) =>
 const frames = (page: import("@playwright/test").Page) =>
   page.evaluate(() => (window as Win).__frapxShaderSample?.frames ?? 0);
 
-test("holds a static frame under prefers-reduced-motion, then resumes", async ({
+test("holds a static frame under prefers-reduced-motion by default, then resumes", async ({
   page
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/?reducedMotion=1");
+  await page.goto("/");
 
   await expect.poll(() => status(page)).toBe("paused");
 
@@ -28,6 +28,17 @@ test("holds a static frame under prefers-reduced-motion, then resumes", async ({
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect.poll(() => status(page)).toBe("running");
   await expect.poll(() => frames(page)).toBeGreaterThan(frozen);
+});
+
+test("keeps animating under prefers-reduced-motion with respectReducedMotion: false", async ({
+  page
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/?reducedMotion=0");
+
+  await expect.poll(() => status(page)).toBe("running");
+  const before = await frames(page);
+  await expect.poll(() => frames(page)).toBeGreaterThan(before);
 });
 
 test("pauses while the tab is hidden, resumes when visible", async ({

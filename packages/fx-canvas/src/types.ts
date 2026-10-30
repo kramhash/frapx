@@ -218,7 +218,7 @@ export type CreateShaderBackgroundOptions<
   pauseWhenHidden?: boolean;
   /**
    * When `true`, automatically hold a single static frame while the user's OS
-   * "prefers reduced motion" setting is enabled. Defaults to `false`. The
+   * "prefers reduced motion" setting is enabled. Defaults to `true`. The
    * `u_reducedMotion` uniform (0/1) is always supplied regardless of this flag.
    */
   respectReducedMotion?: boolean;
@@ -252,7 +252,17 @@ export type CreateShaderBackgroundOptions<
    * Change later with `setResolution()`.
    */
   resolution?: Resolution;
+  /**
+   * Drawing-buffer pixels per CSS pixel. Defaults to `"auto"`, which follows
+   * `devicePixelRatio` capped by `maxDpr`. A number or function is used as
+   * given, including values below 1. Throws `RangeError` for `<= 0` or a
+   * non-finite value.
+   */
   dpr?: DprOption;
+  /**
+   * Caps the pixel ratio. Defaults to 2 for `dpr: "auto"`; a number or
+   * function `dpr` is capped only when this is set.
+   */
   maxDpr?: number;
   autoResize?: boolean;
   debug?: boolean;

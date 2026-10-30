@@ -108,7 +108,7 @@ test("marks a canvas passed with `canvas` without positioning it", async ({ page
   expect(result).toEqual({ marked: true, position: "", selected: 2 });
 });
 
-test("caps dpr at maxDpr", async ({ page }) => {
+test("uses a numeric dpr as given, capped only by an explicit maxDpr", async ({ page }) => {
   const sizes = await page.evaluate(async (fragment) => {
     const { createShaderBackground } = (window as Win).__frapx!;
     const sizeWith = async (options: { dpr: number; maxDpr?: number }) => {
@@ -124,15 +124,16 @@ test("caps dpr at maxDpr", async ({ page }) => {
     };
     return {
       capped: await sizeWith({ dpr: 3, maxDpr: 1.5 }),
-      defaultCap: await sizeWith({ dpr: 3 }),
-      underCap: await sizeWith({ dpr: 1.5, maxDpr: 4 })
+      uncapped: await sizeWith({ dpr: 3 }),
+      underCap: await sizeWith({ dpr: 1.5, maxDpr: 4 }),
+      belowOne: await sizeWith({ dpr: 0.5 })
     };
   }, solid);
 
   expect(sizes.capped).toEqual([75, 30]);
-  // 1.0 caps a numeric dpr only when maxDpr is given (decision 12, #70).
-  expect(sizes.defaultCap).toEqual([100, 40]);
+  expect(sizes.uncapped).toEqual([150, 60]);
   expect(sizes.underCap).toEqual([75, 30]);
+  expect(sizes.belowOne).toEqual([25, 10]);
 });
 
 for (const version of ["100", "300"] as const) {

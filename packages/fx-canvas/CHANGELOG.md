@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+1.0: the API is now covered by SemVer. See the [migration guide](https://kramhash.github.io/frapx/migration/) for before/after code.
+
+### Removed
+
+- **Breaking:** `createBlitter`, `createPingPong`, `createRenderTarget`, `supportsRenderTargetFormat` and the `Blitter`, `PingPong`, `RenderTarget`, `RenderTargetFormat`, `RenderTargetOptions` types (deprecated in 0.12). Import them from `@frapx/core`.
+- **Breaking:** the `data-frapx-shader-canvas` attribute. Select the canvas with `data-frapx-canvas`.
+
+### Changed
+
+- **Breaking:** `respectReducedMotion` defaults to `true`: under the OS "reduce motion" setting the picture holds a still frame. Pass `false` to keep animating.
+- **Breaking:** `dpr` is used as given, via `@frapx/core`. `"auto"` is still capped by `maxDpr` (default 2), but a number or function is capped only when `maxDpr` is set, and values below 1 are allowed. `dpr` or `maxDpr` `<= 0` or non-finite throws `RangeError`.
+
 ## 0.12.0 - 2026-10-30
 
 ### Added

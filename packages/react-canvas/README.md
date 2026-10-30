@@ -196,8 +196,9 @@ override the default:
 ```
 
 With the hook, put the same attributes on the element you pass `ref` to.
-Consider `respectReducedMotion` as well (see "Lifecycle & accessibility" in the
-`@frapx/fx-canvas` README).
+Reduced motion is respected by default: under the OS "reduce motion" setting
+the picture holds a still frame (`respectReducedMotion`, see "Lifecycle &
+accessibility" in the `@frapx/fx-canvas` README).
 
 ## License
 

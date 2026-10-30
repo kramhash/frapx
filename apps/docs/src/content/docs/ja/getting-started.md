@@ -20,7 +20,7 @@ description: 自作の GLSL を @frapx/fx-canvas で本番の Web サイトに�
 本番で地味に面倒なところは、fx-canvas がやってくれます。
 
 - 画面外や非表示のタブでは、描画を止める
-- 「視差効果を減らす」設定の人には、動きを止められる（`respectReducedMotion`）
+- 「視差効果を減らす」設定の人には、既定で動きを止める（`respectReducedMotion`）
 - SSR で import しても壊れない
 - WebGL1 でも動く（WebGL2 のシェーダーも書ける）
 
@@ -51,8 +51,7 @@ createShaderBackground({
       float glow = 0.5 + 0.5 * sin(u_time + uv.x * 8.0);
       gl_FragColor = vec4(uv.x, u_pointerUv.y, glow, 1.0);
     }
-  `,
-  respectReducedMotion: true
+  `
 });
 ```
 
@@ -74,9 +73,9 @@ fx.setUniform("progress", 0.4);
 
 ## reduced motion への対応
 
-`respectReducedMotion: true` を付けると、OS で「視差効果を減らす」（Windows では「アニメーション効果」をオフ）にしている人には、1 枚の静止画を表示したままにします。設定が戻れば、アニメーションも再開します。既定値は `false` です。
+OS で「視差効果を減らす」（Windows では「アニメーション効果」をオフ）にしている人には、既定で 1 枚の静止画を表示したままにします。設定が戻れば、アニメーションも再開します（`respectReducedMotion`、既定値は `true`）。
 
-止めずに動きを弱めたい場合は、シェーダーで `u_reducedMotion` を読みます。このフラグを付けていなくても、値は常に渡されます（設定がオンなら 1、オフなら 0）。
+止めずに動きを弱めたい場合は、`respectReducedMotion: false` を渡して、シェーダーで `u_reducedMotion` を読みます。値はこのフラグに関係なく常に渡されます（設定がオンなら 1、オフなら 0）。
 
 ```glsl
 uniform float u_reducedMotion;
@@ -114,7 +113,6 @@ export function HeroBackground() {
   return (
     <ShaderBackground
       fragment={fragment}
-      respectReducedMotion
       className="hero-bg"
     />
   );
@@ -158,8 +156,7 @@ Astro では、コンポーネントの `<script>` の中で呼びます。`<scr
         vec2 uv = gl_FragCoord.xy / u_resolution;
         gl_FragColor = vec4(uv, 0.5 + 0.5 * sin(u_time), 1.0);
       }
-    `,
-    respectReducedMotion: true
+    `
   });
 </script>
 ```
