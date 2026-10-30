@@ -478,4 +478,137 @@ describe("ShaderBackground", () => {
     expect(shaderMock.instance.bindUniforms).toHaveBeenCalledTimes(created);
     expect(shaderMock.removers.get(source)).not.toHaveBeenCalled();
   });
+
+  it("compares inline options that need a new instance by value", async () => {
+    const render = (format: "rgba8" | "rgba16f", opacity: string) =>
+      root.render(
+        <ShaderBackground
+          fragment="void main() {}"
+          feedback={{ format }}
+          canvasStyle={{ opacity }}
+        />
+      );
+
+    await act(async () => render("rgba8", "0.5"));
+    await act(async () => render("rgba8", "0.5"));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+
+    await act(async () => render("rgba16f", "0.5"));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+
+    await act(async () => render("rgba16f", "0.8"));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(3);
+  });
+
+  it("recreates on an inline dpr function, which compares by reference", async () => {
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" dpr={() => 1} />);
+    });
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" dpr={() => 1} />);
+    });
+
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+  });
+
+  it("recreates from the hook on a changed value without recreateDeps", async () => {
+    const Panel = ({ format }: { format: "rgba8" | "rgba16f" }) => {
+      const { ref } = useShaderBackground({
+        fragment: "void main() {}",
+        feedback: { format }
+      });
+      return <div ref={ref} />;
+    };
+
+    await act(async () => root.render(<Panel format="rgba8" />));
+    await act(async () => root.render(<Panel format="rgba8" />));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(1);
+
+    await act(async () => root.render(<Panel format="rgba16f" />));
+    expect(shaderMock.createShaderBackground).toHaveBeenCalledTimes(2);
+  });
+
+  it("follows status through onStatusChange and chains the caller's callback", async () => {
+    const seen: string[] = [];
+    const onStatusChange = vi.fn();
+    const Panel = () => {
+      const { ref, status } = useShaderBackground({
+        fragment: "void main() {}",
+        onStatusChange
+      });
+      seen.push(status);
+      return <div ref={ref} />;
+    };
+
+    await act(async () => root.render(<Panel />));
+    const [options] = shaderMock.createShaderBackground.mock.calls[0] as unknown as [
+      { onStatusChange: (status: string) => void }
+    ];
+
+    await act(async () => options.onStatusChange("paused"));
+    expect(seen[seen.length - 1]).toBe("paused");
+    await act(async () => options.onStatusChange("running"));
+    expect(seen[seen.length - 1]).toBe("running");
+    expect(onStatusChange.mock.calls.flat()).toEqual(["paused", "running"]);
+  });
+
+  it("forwards setTimeSource and setFragment on the imperative handle", async () => {
+    const ref = { current: null as ShaderBackgroundHandle | null };
+    const source = () => 2;
+
+    await act(async () => {
+      root.render(<ShaderBackground ref={ref} fragment="void main() {}" />);
+    });
+
+    ref.current?.setTimeSource(source);
+    expect(shaderMock.instance.setTimeSource).toHaveBeenLastCalledWith(source);
+    expect(ref.current?.setFragment("void main() { }")).toBeNull();
+    const failure = new Error("compile failed");
+    shaderMock.instance.setFragment.mockReturnValueOnce(failure);
+    expect(ref.current?.setFragment("broken")).toBe(failure);
+    expect(shaderMock.instance.setFragment).toHaveBeenCalledWith("void main() { }");
+  });
+
+  it("keeps the new instance's status when the old one reports destroyed", async () => {
+    const seen: string[] = [];
+    const Panel = ({ format }: { format: "rgba8" | "rgba16f" }) => {
+      const { ref, status } = useShaderBackground({
+        fragment: "void main() {}",
+        feedback: { format }
+      });
+      seen.push(status);
+      return <div ref={ref} />;
+    };
+    const statusOf = (call: number) =>
+      (shaderMock.createShaderBackground.mock.calls[call] as unknown as [
+        { onStatusChange: (status: string) => void }
+      ])[0].onStatusChange;
+
+    await act(async () => root.render(<Panel format="rgba8" />));
+    const first = statusOf(0);
+    shaderMock.instance.destroy.mockImplementationOnce(() => first("destroyed"));
+    await act(async () => root.render(<Panel format="rgba16f" />));
+    await act(async () => statusOf(1)("running"));
+
+    expect(seen[seen.length - 1]).toBe("running");
+  });
+
+  it("calls the latest onShaderError, not the one from creation", async () => {
+    const first = vi.fn();
+    const second = vi.fn();
+
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" onShaderError={first} />);
+    });
+    await act(async () => {
+      root.render(<ShaderBackground fragment="void main() {}" onShaderError={second} />);
+    });
+    const [options] = shaderMock.createShaderBackground.mock.calls[0] as unknown as [
+      { onError: (error: Error) => void }
+    ];
+    await act(async () => options.onError(new Error("lost")));
+
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
+  });
 });

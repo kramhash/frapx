@@ -3,10 +3,12 @@ import {
   type CaptureOptions,
   type CaptureResult,
   type ClockMode,
+  type ShaderCompileError,
   type Resolution,
   type ShaderBackgroundInstance,
   type TextureInput,
   type TextureMap,
+  type TimeSource,
   type UniformInput,
   type UniformInputMap,
   type UniformRuntimeValue,
@@ -37,6 +39,21 @@ export type ShaderBackgroundHandle<
   destroy(): void;
   setTime(seconds: number): void;
   setClock(clock: ClockMode): void;
+  /**
+   * Overrides the `timeSource` prop on the current instance until the prop is
+   * added or removed, or the instance is recreated. Swapping one prop function
+   * for another does not undo it: the instance reads the prop through a
+   * stable wrapper.
+   */
+  setTimeSource(source: TimeSource | null): void;
+  /**
+   * Swaps the fragment shader on the current instance; the `fragment` prop
+   * wins again when it changes. Returns the compile error, or `null` (also
+   * while no instance is mounted). A compile error still reaches `onError`,
+   * but a successful swap here does not clear an earlier error; only a
+   * `fragment` prop change does.
+   */
+  setFragment(fragment: string): ShaderCompileError | null;
   setResolution(resolution: Resolution | null): void;
   /** Rejects while no instance is mounted. */
   captureFrame<F extends CaptureFormat = "png">(
@@ -93,6 +110,7 @@ const OPTION_KEYS = [
   "onBeforeRender",
   "onAfterRender",
   "onResize",
+  "onStatusChange",
   "onShaderReady",
   "onShaderError",
   "uniformSources",
@@ -102,26 +120,6 @@ const OPTION_KEYS = [
 type _MissingOptionKey = Exclude<keyof UseShaderBackgroundOptions, (typeof OPTION_KEYS)[number]>;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _assertComplete: _MissingOptionKey extends never ? true : never = true;
-
-// Keys that are runtime-updated (ref-identity diffed inside the hook). Changing
-// them does NOT recreate the underlying instance.
-const RUNTIME_KEYS = new Set([
-  "fragment",
-  "uniforms",
-  "textures",
-  "clock",
-  "timeSource",
-  "resolution",
-  "onShaderReady",
-  "onShaderError",
-  "onBeforeRender",
-  "onAfterRender",
-  "onResize",
-  "uniformSources",
-]);
-
-// Derived once at module scope so recreateDeps always has a stable length.
-const STATIC_KEYS = OPTION_KEYS.filter(k => !RUNTIME_KEYS.has(k));
 
 const OPTION_KEY_SET = new Set<string>(OPTION_KEYS);
 
@@ -160,10 +158,9 @@ const ShaderBackgroundInner = <
     }
   }
 
-  // Recreate deps: static option values + recreateKey (constant length).
-  const recreateDeps: unknown[] = [...STATIC_KEYS.map(k => propsRecord[k]), recreateKey];
-
-  const { ref, instance } = useShaderBackground(options, recreateDeps);
+  // The hook compares the options that need a new instance by value;
+  // recreateKey forces one regardless.
+  const { ref, instance } = useShaderBackground(options, [recreateKey]);
 
   useImperativeHandle(
     forwardedRef,
@@ -176,6 +173,8 @@ const ShaderBackgroundInner = <
       destroy: () => instance?.destroy(),
       setTime: (seconds) => instance?.setTime(seconds),
       setClock: (clock) => instance?.setClock(clock),
+      setTimeSource: (source) => instance?.setTimeSource(source),
+      setFragment: (fragment) => instance?.setFragment(fragment) ?? null,
       setResolution: (resolution) => instance?.setResolution(resolution),
       captureFrame: <F extends CaptureFormat = "png">(
         options?: CaptureOptions<F>

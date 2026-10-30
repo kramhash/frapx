@@ -39,7 +39,10 @@ export function HeroBackground() {
 The component renders a wrapper `div` (`position: relative`, `overflow: hidden`
 by default) and mounts the shader canvas into it. Most `createShaderBackground`
 options — including `feedback` — pass straight through as props, and changing
-them recreates the underlying instance. `uniforms` and `textures` update the
+them recreates the underlying instance. They are compared by value (plain
+objects and arrays by contents, functions and elements by reference), so an
+inline `feedback={{ format: "rgba16f" }}` keeps the instance while an inline
+`dpr={() => 1}` recreates it; `recreateKey` forces a new one. `uniforms` and `textures` update the
 existing instance instead of recreating it, and a new `fragment` is swapped in
 place with `setFragment()`, so edits and Fast Refresh keep the time and
 feedback. A compile error goes to `error` / `onShaderError` while the previous
@@ -53,18 +56,21 @@ import { useShaderBackground } from "@frapx/react-canvas";
 
 export function ShaderPanel({ intensity }: { intensity: number }) {
   const uniforms = useMemo(() => ({ intensity }), [intensity]);
-  const { ref, instance, error } = useShaderBackground(
-    { fragment, uniforms, feedback: true },
-    [true]
-  );
+  const { ref, instance, status, error } = useShaderBackground({
+    fragment,
+    uniforms,
+    feedback: true
+  });
 
   return <div ref={ref} />;
 }
 ```
 
-The second argument is the recreation dependency array — include anything
-that should tear down and rebuild the shader instance (`feedback`, `vertex`,
-etc.). The fragment source does not need to be there: it is swapped in place.
+The hook recreates the instance on the same value comparison, so `feedback`,
+`vertex` and the like need no dependency array. The optional second argument
+lists extra values whose change rebuilds the instance. `status` follows the
+instance live (`"paused"` offscreen or hidden, `"context-lost"`, …) through
+`onStatusChange`, and an `onStatusChange` option is still called.
 
 ## Imperative handle
 
@@ -84,8 +90,8 @@ ref.current?.setUniform("intensity", 1);
 
 `clock` and `resolution` are props like any other option, but changing them
 switches the existing instance in place instead of recreating it. The handle
-exposes `setTime`, `setClock`, `setResolution`, `captureFrame` and
-`resetFeedback`:
+exposes `setTime`, `setClock`, `setTimeSource`, `setResolution`, `setFragment`,
+`captureFrame` and `resetFeedback`:
 
 ```tsx
 <ShaderBackground ref={ref} fragment={fragment} clock="manual" resolution={[1920, 1080]} />;
