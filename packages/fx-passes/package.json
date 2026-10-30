@@ -1,6 +1,6 @@
 {
   "name": "@frapx/fx-passes",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "WebGL2 multipass shader runtime for video work: Shadertoy-style buffers, float outputs and deterministic sample accumulation for anti-aliasing and motion blur.",
   "keywords": [
     "webgl2",

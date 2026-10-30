@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2026-10-30
 
 ### Added
 
@@ -8,9 +8,8 @@
 
 ### Changed
 
+- **Breaking:** depends on `@frapx/fx-particles` ^0.5.0, so `respectReducedMotion` now defaults to `true`, matching `@frapx/react-canvas` 1.0: a reduced-motion user sees a still frame. Pass `respectReducedMotion={false}` to keep animating.
 - `status` now follows the runtime live through `onStatusChange`: `"paused"` while offscreen, hidden or under reduced motion, and `"context-lost"`. Before, it changed only at ready, error and teardown.
-
-- **Breaking:** via `@frapx/fx-particles`, `respectReducedMotion` now defaults to `true`, matching `@frapx/react-canvas` 1.0: a reduced-motion user sees a still frame. Pass `respectReducedMotion={false}` to keep animating.
 
 ## 0.4.0 - 2026-10-30
 
