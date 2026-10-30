@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 - 2026-10-30
+
+### Changed
+
+- **Breaking:** depends on `@frapx/fx-particles` ^0.4.0, which follows `@frapx/core` 0.8.0: a number or function `dpr` is used as given and capped only when `maxDpr` is set, values below 1 are allowed, and `dpr` or `maxDpr` `<= 0` or non-finite throws `RangeError`. Pass `maxDpr` to keep the old cap. An app using it with `@frapx/fx-canvas` 1.0 installs one core.
+
 ## 0.3.0 - 2026-10-30
 
 ### Changed

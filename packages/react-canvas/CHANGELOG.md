@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-10-30
 
 1.0, on `@frapx/fx-canvas` 1.0. See the [migration guide](https://kramhash.github.io/frapx/migration/) for before/after code.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-10-30
 
 1.0: the API is now covered by SemVer. See the [migration guide](https://kramhash.github.io/frapx/migration/) for before/after code.
 
