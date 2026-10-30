@@ -112,6 +112,12 @@ are unavailable it warns and uses `rgba8`; `formatFallback: false` makes that an
 
 ```ts
 fx.ready;
+fx.status;    // see "Status" below
+fx.supported; // false once unsupported, or after destroy()
+fx.canvas;    // HTMLCanvasElement | null
+fx.gl;        // WebGLRenderingContext | WebGL2RenderingContext | null
+fx.clock;     // "realtime" | "manual"
+fx.time;      // the time of the last frame drawn, in seconds
 fx.start();
 fx.stop();
 fx.render();
@@ -129,7 +135,15 @@ fx.setUniform("progress", 0.5);
 fx.setUniforms({ progress: 0.5, color: [1, 0, 0] });
 await fx.setTexture("image", "/next-hero.webp");
 await fx.setTextures({ image: "/next-hero.webp" });
+const unbind = fx.bindUniforms(source);
 ```
+
+`createShaderBackground()` always returns an instance and never throws for the
+environment, even on the server or without WebGL. It reports problems through
+`status`, `onError` and `ready`. `canvas` and `gl` are `null` until
+initialization creates them, and `gl` is `null` again while the context is lost
+and after `destroy()`. While drawing, use `state.gl` from `onBeforeRender` /
+`onAfterRender`, which is never `null`.
 
 `ready` resolves once the first setup finishes. It rejects with `DestroyedError`
 when `destroy()` runs first, with `UnsupportedError` when WebGL (or a feature
@@ -150,13 +164,74 @@ show a fallback without polling. It is never called for the initial `"idle"`,
 nor before `createShaderBackground()` returns. Calling `destroy()` from it is
 safe.
 
-`hexToRgb("#7dd3fc")` and `hexToRgba("#0f172acc")` turn hex colors into
-`vec3` / `vec4` uniform values, and `glslUtils` (from `@frapx/fx-canvas/glsl`)
-holds small GLSL snippets such as `glslUtils.coverUv` for cover-fitting an
-image texture.
+### Status
 
-For the full option list, GLSL helpers, color-uniform helpers, and feedback
-details, see the [package README](https://github.com/kramhash/frapx/blob/main/packages/fx-canvas/README.md)
+| Status | Meaning |
+|---|---|
+| `"idle"` | Just created. Initialization starts on a microtask. |
+| `"loading"` | The context exists; shaders, feedback and initial textures are being set up. |
+| `"ready"` | Setup finished. Stays here only with `autoStart: false` until `start()`. |
+| `"running"` | The render loop runs (in `"demand"` mode: it draws on changes). |
+| `"paused"` | After `stop()`, under a manual clock, or while offscreen, hidden or (with `respectReducedMotion`) under reduced motion. |
+| `"context-lost"` | The GPU dropped the context; it returns to running or paused when restored. |
+| `"error"` | Setup failed, such as a first shader that did not compile. Final. |
+| `"unsupported"` | No browser, no WebGL (or WebGL2 for GLSL ES 3.00), a missing `target`, or a size or format the GPU cannot provide. Final. |
+| `"destroyed"` | `destroy()` was called. Final. |
+
+`fx.supported` is `false` for `"unsupported"` and `"destroyed"` and `true`
+otherwise, including before initialization finishes, so wait for `ready` or
+watch `onStatusChange` to know whether the effect runs. From 1.0 on, these nine
+values are fixed.
+
+### Errors
+
+Every error the library creates extends `ShaderError`: `UnsupportedError`,
+`TargetNotFoundError`, `ShaderCompileError` (with `stage` and `lines`),
+`TextureLoadError` and `DestroyedError`. They reach `onError`, and setup
+failures also reject `ready`.
+
+- `setFragment()` never throws; it returns the compile error or `null`.
+- `setTexture()` / `setTextures()` reject **and** call `onError`.
+- `setTime()` throws `RangeError` for a non-finite value; `setResolution()`
+  throws `RangeError`, `UnsupportedError` (above the GPU's limits) or
+  `TypeError` (`null` without a target).
+- After `destroy()` every method does nothing, except `captureFrame()`, which
+  rejects with `DestroyedError`.
+
+The package README lists [when each error occurs](https://github.com/kramhash/frapx/blob/main/packages/fx-canvas/README.md#errors).
+
+## Styling the canvas
+
+Every canvas the library manages carries `data-frapx-canvas`, a stable selector
+for styling and tests that is part of the public API. `canvasClass` and
+`canvasStyle` add a class and inline styles. `layer: "background"` (default)
+puts a created canvas first in the target with `z-index: 0`; `"overlay"` puts
+it last with `z-index: 1`.
+
+```css
+.hero [data-frapx-canvas] {
+  mix-blend-mode: screen;
+}
+```
+
+## Helpers
+
+`hexToRgb("#7dd3fc")` and `hexToRgba("#0f172acc")` turn hex colors into
+`vec3` / `vec4` uniform values. They are also exported alone from
+`@frapx/fx-canvas/color`.
+
+`glslUtils` (also from `@frapx/fx-canvas/glsl`) holds three snippets that work
+in GLSL ES 1.00 and 3.00:
+
+- `coverUv(uv, viewportSize, textureSize)` fills the viewport with a texture,
+  like `background-size: cover`.
+- `containUv(uv, viewportSize, textureSize)` fits the whole texture, like
+  `contain`; mask the area outside 0–1.
+- `rotate2d(angle)` returns a `mat2`: `p * rotate2d(a)` turns `p`
+  counter-clockwise.
+
+For the full option list and feedback details, see the
+[package README](https://github.com/kramhash/frapx/blob/main/packages/fx-canvas/README.md)
 and [CHANGELOG](https://github.com/kramhash/frapx/blob/main/packages/fx-canvas/CHANGELOG.md)
 on GitHub — or try it live on the [Live Demo](/frapx/live-demo/) page.
 
@@ -180,6 +255,33 @@ import { keyframes } from "@frapx/fx-canvas";
 
 fx.bindUniforms(keyframes({ camPos: [[0, [0, 1, 6]], [4, [3, 1.5, 2]]] }));
 ```
+
+Make `get(time)` a **pure function of `time`**: return the same values for the
+same time and keep no state between calls. It can be called more than once per
+frame, for times out of order (a seek, a capture, an accumulated sample in
+`@frapx/fx-passes`), or not at all while paused. A pure source makes a manual
+clock render the same frame for the same time, so an export matches the
+preview. `keyframes()` is pure.
+
+## SSR
+
+Importing the package on the server is safe. Calling `createShaderBackground()`
+there still returns an instance: on the next microtask its `status` becomes
+`"unsupported"`, `onError` receives an `UnsupportedError`, and `ready` rejects
+(an unawaited `ready` logs nothing). Create instances in client-only code.
+
+## Examples
+
+On GitHub under [`examples/`](https://github.com/kramhash/frapx/tree/main/examples):
+
+- `vite-basic` — minimal usage and integration checks.
+- `vite-feedback` — previous-frame feedback.
+- `vite-capture` — a 4K PNG sequence with `clock: "manual"` and `captureFrame()`.
+- `vite-hot-reload` — `setFragment()` on Vite HMR with the `@frapx/tool-dev` overlay.
+- `vite-flowmap`, `vite-sdf`, `vite-raymarch` — with the `glsl-*` snippet packages.
+- `vite-react` — `@frapx/react-canvas`.
+- `vite-passes`, `vite-timeline`, `vite-particles`, `vite-react-particles`,
+  `vite-liminal-vein`, `vite-poolrooms` — the other runtimes.
 
 ## Depends on
 

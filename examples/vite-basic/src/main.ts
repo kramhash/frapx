@@ -1,4 +1,4 @@
-import { createShaderBackground, glsl } from "@frapx/fx-canvas";
+import { createShaderBackground, glsl, glslUtils } from "@frapx/fx-canvas";
 import type { ShaderBackgroundInstance } from "@frapx/fx-canvas";
 import "./styles.css";
 
@@ -9,6 +9,12 @@ declare global {
       pixel: number[] | null;
     };
     __frapxShader?: ShaderBackgroundInstance;
+    /** Lets the E2E suite create its own instances on this page. */
+    __frapx?: {
+      createShaderBackground: typeof createShaderBackground;
+      glsl: typeof glsl;
+      glslUtils: typeof glslUtils;
+    };
     /** The external transport position `?timeSource=1` follows, in seconds. */
     __frapxTransportTime?: number;
   }
@@ -194,6 +200,7 @@ const fx = createShaderBackground({
 });
 
 window.__frapxShader = fx;
+window.__frapx = { createShaderBackground, glsl, glslUtils };
 
 const progress = document.querySelector<HTMLInputElement>("[data-progress]");
 progress?.addEventListener("input", () => {
