@@ -28,6 +28,14 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
 - uniform 注釈はプレイグラウンドだけが解釈し、ランタイムの公開 API には影響させない。
 - docs に `llms.txt` を置く。
 
+## 2026-10-30 決定事項（本文より優先。決定 3 を補う）
+
+10. **価値は 2 層で示す。** 下の層は「本番向けの挙動を引き受ける軽い土台」（fx-canvas）。上の層は「よく使う部品を 1 か所で更新し続けてまとめたもの」（glsl-sdf / noise / raymarch / flowmap、fx-passes、fx-particles、tool-capture / render）。入口（ヒーロー、最小のコード、プレイグラウンド）は fx-canvas のまま。
+11. **軽さで張り合う相手は 3D エンジンだけにする。** README には three.js / Babylon.js との実測値を、測った日付と、計測リポジトリ [kramhash/frapx-bench](https://github.com/kramhash/frapx-bench) へのリンクを添えて載せる。2026-10-30 の min+gzip は frapx 11.2 kB、three.js 133.0 kB、Babylon.js 44.9 kB。
+12. **OGL / twgl.js とはサイズで競わない。** 実測では同じ重さ（OGL 13.1 kB、twgl.js 11.2 kB）。「When to use something else」節で中立に紹介し、frapx はループ、サイズ追従、停止、reduced motion、コンテキストの復帰を引き受ける側だと書く。相手の更新が止まっていることは書かない。
+13. **作ったきっかけ（3D エンジンを読み込まずにシェーダー 1 枚を載せたかった）を、価値提案の直後に 1 文で書く。** 反映先はルートと fx-canvas の README、docs のトップ、日本語の Getting Started。
+14. **計測は frapx 本体の外（公開の計測リポジトリ）で行う。** frapx に three などの依存は入れない。数字を README に載せ直すときは、計測リポジトリで `pnpm measure` を回し直す。
+
 ## 進捗
 
 - **Phase 0 — 看板作品と痛みの解消（完了、2026-10-20）**

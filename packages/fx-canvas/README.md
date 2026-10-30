@@ -15,6 +15,16 @@
 
 **Put the GLSL you wrote on a production website.** `@frapx/fx-canvas` runs your fragment shader behind any element in about 11 kB (min+gzip, including `@frapx/core`) and handles what bites in production: pausing offscreen and in hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2.
 
+frapx started from wanting a fragment shader on a page without shipping a 3D engine. Here is the same full-screen shader with each:
+
+| Library | min+gzip |
+| --- | ---: |
+| `@frapx/fx-canvas` | 11 kB |
+| Babylon.js | 45 kB |
+| three.js | 133 kB |
+
+<sub>Measured 2026-10-30 · [how](https://github.com/kramhash/frapx-bench)</sub>
+
 **Try it:** [Live demo](https://kramhash.github.io/frapx/live-demo/) · [Getting started](https://kramhash.github.io/frapx/getting-started/) · [Documentation](https://kramhash.github.io/frapx/)
 
 ## Install
@@ -607,9 +617,12 @@ void main() {
 
 `glsl` and `glslUtils` are also exported from `@frapx/fx-canvas`.
 
-## Scope
+## When to use something else
 
-`@frapx/fx-canvas` creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in uniforms, custom uniforms, textures, and optional previous-frame feedback. It is not a scene, camera, mesh, or full rendering-engine abstraction.
+`@frapx/fx-canvas` creates and manages a WebGL canvas for an existing DOM region, then lets you drive fragment shaders with built-in uniforms, custom uniforms, textures, and optional previous-frame feedback.
+
+- **A 3D scene** — meshes, loaded models, lights, shadows or physics: use [three.js](https://threejs.org/) or [Babylon.js](https://www.babylonjs.com/). fx-canvas is not a scene, camera, mesh or rendering-engine abstraction (3D inside the shader, such as raymarching with `@frapx/glsl-raymarch`, is fine).
+- **Your own thin WebGL layer** — if you want small wrappers over programs and buffers and will write the render loop yourself, [OGL](https://github.com/oframe/ogl) and [twgl.js](https://twgljs.org/) are about the same size ([measurements](https://github.com/kramhash/frapx-bench)). fx-canvas is for when you want the loop, sizing, pausing, reduced motion and context restore handled for you.
 
 ## SSR Notes
 

@@ -21,6 +21,22 @@ hero:
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
+frapx started from wanting a fragment shader on a page without shipping a 3D
+engine. Here is the same full-screen shader with each:
+
+| Library | min+gzip |
+| --- | ---: |
+| `@frapx/fx-canvas` | 11 kB |
+| Babylon.js | 45 kB |
+| three.js | 133 kB |
+
+<sub>Measured 2026-10-30 · [how](https://github.com/kramhash/frapx-bench)</sub>
+
+Start with fx-canvas, then add
+the pieces you keep reusing — SDF, noise, raymarching, multipass/FBO, GPU
+particles and frame export — maintained together. For a 3D scene with meshes,
+models and lights, use three.js or Babylon.js instead.
+
 ## Which package do I need?
 
 frapx is split into several small packages instead of one big one. The
