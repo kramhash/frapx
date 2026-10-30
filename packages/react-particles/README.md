@@ -44,12 +44,16 @@ Options are compared by value, so inline arrays and objects such as
 
 - **In place:** the uniform-backed values — `rate`, `opacity`, `twinkle`,
   `perspective` and the force values (`forces.gravity`, `forces.drag`,
-  `forces.curl.*`, `forces.pointer.*`) — plus `color`, `palette`, `blend`,
+  `forces.curl.*`, `forces.pointer.*`) and the `sdf` placement and strengths
+  (`sdf.center`, `sdf.size`, `sdf.rotation`, `sdf.attract.*`,
+  `sdf.collide.bounce`) — plus `color`, `palette`, `blend`,
   `clock`, `timeSource` and `resolution`. The particles already on screen keep
   going. A `timeSource` is called through a stable wrapper, so an inline arrow
   function is fine.
 - **Recreated:** any other change (`preset`, `lifetime`, `size`, `sprite`,
-  `emitter`, which forces are present, `maxParticles`, `seed`…), removing one
+  `emitter`, which forces are present, `sdf.volume` (by identity), which of
+  `sdf.attract` / `sdf.collide` are present and `sdf.emit`, `maxParticles`,
+  `seed`…), removing one
   of the in-place values (so it falls back to the preset or default), and
   `recreateKey`. A new instance starts again from its prewarmed state.
 - **`rate` and the pool:** without `maxParticles` the pool is sized for the

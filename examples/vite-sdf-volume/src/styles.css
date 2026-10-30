@@ -126,3 +126,27 @@ input:focus-visible {
     width: 100%;
   }
 }
+
+.views {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.views a {
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.views a[aria-current="page"] {
+  color: #050508;
+  background: #e8e8ee;
+}
+
+.control[hidden] {
+  display: none;
+}

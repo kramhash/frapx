@@ -62,6 +62,15 @@ Oct 28, 2026 · @mark
 12. **`examples/vite-sdf-volume` の素材は `Suzanne.r8-zstd.sdf.ktx2`（212 KB）にし、展開は fzstd で行う。** fzstd は例のアプリの依存にだけ入れる。
     - r8 は表面から 8 ボクセルより遠い距離を頭打ちにする。そのため、帯より広い smooth union（`k` > 帯）は箱状に崩れる。例のブレンドは帯の幅（約 0.18）までにした。README の「Formats」に書いてある。
 
+## 2026-10-30 決定事項（#73 の実装中、本文より優先）
+
+13. **`frapx_sdVolumeGrad` は箱の外で「箱の上の最寄り点から推定した表面の点から、p へ向かう単位ベクトル」を返す。**
+    - `max(b, e − b)` の勾配をそのまま使うと、箱のすぐ外（b < e/2）で内向きになる。e − b が外へ行くほど小さくなるためで、粒子の attract が逆向きに押し、出現位置を表面へ寄せる処理も箱の外で止まった。値（決定事項 11）はレイマーチ用に下界のまま残す。
+    - あわせて、箱に clamp して引くだけの `frapx_sdVolumeSample` を公開した。
+14. **fx-particles では、勾配が 0 の場所で「箱の中心から外へ」を法線の代わりにする。** r8 は表面から帯の幅より離れた場所で値が頭打ちになり、勾配が消える。以前は法線の代わりに `(0, 1, 0)` を使っていたため、粒子が箱の底面に板状に溜まった。
+    - 出現位置を表面へ寄せる処理は、2 回ではなく「最大 8 回、ボクセルの 5% 以内に入ったら打ち切り」にした。
+    - `emit: "inside"` は箱の中の乱数点を 16 回試し、全部外れたら表面に出す。
+
 ## KTX2 の形式
 
 形式の正本は書き手の Blender Extension 側にある（`~/works/dev/blender/tools/3dsdf-texture/docs/format.md`）。読み手は viewer-three、Godot サンプル、frapx の 3 つになったので、2026-10-28 に frapx から移した。布置・key/value・メタの JSON スキーマ・`decode` の定義はそちらを見る。ここには frapx が読む範囲だけを書く。
@@ -97,5 +106,5 @@ Oct 28, 2026 · @mark
 |---|---|---|---|
 | — | Blender Extension に KTX2 の出力を足す（別リポジトリ `kramhash/3dsdf-texture`） | なし | 実装済み（2026-10-28）。0.1.0 は GitHub Releases で配布する |
 | [#71](https://github.com/kramhash/frapx/issues/71) | core に 3D データテクスチャ（fx-canvas / fx-passes）を足す | fx-canvas 1.0（#70） | PR #99 でマージ済み（未公開） |
-| [#72](https://github.com/kramhash/frapx/issues/72) | `@frapx/glsl-sdf-volume` を新設し、`examples/vite-sdf-volume` でレイマーチする。パッケージの README と docs から 3dsdf-texture へ「素材はこれで作れる」とリンクする | #71。実物の素材は KTX2 の出力が前提 | 未着手 |
+| [#72](https://github.com/kramhash/frapx/issues/72) | `@frapx/glsl-sdf-volume` を新設し、`examples/vite-sdf-volume` でレイマーチする。パッケージの README と docs から 3dsdf-texture へ「素材はこれで作れる」とリンクする | #71。実物の素材は KTX2 の出力が前提 | PR #100 でマージ済み（未公開） |
 | [#73](https://github.com/kramhash/frapx/issues/73) | fx-particles の `sdf`（引き寄せ・衝突・出現）と react-particles | #72 | 未着手 |

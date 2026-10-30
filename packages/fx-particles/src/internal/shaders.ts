@@ -1,4 +1,5 @@
 import { curl3d } from "@frapx/glsl-noise";
+import { sdfVolume } from "@frapx/glsl-sdf-volume";
 import type { ResolvedConfig } from "./config";
 
 // Particle state, three vec4 per particle, interleaved in one buffer:
@@ -26,9 +27,106 @@ float frapx_depthScale(float z) {
 }
 `;
 
-const forceCode = (config: ResolvedConfig): { uniforms: string; body: string; helpers: string } => {
+// A baked SDF placed in particle space. Depth uses the same units as x and y.
+// sdfCenter is [u, v, depth] like the pointer, so the shape's center shows at
+// that viewport position; sdfSize is its longest side; sdfRotation is Euler
+// radians applied x, then y, then z.
+const sdfCode = `
+uniform highp sampler3D u_sdfVolume;
+uniform vec3 u_sdfMin;
+uniform vec3 u_sdfMax;
+uniform float u_sdfScale;
+uniform float u_sdfOffset;
+uniform vec3 u_sdfCenter;
+uniform float u_sdfSize;
+uniform vec3 u_sdfRotation;
+${sdfVolume}
+
+mat3 frapx_sdfRotation;
+vec3 frapx_sdfOrigin;
+// Particle-space length of one volume unit.
+float frapx_sdfUnit;
+
+void frapx_sdfSetup() {
+  vec3 c = cos(u_sdfRotation);
+  vec3 s = sin(u_sdfRotation);
+  mat3 rx = mat3(1.0, 0.0, 0.0, 0.0, c.x, s.x, 0.0, -s.x, c.x);
+  mat3 ry = mat3(c.y, 0.0, -s.y, 0.0, 1.0, 0.0, s.y, 0.0, c.y);
+  mat3 rz = mat3(c.z, s.z, 0.0, -s.z, c.z, 0.0, 0.0, 0.0, 1.0);
+  frapx_sdfRotation = rz * ry * rx;
+  frapx_sdfOrigin = vec3(
+    (u_sdfCenter.xy - 0.5) * vec2(u_aspect, 1.0) / frapx_depthScale(u_sdfCenter.z),
+    u_sdfCenter.z
+  );
+  vec3 extent = u_sdfMax - u_sdfMin;
+  frapx_sdfUnit = u_sdfSize / max(max(extent.x, extent.y), max(extent.z, 1e-6));
+}
+
+vec3 frapx_toVolume(vec3 p) {
+  return (u_sdfMin + u_sdfMax) * 0.5 + transpose(frapx_sdfRotation) * (p - frapx_sdfOrigin) / frapx_sdfUnit;
+}
+
+vec3 frapx_fromVolume(vec3 q) {
+  return frapx_sdfOrigin + frapx_sdfRotation * (q - (u_sdfMin + u_sdfMax) * 0.5) * frapx_sdfUnit;
+}
+
+float frapx_sdfVolumeAt(vec3 q) {
+  return frapx_sdVolume(u_sdfVolume, q, u_sdfMin, u_sdfMax, u_sdfScale, u_sdfOffset);
+}
+
+// Where the gradient vanishes (an r8 volume saturates a few voxels from the
+// surface), point away from the box center so a pull still heads inward.
+vec3 frapx_sdfNormalAt(vec3 q) {
+  vec3 g = frapx_sdVolumeGrad(u_sdfVolume, q, u_sdfMin, u_sdfMax, u_sdfScale, u_sdfOffset);
+  float len = length(g);
+  if (len > 1e-6) return g / len;
+  vec3 outward = q - (u_sdfMin + u_sdfMax) * 0.5;
+  float outLen = length(outward);
+  return outLen > 1e-6 ? outward / outLen : vec3(0.0, 1.0, 0.0);
+}
+
+// Distance in particle space and the outward normal there.
+float frapx_sdfDistance(vec3 p, out vec3 normal) {
+  vec3 q = frapx_toVolume(p);
+  normal = frapx_sdfRotation * frapx_sdfNormalAt(q);
+  return frapx_sdfVolumeAt(q) * frapx_sdfUnit;
+}
+`;
+
+// A spawn position from the shape: a random point in its box, kept for
+// "inside" once one lands inside (up to 16 tries), then moved onto the surface
+// along the normal. Several moves, since an r8 volume saturates its distance
+// a few voxels from the surface.
+const sdfSpawnCode = (emit: "surface" | "inside") => `
+vec3 frapx_sdfSpawn(uint spawn) {
+  vec3 q = vec3(0.0);
+  float d = 1.0;
+  for (uint i = 0u; i < ${emit === "inside" ? "16u" : "1u"}; i++) {
+    q = mix(u_sdfMin, u_sdfMax, vec3(
+      frapx_random(spawn, 11u + 3u * i),
+      frapx_random(spawn, 12u + 3u * i),
+      frapx_random(spawn, 13u + 3u * i)
+    ));
+    d = frapx_sdfVolumeAt(q);
+    ${emit === "inside" ? "if (d < 0.0) return frapx_fromVolume(q);" : ""}
+  }
+  vec3 voxel = (u_sdfMax - u_sdfMin) / vec3(textureSize(u_sdfVolume, 0));
+  float tolerance = 0.05 * min(min(voxel.x, voxel.y), voxel.z);
+  for (int i = 0; i < 8; i++) {
+    if (abs(d) < tolerance) break;
+    q -= frapx_sdfNormalAt(q) * d;
+    d = frapx_sdfVolumeAt(q);
+  }
+  return frapx_fromVolume(q);
+}
+`;
+
+const forceCode = (
+  config: ResolvedConfig
+): { uniforms: string; body: string; post: string; helpers: string } => {
   const uniforms: string[] = [];
   const body: string[] = [];
+  const post: string[] = [];
   let helpers = "";
   if (config.forces.gravity) {
     uniforms.push("uniform vec3 u_gravity;");
@@ -59,7 +157,36 @@ const forceCode = (config: ResolvedConfig): { uniforms: string; body: string; he
       acceleration.xy += direction * u_pointerStrength * falloff * u_pointerActive / scale;
     }`);
   }
-  return { uniforms: uniforms.join("\n"), body: body.join("\n      "), helpers };
+  const sdf = config.sdf;
+  if (sdf?.attract) {
+    uniforms.push("uniform float u_sdfAttractStrength;", "uniform float u_sdfAttractFalloff;");
+    // A spring towards the surface from both sides; falloff > 0 limits its
+    // reach to that distance.
+    body.push(`{
+      vec3 normal;
+      float d = frapx_sdfDistance(position, normal);
+      float fade = u_sdfAttractFalloff > 0.0 ? 1.0 - smoothstep(0.0, u_sdfAttractFalloff, abs(d)) : 1.0;
+      acceleration -= normal * d * u_sdfAttractStrength * fade;
+    }`);
+  }
+  if (sdf?.collide) {
+    uniforms.push("uniform float u_sdfBounce;");
+    post.push(`{
+      vec3 normal;
+      float d = frapx_sdfDistance(position, normal);
+      if (d < 0.0) {
+        position -= normal * d;
+        float inward = dot(velocity, normal);
+        if (inward < 0.0) velocity -= (1.0 + u_sdfBounce) * inward * normal;
+      }
+    }`);
+  }
+  return {
+    uniforms: uniforms.join("\n"),
+    body: body.join("\n      "),
+    post: post.join("\n    "),
+    helpers
+  };
 };
 
 /** The transform feedback program's vertex shader: one step for every particle. */
@@ -95,6 +222,7 @@ ${config.forces.drag ? "uniform float u_drag;" : ""}
 ${forces.uniforms}
 ${common}
 ${forces.helpers}
+${config.sdf ? sdfCode : ""}
 
 uint frapx_hash(uint x) {
   x ^= x >> 16;
@@ -110,11 +238,13 @@ float frapx_random(uint spawn, uint channel) {
   uint h = frapx_hash(frapx_hash(spawn ^ frapx_hash(u_seed)) + channel * 0x9e3779b9u);
   return float(h >> 8) * (1.0 / 16777216.0);
 }
+${config.sdf?.emit ? sdfSpawnCode(config.sdf.emit) : ""}
 
 void main() {
   vec4 posAge = a_posAge;
   vec4 velLife = a_velLife;
   vec4 misc = a_misc;
+  ${config.sdf ? "frapx_sdfSetup();" : ""}
 
   // This step's spawns take consecutive slots of the ring from u_spawnSlot.
   uint slot = uint(gl_VertexID);
@@ -122,16 +252,20 @@ void main() {
 
   if (offset < u_spawnCount) {
     uint spawn = u_spawnBase + offset;
-    float z = mix(u_depthRange.x, u_depthRange.y, frapx_random(spawn, 0u));
+    ${
+      config.sdf?.emit
+        ? "vec3 spawnPosition = frapx_sdfSpawn(spawn);"
+        : `float z = mix(u_depthRange.x, u_depthRange.y, frapx_random(spawn, 0u));
     vec2 uv = mix(u_area.xy, u_area.zw, vec2(frapx_random(spawn, 1u), frapx_random(spawn, 2u)));
-    vec2 screen = (uv - 0.5) * vec2(u_aspect, 1.0);
+    vec3 spawnPosition = vec3((uv - 0.5) * vec2(u_aspect, 1.0) / frapx_depthScale(z), z);`
+    }
     vec3 velocity = mix(
       u_velocityMin,
       u_velocityMax,
       vec3(frapx_random(spawn, 3u), frapx_random(spawn, 4u), frapx_random(spawn, 5u))
     );
     float lifetime = mix(u_lifetime.x, u_lifetime.y, frapx_random(spawn, 6u));
-    posAge = vec4(screen / frapx_depthScale(z), z, 0.0);
+    posAge = vec4(spawnPosition, 0.0);
     velLife = vec4(velocity, lifetime);
     misc = vec4(
       frapx_random(spawn, 7u),
@@ -147,6 +281,7 @@ void main() {
     velocity += acceleration * u_dt;
     ${drag}
     position += velocity * u_dt;
+    ${forces.post}
     posAge = vec4(position, posAge.w + u_dt);
     velLife.xyz = velocity;
     misc.y += misc.z * u_dt;

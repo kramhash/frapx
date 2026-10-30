@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@frapx/core": "workspace:^",
-    "@frapx/glsl-noise": "workspace:^"
+    "@frapx/glsl-noise": "workspace:^",
+    "@frapx/glsl-sdf-volume": "workspace:^"
   },
   "devDependencies": {
     "@frapx/tool-capture": "workspace:*"

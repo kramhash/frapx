@@ -28,6 +28,7 @@ const NOT_STRUCTURE = new Set<string>([
   "palette",
   "blend",
   "forces",
+  "sdf",
   "clock",
   "timeSource",
   "resolution",
@@ -51,6 +52,13 @@ export const liveValuesOf = (options: UseParticlesOptions): LiveValues => {
   if (curl?.speed !== undefined) uniforms.curlSpeed = curl.speed;
   if (pointer?.strength !== undefined) uniforms.pointerStrength = pointer.strength;
   if (pointer?.radius !== undefined) uniforms.pointerRadius = pointer.radius;
+  const sdf = options.sdf;
+  if (sdf?.center !== undefined) uniforms.sdfCenter = sdf.center;
+  if (sdf?.size !== undefined) uniforms.sdfSize = sdf.size;
+  if (sdf?.rotation !== undefined) uniforms.sdfRotation = sdf.rotation;
+  if (sdf?.attract?.strength !== undefined) uniforms.sdfAttractStrength = sdf.attract.strength;
+  if (sdf?.attract?.falloff !== undefined) uniforms.sdfAttractFalloff = sdf.attract.falloff;
+  if (sdf?.collide?.bounce !== undefined) uniforms.sdfBounce = sdf.collide.bounce;
 
   const live: LiveValues = { uniforms };
   if (options.color !== undefined) live.color = options.color;
@@ -61,7 +69,9 @@ export const liveValuesOf = (options: UseParticlesOptions): LiveValues => {
 
 /**
  * Everything a change to which recreates the instance. Which forces are
- * present is structure; their values are live uniforms.
+ * present is structure; their values are live uniforms. For `sdf`, the volume
+ * (by identity), which of attract / collide are present and `emit` are
+ * structure; the placement and strengths are live.
  */
 export const structureOf = (options: UseParticlesOptions): Record<string, unknown> => {
   const structure: Record<string, unknown> = {};
@@ -72,6 +82,16 @@ export const structureOf = (options: UseParticlesOptions): Record<string, unknow
     structure.forces = Object.keys(options.forces).filter(
       (name) => options.forces?.[name as keyof typeof options.forces] !== undefined
     );
+  }
+  if (options.sdf) {
+    structure.sdf = {
+      // deepEqual compares the volume's typed array and uniforms() by
+      // identity, so another loaded volume recreates and the same one does not.
+      volume: options.sdf.volume,
+      attract: options.sdf.attract !== undefined,
+      collide: options.sdf.collide !== undefined,
+      emit: options.sdf.emit ?? null
+    };
   }
   return structure;
 };

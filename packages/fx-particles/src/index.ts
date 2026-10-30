@@ -17,6 +17,8 @@ export type {
   ParticleUniformName,
   ParticlesInstance,
   PointerForce,
+  SdfOptions,
+  SdfVolume,
   Range,
   Resolution,
   ShaderLayer,

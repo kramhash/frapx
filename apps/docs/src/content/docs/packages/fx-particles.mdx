@@ -60,6 +60,7 @@ Lengths are in viewport heights (1 is the canvas' height) and times in seconds. 
 | `forces.drag` | — | Velocity damping per second |
 | `forces.curl` | — | `{ strength, scale, speed }` (defaults 0.1, 1, 0.1): divergence-free swirl ([`curl3d`](/frapx/packages/glsl-noise/#curl-noise)) |
 | `forces.pointer` | — | `{ strength, radius }` (defaults 0.5, 0.2): push from the pointer; negative strength pulls |
+| `sdf` | — | Follow a baked SDF (WebGL2): attract to it, collide with it, spawn from it. See [Following a baked SDF](#following-a-baked-sdf) |
 | `size` | `[0.01, 0.02]` | Diameter range |
 | `sizeOverLife` | `"constant"` | `"fadeIn"`, `"fadeOut"` or `"fadeInOut"` |
 | `color` | white | A hex color, or stops over life: `["#fff0", "#fff", "#fff0"]` or `[[0.2, "#fff"], ...]` |
@@ -85,7 +86,7 @@ Which forces exist, the pool, the sprite, `sizeOverLife` and `tumble` are compil
 
 These values are uniforms. `setUniform(name, value)` changes one, and `bindUniforms(source)` drives them from a timeline such as `keyframes()` (re-exported here):
 
-- Simulation: `rate`, `gravity`, `drag`, `curlStrength`, `curlScale`, `curlSpeed`, `pointerStrength`, `pointerRadius`, `perspective`
+- Simulation: `rate`, `gravity`, `drag`, `curlStrength`, `curlScale`, `curlSpeed`, `pointerStrength`, `pointerRadius`, `perspective`, `sdfCenter`, `sdfSize`, `sdfRotation`, `sdfAttractStrength`, `sdfAttractFalloff`, `sdfBounce`
 - Drawing only: `opacity`, `twinkle`
 
 A force's uniforms only exist when that force was configured at creation: without `forces.curl`, setting `curlStrength` has no effect (`debug` warns).
@@ -116,6 +117,47 @@ particles.bindUniforms(
 ```
 
 `setColor()`, `setPalette()` and `setBlend()` change the look without touching the simulation.
+
+## Following a baked SDF
+
+`sdf` makes the particles follow a mesh baked in Blender with the [3dsdf-texture](https://github.com/kramhash/3dsdf-texture) extension and loaded with [`@frapx/glsl-sdf-volume`](/frapx/packages/glsl-sdf-volume/) — the "particles form the object" effect.
+
+```ts
+import { createParticles } from "@frapx/fx-particles";
+import { loadSdfVolume } from "@frapx/glsl-sdf-volume";
+
+const volume = await loadSdfVolume("/sdf/logo.r16f.sdf.ktx2");
+
+createParticles({
+  target: ".hero",
+  rate: 2500,
+  lifetime: [8, 12],
+  emitter: { depth: [0, 1] },
+  forces: { drag: 3 },
+  sdf: {
+    volume,
+    center: [0.5, 0.5, 0.5], // viewport UV and depth of the shape's center
+    size: 0.9, // longest box side, in viewport heights
+    rotation: [0, 0.4, 0], // Euler radians, applied x, then y, then z
+    attract: { strength: 24 }, // spring onto the surface; pair with drag
+    collide: { bounce: 0.2 } // keep out of the shape
+    // emit: "surface" | "inside" spawns from the shape instead of `emitter`
+  }
+});
+```
+
+| Field | Default | Uniform | |
+| --- | --- | --- | --- |
+| `volume` | — | — | From `loadSdfVolume()` |
+| `center` | `[0.5, 0.5, 0.5]` | `sdfCenter` | Where the shape's center shows: viewport UV (y up) and depth |
+| `size` | 0.5 | `sdfSize` | Longest side of the shape's box, in viewport heights. Depth uses the same units |
+| `rotation` | `[0, 0, 0]` | `sdfRotation` | Euler radians, applied x, then y, then z |
+| `attract.strength` | 8 | `sdfAttractStrength` | Acceleration per unit of distance from the surface, from both sides |
+| `attract.falloff` | 0 | `sdfAttractFalloff` | Distance at which the pull fades out; 0 pulls from anywhere |
+| `collide.bounce` | 0 | `sdfBounce` | Particles inside are moved onto the surface and keep this fraction of their inward speed |
+| `emit` | — | — | `"surface"` or `"inside"` (16 tries in the box, then the surface) instead of `emitter` |
+
+Which of `attract`, `collide` and `emit` are present is compiled into the simulation. The placement and strengths are uniforms, so `setUniform("sdfRotation", …)` or a `bindUniforms()` timeline turns the shape, and the manual clock stays reproducible. An `r8` volume stores distances only within a few voxels of the surface. Farther in its box, particles head for the box center until they reach that band, so prefer `r16f` when particles start far inside the box.
 
 ## Time, determinism and export
 

@@ -15,6 +15,7 @@ export default defineConfig({
       source("fx-canvas"),
       source("fx-particles"),
       source("glsl-noise"),
+      source("glsl-sdf-volume"),
       source("tool-capture")
     ]
   }

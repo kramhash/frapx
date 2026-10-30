@@ -2,6 +2,7 @@ import { act, StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Particles, useParticles, type ParticlesHandle } from "../src";
+import type { SdfOptions } from "@frapx/fx-particles";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean })
   .IS_REACT_ACT_ENVIRONMENT = true;
@@ -187,6 +188,39 @@ describe("Particles", () => {
     await render(<Particles preset="dust" lifetime={[2, 5]} forces={{ drag: 2, curl: {} }} />);
     expect(created()).toBe(4);
     expect(particlesMock.instances[2]!.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies sdf placement and strengths in place, and recreates for its structure", async () => {
+    const volume = { texture: { data: new Uint8Array(8), size: [2, 2, 2] }, uniforms: () => ({}), meta: {} };
+    const other = { texture: { data: new Uint8Array(8), size: [2, 2, 2] }, uniforms: () => ({}), meta: {} };
+    const sdf = (extra: Record<string, unknown>) =>
+      ({ volume, emit: "surface", attract: {}, ...extra }) as unknown as SdfOptions;
+
+    await render(<Particles sdf={sdf({ center: [0.5, 0.5, 0.5], attract: { strength: 4 } })} />);
+    await render(
+      <Particles
+        sdf={sdf({ center: [0.4, 0.5, 0.5], size: 0.6, rotation: [0, 1, 0], attract: { strength: 8, falloff: 0.1 } })}
+      />
+    );
+    expect(created()).toBe(1);
+    expect(latest().setUniforms).toHaveBeenCalledWith({
+      sdfCenter: [0.4, 0.5, 0.5],
+      sdfSize: 0.6,
+      sdfRotation: [0, 1, 0],
+      sdfAttractStrength: 8,
+      sdfAttractFalloff: 0.1
+    });
+
+    // Adding collide changes the generated simulation.
+    await render(<Particles sdf={sdf({ center: [0.4, 0.5, 0.5], size: 0.6, rotation: [0, 1, 0], attract: { strength: 8, falloff: 0.1 }, collide: {} })} />);
+    expect(created()).toBe(2);
+
+    // Another volume, even with the same shape of contents.
+    await render(<Particles sdf={sdf({ volume: other, center: [0.4, 0.5, 0.5], size: 0.6, rotation: [0, 1, 0], attract: { strength: 8, falloff: 0.1 }, collide: {} })} />);
+    expect(created()).toBe(3);
+
+    await render(<Particles sdf={sdf({ volume: other, emit: "inside", center: [0.4, 0.5, 0.5], size: 0.6, rotation: [0, 1, 0], attract: { strength: 8, falloff: 0.1 }, collide: {} })} />);
+    expect(created()).toBe(4);
   });
 
   it("recreates when a live value is dropped, and applies an added one in place", async () => {

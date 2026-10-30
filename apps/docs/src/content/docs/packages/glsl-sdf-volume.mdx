@@ -96,10 +96,12 @@ A file this version does not read fails with an error naming the field: the KTX2
 ```glsl
 float frapx_sdVolume(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset);
 vec3 frapx_sdVolumeGrad(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset);
+float frapx_sdVolumeSample(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset);
 ```
 
 - `frapx_sdVolume` is the signed distance at `p` (negative inside), in the units of the source object. Inside the box it is the sampled value `v * scale + offset`. Outside, with `b` the distance to the box and `e` the value at the nearest point on it, it is `max(b, e - b)`: both are lower bounds of the true distance, so sphere tracing from outside never steps through the surface.
-- `frapx_sdVolumeGrad` is the gradient from central differences one voxel apart. Normalize it for a surface normal.
+- `frapx_sdVolumeGrad` points away from the surface. Inside the box it is the gradient from central differences one voxel apart; normalize it for a surface normal. Outside it is the unit vector from the surface point nearest the box point to `p`. That is not the gradient of `frapx_sdVolume` there: `e - b` shrinks as `p` moves away from the box, so that gradient would point inward near it.
+- `frapx_sdVolumeSample` is the decoded value at `p` clamped into the box, with no distance added outside.
 - Placement is yours: transform `p` into the volume's space before the call (`p = inverse(rotation) * (p - position) / scale`) and multiply the result by `scale`.
 
 ## Formats
@@ -128,7 +130,7 @@ Compression pays off mainly for `r8` (about 20–30% of the file).
 
 ## Example
 
-[`examples/vite-sdf-volume`](https://github.com/kramhash/frapx/tree/main/examples/vite-sdf-volume) raymarches Suzanne from a zstd `r8` file and smooth-unions it with an orbiting sphere. `?still` shows it from the camera of 3dsdf-texture's three.js viewer.
+[`examples/vite-sdf-volume`](https://github.com/kramhash/frapx/tree/main/examples/vite-sdf-volume) raymarches Suzanne from a zstd `r8` file and smooth-unions it with an orbiting sphere. `?still` shows it from the camera of 3dsdf-texture's three.js viewer. `?view=particles` and `?view=surface` drive [`@frapx/fx-particles`](/frapx/packages/fx-particles/#following-a-baked-sdf) with the same volume.
 
 ## License
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `sdf` option: follow a baked SDF from `@frapx/glsl-sdf-volume` — `attract` (a spring onto the surface), `collide` (keep out, with `bounce`) and `emit: "surface" | "inside"` (spawn from the shape instead of `emitter`). Only the parts that are written are generated. The placement (`center`, `size`, `rotation`) and strengths are uniforms (`sdfCenter`, `sdfSize`, `sdfRotation`, `sdfAttractStrength`, `sdfAttractFalloff`, `sdfBounce`), so they move live and the manual clock stays reproducible. New types `SdfOptions` and `SdfVolume`. Depends on `@frapx/glsl-sdf-volume`.
+- Texture load warnings (such as an `r32f` volume falling back to nearest filtering) show under `debug`.
+
 ## 0.5.0 - 2026-10-30
 
 ### Added

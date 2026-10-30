@@ -75,6 +75,7 @@ const OPTION_KEYS = [
   "twinkle",
   "blend",
   "perspective",
+  "sdf",
   "maxParticles",
   "simulationRate",
   "prewarm",

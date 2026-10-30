@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Passes `sdf` through. Its placement and strengths change in place; another `volume` (by identity), adding or removing `attract` / `collide`, or a new `emit` recreates the instance.
+
 ## 0.5.0 - 2026-10-30
 
 ### Added

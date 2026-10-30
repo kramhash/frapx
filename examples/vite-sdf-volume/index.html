@@ -13,7 +13,12 @@
           <h1>Baked SDF volume</h1>
         </div>
         <div class="controls">
-          <label class="control">
+          <nav class="views">
+            <a href="./" data-view="raymarch">Raymarch</a>
+            <a href="./?view=particles" data-view="particles">Gather</a>
+            <a href="./?view=surface" data-view="surface">Surface</a>
+          </nav>
+          <label class="control" data-raymarch-only>
             <span>
               <span>Blend</span>
               <output data-blend-output>0.12</output>

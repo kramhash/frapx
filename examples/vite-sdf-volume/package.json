@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@frapx/fx-canvas": "workspace:*",
+    "@frapx/fx-particles": "workspace:*",
     "@frapx/glsl-raymarch": "workspace:*",
     "@frapx/glsl-sdf": "workspace:*",
     "@frapx/glsl-sdf-volume": "workspace:*",
