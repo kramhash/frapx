@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Restoring a lost WebGL context no longer logs `INVALID_OPERATION: delete` warnings: the stale fullscreen program is dropped with the context instead of being disposed against the restored one.
+
 ## 1.0.0 - 2026-10-30
 
 1.0: the API is now covered by SemVer. See the [migration guide](https://kramhash.github.io/frapx/migration/) for before/after code.
