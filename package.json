@@ -7,7 +7,7 @@
     "build": "pnpm -r --filter \"./packages/*\" build",
     "typecheck": "pnpm -r --filter \"./packages/*\" --filter \"./examples/*\" --filter \"./apps/*\" typecheck",
     "test": "pnpm -r --filter \"./packages/*\" test",
-    "test:e2e": "pnpm --filter @frapx/fx-canvas test:e2e && pnpm --filter @frapx/glsl-noise test:e2e && pnpm --filter @frapx/glsl-flowmap test:e2e && pnpm --filter @frapx/glsl-sdf test:e2e && pnpm --filter @frapx/glsl-raymarch test:e2e && pnpm --filter @frapx/tool-capture test:e2e && pnpm --filter @frapx/tool-render test:e2e && pnpm --filter @frapx/fx-passes test:e2e && pnpm --filter @frapx/fx-particles test:e2e && pnpm --filter @frapx/react-particles test:e2e",
+    "test:e2e": "pnpm --filter @frapx/fx-canvas test:e2e && pnpm --filter @frapx/glsl-noise test:e2e && pnpm --filter @frapx/glsl-flowmap test:e2e && pnpm --filter @frapx/glsl-sdf test:e2e && pnpm --filter @frapx/glsl-raymarch test:e2e && pnpm --filter @frapx/glsl-sdf-volume test:e2e && pnpm --filter @frapx/tool-capture test:e2e && pnpm --filter @frapx/tool-render test:e2e && pnpm --filter @frapx/fx-passes test:e2e && pnpm --filter @frapx/fx-particles test:e2e && pnpm --filter @frapx/react-particles test:e2e",
     "check:licenses": "node scripts/check-licenses.mjs",
     "dev": "pnpm --filter @frapx/example-vite-basic dev",
     "dev:flowmap": "pnpm --filter @frapx/flowmap-painter dev",

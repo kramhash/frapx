@@ -30,8 +30,7 @@ Oct 28, 2026 · @mark
    - `uniforms("sdf")` は `sdfMin` / `sdfMax`（vec3）と `sdfScale` / `sdfOffset`（float）を返す。
    - GLSL は `frapx_sdVolume(tex, p, min, max, scale, offset)` と `frapx_sdVolumeGrad(...)`。
    - 距離への変換は `d = v * scale + offset` で、GLSL に分岐を持たない。
-   - bbox の外では「箱までの距離＋箱の縁の値」を返す。
-     - **未解決（#72 で決める）:** この値はリプシッツ性から真の距離の上界で、過大評価になる。sphere tracing では、箱の角を斜めにかすめるレイが表面を踏み越えうる。案は 2 つ。1 つはレイを箱との交差点まで先に進めてから内側だけをマーチする（3dsdf-texture の viewer と Godot サンプルはこの形）。もう 1 つは、箱の外では箱までの距離だけを返す（下界なので安全だが、歩幅は小さくなる）。粒子の引き寄せでは上界でも実害は小さい。
+   - bbox の外で返す値は決定事項 11 に置き換えた（当初の「箱までの距離＋箱の縁の値」は上界で、踏み越えが起きる）。
    - 配置は、呼ぶ前に利用者が `p` を変換する。
 8. **fx-particles に `sdf` オプションを足す。**
    - 形は `{ volume, center: [u, v, depth], size, rotation, attract: { strength, falloff }, collide: { bounce }, emit: "surface" | "inside" }`。
@@ -52,6 +51,16 @@ Oct 28, 2026 · @mark
     - scheme 2 なのに `zstd` が無いときは、「`zstd` オプションが要る」と書いたエラーにする。
     - 展開後の長さが `uncompressedByteLength` と違うときもエラーにする。
     - 3dsdf-texture の viewer-three は、同じ形（`loadSdf(url, { zstd })` に fzstd を渡す）で実装済み。
+
+## 2026-10-30 決定事項（本文より優先）
+
+11. **`frapx_sdVolume` は bbox の外で `max(b, e − b)` を返す。** b は点から箱までの距離、e は箱の上の最寄り点で引いた値。
+    - b は「形が箱の中にある」ことから、e − b は「距離関数の傾きが 1 以下」であることから、どちらも真の距離の下界になる。sphere tracing で表面を踏み越えない。
+    - 箱の近くでは e − b が効くので、b だけを返すより歩幅が大きい。
+    - レイを先に箱まで進める形（viewer-three）は採らない。`frapx_map` で他の形と合成する使い方と噛み合わないため。
+    - 当初の b + e は上界。GPU e2e で、b + e に差し替えると下界のテストが落ちることを確認した。
+12. **`examples/vite-sdf-volume` の素材は `Suzanne.r8-zstd.sdf.ktx2`（212 KB）にし、展開は fzstd で行う。** fzstd は例のアプリの依存にだけ入れる。
+    - r8 は表面から 8 ボクセルより遠い距離を頭打ちにする。そのため、帯より広い smooth union（`k` > 帯）は箱状に崩れる。例のブレンドは帯の幅（約 0.18）までにした。README の「Formats」に書いてある。
 
 ## KTX2 の形式
 
@@ -87,6 +96,6 @@ Oct 28, 2026 · @mark
 | Issue | 内容 | 依存 | 状態 |
 |---|---|---|---|
 | — | Blender Extension に KTX2 の出力を足す（別リポジトリ `kramhash/3dsdf-texture`） | なし | 実装済み（2026-10-28）。0.1.0 は GitHub Releases で配布する |
-| [#71](https://github.com/kramhash/frapx/issues/71) | core に 3D データテクスチャ（fx-canvas / fx-passes）を足す | fx-canvas 1.0（#70） | 未着手 |
+| [#71](https://github.com/kramhash/frapx/issues/71) | core に 3D データテクスチャ（fx-canvas / fx-passes）を足す | fx-canvas 1.0（#70） | PR #99 でマージ済み（未公開） |
 | [#72](https://github.com/kramhash/frapx/issues/72) | `@frapx/glsl-sdf-volume` を新設し、`examples/vite-sdf-volume` でレイマーチする。パッケージの README と docs から 3dsdf-texture へ「素材はこれで作れる」とリンクする | #71。実物の素材は KTX2 の出力が前提 | 未着手 |
 | [#73](https://github.com/kramhash/frapx/issues/73) | fx-particles の `sdf`（引き寄せ・衝突・出現）と react-particles | #72 | 未着手 |
