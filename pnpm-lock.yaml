@@ -528,6 +528,31 @@ importers:
         specifier: ^6.3.5
         version: 6.4.3(@types/node@24.13.2)(lightningcss@1.32.0)(yaml@2.9.0)
 
+  examples/vite-sdf-volume:
+    dependencies:
+      '@frapx/fx-canvas':
+        specifier: workspace:*
+        version: link:../../packages/fx-canvas
+      '@frapx/glsl-raymarch':
+        specifier: workspace:*
+        version: link:../../packages/glsl-raymarch
+      '@frapx/glsl-sdf':
+        specifier: workspace:*
+        version: link:../../packages/glsl-sdf
+      '@frapx/glsl-sdf-volume':
+        specifier: workspace:*
+        version: link:../../packages/glsl-sdf-volume
+      fzstd:
+        specifier: ^0.1.1
+        version: 0.1.1
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.3.5
+        version: 6.4.3(@types/node@24.13.2)(lightningcss@1.32.0)(yaml@2.9.0)
+
   examples/vite-timeline:
     dependencies:
       '@frapx/fx-passes':
@@ -599,6 +624,12 @@ importers:
         version: link:../glsl-sdf
 
   packages/glsl-sdf: {}
+
+  packages/glsl-sdf-volume:
+    devDependencies:
+      '@frapx/fx-canvas':
+        specifier: workspace:*
+        version: link:../fx-canvas
 
   packages/react-canvas:
     dependencies:
@@ -2616,6 +2647,9 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
+  fzstd@0.1.1:
+    resolution: {integrity: sha512-dkuVSOKKwh3eas5VkJy1AW1vFpet8TA/fGmVA5krThl8YcOVE/8ZIoEA1+U1vEn5ckxxhLirSdY837azmbaNHA==}
+
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
@@ -3910,16 +3944,22 @@ packages:
     resolution: {integrity: sha512-9K2k72s4n7rV9s4bX0MyjbX9iBribvKZbBJKuEmTCZfeWJXs6Yh7bGpY4eoc7UufAjvpheBqwyZCOIPBvxCv0A==}
     peerDependencies:
       '@volar/language-service': ~2.4.0
+      typescript: '*'
     peerDependenciesMeta:
       '@volar/language-service':
+        optional: true
+      typescript:
         optional: true
 
   volar-service-typescript@0.0.71:
     resolution: {integrity: sha512-yTtM/BVT6hoyEYnDtaCyAtNhdNeS/mhTTABlBOdw3NNiRBUin3IznFJpgfjer4c6RYopiPjjQjc9VFhxVl1mLw==}
     peerDependencies:
       '@volar/language-service': ~2.4.0
+      typescript: '*'
     peerDependenciesMeta:
       '@volar/language-service':
+        optional: true
+      typescript:
         optional: true
 
   volar-service-yaml@0.0.71:
@@ -4185,8 +4225,8 @@ snapshots:
       volar-service-emmet: 0.0.71(@volar/language-service@2.4.28)
       volar-service-html: 0.0.71(@volar/language-service@2.4.28)
       volar-service-prettier: 0.0.71(@volar/language-service@2.4.28)(prettier@3.9.5)
-      volar-service-typescript: 0.0.71(@volar/language-service@2.4.28)
-      volar-service-typescript-twoslash-queries: 0.0.71(@volar/language-service@2.4.28)
+      volar-service-typescript: 0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3)
+      volar-service-typescript-twoslash-queries: 0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3)
       volar-service-yaml: 0.0.71(@volar/language-service@2.4.28)
       vscode-html-languageservice: 5.6.2
       vscode-uri: 3.1.0
@@ -5911,6 +5951,8 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  fzstd@0.1.1: {}
 
   gensync@1.0.0-beta.2: {}
 
@@ -7654,13 +7696,14 @@ snapshots:
       '@volar/language-service': 2.4.28
       prettier: 3.9.5
 
-  volar-service-typescript-twoslash-queries@0.0.71(@volar/language-service@2.4.28):
+  volar-service-typescript-twoslash-queries@0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3):
     dependencies:
       vscode-uri: 3.1.0
     optionalDependencies:
       '@volar/language-service': 2.4.28
+      typescript: 5.9.3
 
-  volar-service-typescript@0.0.71(@volar/language-service@2.4.28):
+  volar-service-typescript@0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3):
     dependencies:
       path-browserify: 1.0.1
       semver: 7.8.5
@@ -7670,6 +7713,7 @@ snapshots:
       vscode-uri: 3.1.0
     optionalDependencies:
       '@volar/language-service': 2.4.28
+      typescript: 5.9.3
 
   volar-service-yaml@0.0.71(@volar/language-service@2.4.28):
     dependencies:

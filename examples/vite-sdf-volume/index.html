@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frapx SDF Volume Example</title>
+  </head>
+  <body>
+    <main class="app">
+      <header class="bar">
+        <div>
+          <p class="eyebrow">Example</p>
+          <h1>Baked SDF volume</h1>
+        </div>
+        <div class="controls">
+          <label class="control">
+            <span>
+              <span>Blend</span>
+              <output data-blend-output>0.12</output>
+            </span>
+            <!-- r8 stores distances only within 8 voxels (about 0.18 here); a
+                 wider blend reaches the saturated values and turns boxy. -->
+            <input data-blend type="range" min="0" max="0.18" step="0.01" value="0.12" />
+          </label>
+        </div>
+      </header>
+      <section class="panel" data-panel>
+        <span class="tag" data-tag>Loading Suzanne…</span>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

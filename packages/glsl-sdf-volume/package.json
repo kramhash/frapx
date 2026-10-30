@@ -1,0 +1,51 @@
+{
+  "name": "@frapx/glsl-sdf-volume",
+  "version": "0.1.0",
+  "description": "Baked 3D signed distance fields for frapx shaders — load .sdf.ktx2 volumes from the 3dsdf-texture Blender extension and sample them in GLSL.",
+  "keywords": [
+    "webgl",
+    "webgl2",
+    "shader",
+    "glsl",
+    "sdf",
+    "signed-distance-field",
+    "raymarching",
+    "ktx2",
+    "blender"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@frapx/fx-canvas": "workspace:*"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kramhash/frapx.git",
+    "directory": "packages/glsl-sdf-volume"
+  },
+  "homepage": "https://kramhash.github.io/frapx/packages/glsl-sdf-volume/",
+  "bugs": {
+    "url": "https://github.com/kramhash/frapx/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

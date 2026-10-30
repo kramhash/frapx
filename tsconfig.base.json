@@ -20,6 +20,7 @@
       "@frapx/react-canvas": ["./packages/react-canvas/src/index.ts"],
       "@frapx/glsl-noise": ["./packages/glsl-noise/src/index.ts"],
       "@frapx/glsl-flowmap": ["./packages/glsl-flowmap/src/index.ts"],
+      "@frapx/glsl-sdf-volume": ["./packages/glsl-sdf-volume/src/index.ts"],
       "@frapx/fx-particles": ["./packages/fx-particles/src/index.ts"],
       "@frapx/react-particles": ["./packages/react-particles/src/index.ts"]
     }

@@ -64,8 +64,9 @@ never need to guess:
 		shader — not a runtime, no instantiation. **[`@frapx/glsl-noise`](/frapx/packages/glsl-noise/)**
 		(3D noise), **[`@frapx/glsl-flowmap`](/frapx/packages/glsl-flowmap/)**
 		(flowmap decode/advection), **[`@frapx/glsl-sdf`](/frapx/packages/glsl-sdf/)**
-		(2D/3D signed distance functions) and **[`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/)**
-		(raymarching loop, shadows and camera rays) are available today.
+		(2D/3D signed distance functions), **[`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/)**
+		(raymarching loop, shadows and camera rays) and **[`@frapx/glsl-sdf-volume`](/frapx/packages/glsl-sdf-volume/)**
+		(meshes baked in Blender as 3D SDFs) are available today.
 	</Card>
 	<Card title="tool-* — tools" icon="download">
 		Export and production utilities built on an `fx-*` instance, not effects
@@ -93,6 +94,7 @@ never need to guess:
 | Distort a texture with a painted flowmap | `@frapx/glsl-flowmap` (WebGL2 / GLSL ES 3.00) |
 | Draw shapes with signed distance functions | `@frapx/glsl-sdf` |
 | Raymarch a 3D scene with shadows, occlusion and a camera | `@frapx/glsl-raymarch` + `@frapx/glsl-sdf` |
+| Raymarch a mesh baked in Blender, or blend it with SDF shapes | `@frapx/glsl-sdf-volume` (WebGL2) + `@frapx/glsl-raymarch` |
 | Export my shader as a PNG sequence for video | `@frapx/fx-canvas` + `@frapx/tool-capture` |
 | Render hours-long frame sequences from the command line, then encode with ffmpeg | `@frapx/tool-capture` in the page + `@frapx/tool-render` |
 | Edit shaders with hot reload and see compile errors on the page | `setFragment()` (built in) + `@frapx/tool-dev` |
