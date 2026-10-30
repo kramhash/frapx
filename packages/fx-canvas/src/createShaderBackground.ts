@@ -180,7 +180,10 @@ class ShaderBackground<TUniforms extends UniformInputMap>
       },
 
       onReady: () => options.onReady?.(this),
-      ...(options.onError !== undefined && { onError: options.onError })
+      ...(options.onError !== undefined && { onError: options.onError }),
+      ...(options.onStatusChange !== undefined && {
+        onStatusChange: options.onStatusChange
+      })
     });
 
     this.ready = this.host.ready;
@@ -644,6 +647,6 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   private warnUnknownUniform(name: string): void {
     if (!this.options.debug || this.warnedUniforms.has(name)) return;
     this.warnedUniforms.add(name);
-    console.warn(`[frapx/shader] Uniform not found or optimized out: ${name}`);
+    console.warn(`[frapx/fx-canvas] Uniform not found or optimized out: ${name}`);
   }
 }

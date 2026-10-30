@@ -144,6 +144,11 @@ rejections when `ready` is left unhandled, even with `onError`.
 but also after `setResolution()`), for work that depends on the size, such as
 picking a quality level.
 
+`onStatusChange(status)` runs with the new value each time `fx.status` changes
+(for example `"paused"` in a hidden tab, or `"context-lost"`), so a page can
+show a fallback without polling. It is never called for the initial `"idle"`;
+the first call, `"loading"`, comes after `createShaderBackground()` returns.
+
 `hexToRgb("#7dd3fc")` and `hexToRgba("#0f172acc")` turn hex colors into
 `vec3` / `vec4` uniform values, and `glslUtils` (from `@frapx/fx-canvas/glsl`)
 holds small GLSL snippets such as `glslUtils.coverUv` for cover-fitting an

@@ -4,7 +4,12 @@
 
 ### Added
 
+- `onStatusChange(status)` option, via `@frapx/core`: a page can follow `running` / `paused` / `context-lost` and the rest without polling `status`. Not called for the initial `"idle"`; the first call, `"loading"`, comes after `createShaderBackground()` returns.
 - `time` on the instance: the time of the last frame drawn — the value `setTime()` would need to reproduce that frame. While gated it is the time the loop stopped at, and with a `timeSource` it is the last value read from the source. Lets a page read back where the picture is, for example to start audio at the same position or to render a frame counter.
+
+### Changed
+
+- Debug warnings start with `[frapx/fx-canvas]` instead of the pre-rename `[frapx/shader]`.
 
 ## 0.11.0 - 2026-10-23
 

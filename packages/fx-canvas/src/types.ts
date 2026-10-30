@@ -193,6 +193,13 @@ export type CreateShaderBackgroundOptions<
   onAfterRender?: (state: RenderState<TUniforms>) => void;
   /** Called whenever the observed size actually changes (not every frame). */
   onResize?: (state: RenderState<TUniforms>) => void;
+  /**
+   * Called synchronously each time `status` changes value, with the new
+   * value. Not called for the initial `"idle"`. Initialization starts on a
+   * microtask after creation, so the first call (`"loading"`, `"unsupported"`
+   * or `"destroyed"`) never happens before `createShaderBackground` returns.
+   */
+  onStatusChange?: (status: ShaderStatus) => void;
 };
 
 export type ShaderBackgroundInstance<

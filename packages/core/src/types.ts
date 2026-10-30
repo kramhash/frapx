@@ -243,6 +243,13 @@ export type RuntimeHostOptions = {
 
   onReady?: () => void;
   onError?: (error: Error) => void;
+  /**
+   * Called synchronously each time `status` changes value, with the new
+   * value. Not called for the initial `"idle"`. Initialization starts on a
+   * microtask after creation, so the first call (`"loading"`, `"unsupported"`
+   * or `"destroyed"`) never happens before the factory returns.
+   */
+  onStatusChange?: (status: ShaderStatus) => void;
 };
 
 export type RuntimeHostInstance = {

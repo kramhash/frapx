@@ -403,11 +403,14 @@ createShaderBackground({
   onError(error) {},
   onBeforeRender(state) {},
   onAfterRender(state) {},
-  onResize(state) {}
+  onResize(state) {},
+  onStatusChange(status) {}
 });
 ```
 
 `onResize(state)` is called with the same `RenderState` as the render hooks whenever the render size actually changes: not on setup, nor every frame, but also after `setResolution()`. A resize requested during `captureFrame()` waits until the capture ends.
+
+`onStatusChange(status)` is called with the new value each time `fx.status` changes, for example `"paused"` when the tab is hidden or `"context-lost"` when the GPU drops the context, so a page can show a fallback without polling. It is called synchronously at the change and only when the value actually changes. It is never called for the initial `"idle"`: initialization starts on a microtask after `createShaderBackground()` returns, so the first call (`"loading"`) always comes after the instance exists.
 
 `layer: "background"` inserts the canvas as the first child with `z-index: 0`. `layer: "overlay"` inserts it as the last child with `z-index: 1`. Existing child styles are not changed.
 

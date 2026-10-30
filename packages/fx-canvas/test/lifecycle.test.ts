@@ -202,6 +202,23 @@ describe("lifecycle gates", () => {
     expect(fx.status).toBe("running");
   });
 
+  it("reports status changes through onStatusChange", async () => {
+    const onStatusChange = vi.fn();
+    const fx = create({ onStatusChange });
+    await fx.ready;
+
+    setHidden(true);
+    setHidden(false);
+
+    expect(onStatusChange.mock.calls.flat()).toEqual([
+      "loading",
+      "ready",
+      "running",
+      "paused",
+      "running"
+    ]);
+  });
+
   it("pauses while offscreen, resumes when back on screen", async () => {
     const fx = create();
     await fx.ready;
