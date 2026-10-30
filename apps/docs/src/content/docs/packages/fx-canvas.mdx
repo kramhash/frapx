@@ -81,7 +81,6 @@ with `{ format: "rgba8" }` (`Uint8Array`) and `{ format: "rgba16f" }`
 const fx = createShaderBackground({
   target: ".hero",
   fragment,
-  respectReducedMotion: true,
   timeSource: () => transport.getPositionMs() / 1000 // seconds
 });
 ```
@@ -172,7 +171,7 @@ safe.
 | `"loading"` | The context exists; shaders, feedback and initial textures are being set up. |
 | `"ready"` | Setup finished. Stays here only with `autoStart: false` until `start()`. |
 | `"running"` | The render loop runs (in `"demand"` mode: it draws on changes). |
-| `"paused"` | After `stop()`, under a manual clock, or while offscreen, hidden or (with `respectReducedMotion`) under reduced motion. |
+| `"paused"` | After `stop()`, under a manual clock, or while offscreen, hidden or under reduced motion (unless `respectReducedMotion: false`). |
 | `"context-lost"` | The GPU dropped the context; it returns to running or paused when restored. |
 | `"error"` | Setup failed, such as a first shader that did not compile. Final. |
 | `"unsupported"` | No browser, no WebGL (or WebGL2 for GLSL ES 3.00), a missing `target`, or a size or format the GPU cannot provide. Final. |

@@ -77,20 +77,39 @@ export const setupCanvas = (options: SetupCanvasOptions): DomSetup | null => {
   };
 };
 
+/**
+ * `"auto"` follows `devicePixelRatio`, capped by `maxDpr` (default 2). A
+ * number or function is used as given and capped only when `maxDpr` is set.
+ * Values below 1 are allowed; `<= 0` or non-finite throws `RangeError`.
+ */
 export const resolveDpr = (
   dpr: DprOption | undefined,
   maxDpr: number | undefined
 ): number => {
-  const raw =
-    typeof dpr === "function"
-      ? dpr()
-      : typeof dpr === "number"
-        ? dpr
-        : typeof window === "undefined"
-          ? 1
-          : window.devicePixelRatio || 1;
+  if (dpr === undefined || dpr === "auto") {
+    const device =
+      typeof window === "undefined" ? 1 : window.devicePixelRatio || 1;
+    return Math.min(device, assertPositive("maxDpr", maxDpr ?? 2));
+  }
 
-  return Math.max(1, Math.min(raw, maxDpr ?? 2));
+  const raw = assertPositive("dpr", typeof dpr === "function" ? dpr() : dpr);
+  return maxDpr === undefined ? raw : Math.min(raw, assertPositive("maxDpr", maxDpr));
+};
+
+/** Checks the static parts of the dpr options; a `dpr` function is checked when it is called. */
+export const assertDprOptions = (
+  dpr: DprOption | undefined,
+  maxDpr: number | undefined
+): void => {
+  if (typeof dpr === "number") assertPositive("dpr", dpr);
+  if (maxDpr !== undefined) assertPositive("maxDpr", maxDpr);
+};
+
+const assertPositive = (name: string, value: number): number => {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new RangeError(`\`${name}\` must be a finite number above 0, got ${value}`);
+  }
+  return value;
 };
 
 export const resizeCanvasToTarget = (

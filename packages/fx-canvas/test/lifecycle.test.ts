@@ -295,9 +295,16 @@ describe("reduced motion", () => {
     expect(fx.status).toBe("running");
   });
 
-  it("does not pause when reduced motion is active but not respected", async () => {
+  it("respects reduced motion by default", async () => {
     mediaMatches = true;
     const fx = create();
+    await fx.ready;
+    expect(fx.status).toBe("paused");
+  });
+
+  it("does not pause when reduced motion is active but not respected", async () => {
+    mediaMatches = true;
+    const fx = create({ respectReducedMotion: false });
     await fx.ready;
     expect(fx.status).toBe("running");
   });
@@ -306,6 +313,7 @@ describe("reduced motion", () => {
     mediaMatches = true;
     let observed: boolean | null = null;
     const fx = create({
+      respectReducedMotion: false,
       onBeforeRender: (state: RenderState) => {
         observed = state.reducedMotion;
       }

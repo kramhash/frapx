@@ -2,19 +2,6 @@ export { createShaderBackground } from "./createShaderBackground";
 export { hexToRgb, hexToRgba } from "./color";
 export type { Rgb, Rgba } from "./color";
 export { glsl, glslUtils } from "./glsl";
-export {
-  createBlitter,
-  createPingPong,
-  createRenderTarget,
-  supportsRenderTargetFormat
-} from "./blit";
-export type {
-  Blitter,
-  PingPong,
-  RenderTarget,
-  RenderTargetFormat,
-  RenderTargetOptions
-} from "./blit";
 export type {
   CaptureFormat,
   CaptureOptions,

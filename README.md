@@ -36,7 +36,6 @@ import { createShaderBackground, glsl } from "@frapx/fx-canvas";
 
 createShaderBackground({
   target: ".hero",
-  respectReducedMotion: true,
   fragment: glsl`
     precision highp float;
     uniform vec2 u_resolution;

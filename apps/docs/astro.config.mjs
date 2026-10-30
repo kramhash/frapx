@@ -52,7 +52,7 @@ export default defineConfig({
         },
         { label: "Live Demo", slug: "live-demo" },
         { label: "Showcase", slug: "showcase" },
-        { label: "Migrating from old package names", slug: "migration" },
+        { label: "Migration guide", slug: "migration" },
       ],
     }),
   ],

@@ -170,7 +170,7 @@ test("pauses drawing while hidden with a time source", async ({ page }) => {
 
 test("holds a frame under reduced motion with a time source", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/?timeSource=1&reducedMotion=1");
+  await page.goto("/?timeSource=1");
   await waitReady(page);
   await expect.poll(() => status(page)).toBe("paused");
 

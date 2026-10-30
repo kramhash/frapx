@@ -177,7 +177,8 @@ const fx = createShaderBackground({
     progress: 0
   },
   debug: true,
-  respectReducedMotion: params.get("reducedMotion") === "1",
+  // Reduced motion is respected by default; ?reducedMotion=0 opts out.
+  ...(params.get("reducedMotion") === "0" && { respectReducedMotion: false }),
   onAfterRender({ gl, width, height }) {
     const pixel = new Uint8Array(4);
     // Float framebuffers cannot be read as UNSIGNED_BYTE; leave the sample empty.

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Breaking:** `dpr` is used as given, via `@frapx/core`: `"auto"` is still capped by `maxDpr` (default 2), but a number or function is capped only when `maxDpr` is set, and values below 1 are allowed. `dpr` or `maxDpr` `<= 0` or non-finite throws `RangeError`. Pass `maxDpr` to keep the old cap. `respectReducedMotion` still defaults to `false` here.
+
 ## 0.5.0 - 2026-10-30
 
 ### Added

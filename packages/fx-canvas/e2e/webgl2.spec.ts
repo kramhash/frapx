@@ -8,7 +8,7 @@ type FrapxWindow = typeof window & {
 test("renders a non-empty shader canvas with GLSL ES 3.00 (WebGL2)", async ({ page }) => {
   await page.goto("/?webgl2=1");
 
-  const canvas = page.locator("[data-frapx-shader-canvas]");
+  const canvas = page.locator("[data-frapx-canvas]");
   await expect(canvas).toBeVisible();
 
   await expect

@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+1.0, on `@frapx/fx-canvas` 1.0. See the [migration guide](https://kramhash.github.io/frapx/migration/) for before/after code.
+
+### Changed
+
+- **Breaking:** `respectReducedMotion` defaults to `true`, via fx-canvas: under the OS "reduce motion" setting the picture holds a still frame. Pass `respectReducedMotion={false}` to keep animating.
+- **Breaking:** `dpr` is used as given, via fx-canvas: a number or function is capped only when `maxDpr` is set, and values below 1 are allowed. `dpr` or `maxDpr` `<= 0` or non-finite throws `RangeError`.
+- **Breaking:** the canvas no longer carries `data-frapx-shader-canvas`; use `data-frapx-canvas`.
+
 ## 0.9.0 - 2026-10-30
 
 ### Added
