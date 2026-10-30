@@ -38,7 +38,7 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
 
 ## 2026-10-30 決定事項（その 2。Phase 2 の本文より優先）
 
-15. **P2 の前に 2 つを済ませる。** 順番は ① 1.0 の積み残しとバグ（#78、#85、#86）→ ② SDF volume（#71→#72→#73、`docs/frapx_sdf_volume.md`）→ ③ P2。① と ② は別々に公開する。① の範囲は `docs/frapx_1.0_api_inventory.md` の「2026-10-30 決定事項（その 2）」にある。
+15. **P2 の前に 2 つを済ませる。** 順番は ① 1.0 の積み残しとバグ（#78 は外部の PR #84 でマージ済み、#85、#86）→ ② SDF volume（#71→#72→#73、`docs/frapx_sdf_volume.md`）→ ③ P2。① と ② は別々に公開する。① の範囲は `docs/frapx_1.0_api_inventory.md` の「2026-10-30 決定事項（その 2）」にある。
 16. **v1 の範囲は決定 4 のまま。** feedback、テクスチャ、焼いた SDF（glsl-sdf-volume）は入れない。焼いた SDF のスターターは、公開後の v1.1 の候補にする。glsl-sdf は v1 に入る。
 17. **土台は `apps/playground`（React 19 + Vite）。** flowmap-painter と同じ型で作る。プレビューは `createShaderBackground` を直接使い、編集は `setFragment` で差し替える。作り直すのは `#version` が変わったときだけ。
 18. **エディタは CodeMirror 6。** 2026-10-30 に承認を得た。依存はアプリの中だけ。

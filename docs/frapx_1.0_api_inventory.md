@@ -60,7 +60,7 @@ Oct 28, 2026 · @mark
 
     機能の差は入れない（particles の `onResize` / `renderMode`、passes の `onBeforeRender` / `onAfterRender`）。要望が出たら別の issue にする。
 26. **react-particles の `status` は `onStatusChange` で追従する（#86、#85 に依存）。** react-canvas と同じ形にする。
-27. **#78（コンテキストの復帰で出る INVALID_OPERATION の警告）は、good first issue だが自分で直す。**
+27. **#78（コンテキストの復帰で出る INVALID_OPERATION の警告）は、外部からの PR #84（bfs2021）で直した。** 2026-10-30 にマージした。最初は自分で直すと決めていたが、その時点で外部の PR が出ていたので、そちらを採用した。テクスチャで起きる同じ種類の問題は #95（good first issue）にした。① の公開は #95 を待たない。
 28. **決定 19 の (d)(e)(f) は good first issue として残す（#87〜#89）。** 自分では着手しない。
 29. **公開は 1 回にまとめる。** fx-canvas 1.0.1、fx-passes 0.7、fx-particles 0.5、react-particles 0.5。
 
