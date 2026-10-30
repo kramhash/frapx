@@ -142,7 +142,7 @@ class RuntimeHost implements RuntimeHostInstance {
     this.running = false;
     this.cancelFrame();
     if (!this.destroyed && this.currentStatus !== "unsupported") {
-      this.currentStatus = "paused";
+      this.setStatus("paused");
     }
   }
 
@@ -311,7 +311,7 @@ class RuntimeHost implements RuntimeHostInstance {
       (dom.target as HTMLElement).style.position = dom.restoredPosition!;
     }
 
-    this.currentStatus = "destroyed";
+    this.setStatus("destroyed");
     this.markReadyHandled();
     this.readyReject?.(new DestroyedError("Runtime host was destroyed."));
   }
@@ -376,37 +376,39 @@ class RuntimeHost implements RuntimeHostInstance {
     this.reconcile();
   }
 
-  private reconcile(): void {
+  // `restoring` lets a restored context leave "context-lost" straight to what
+  // the gates allow, so the status never passes through a stale value.
+  private reconcile(restoring = false): void {
     if (
       this.destroyed ||
       this.currentStatus === "unsupported" ||
       this.currentStatus === "error" ||
-      this.currentStatus === "context-lost"
+      (this.currentStatus === "context-lost" && !restoring)
     ) {
       return;
     }
 
     if (this.isManual) {
       this.cancelFrame();
-      this.currentStatus = "paused";
+      this.setStatus("paused");
       return;
     }
 
     if (this.running) {
       if (this.hasVisibilityBlock) {
         this.cancelFrame();
-        this.currentStatus = "paused";
+        this.setStatus("paused");
         return;
       }
 
       if (this.hasMotionBlock) {
         this.cancelFrame();
-        this.currentStatus = "paused";
+        this.setStatus("paused");
         this.renderStaticFrame();
         return;
       }
 
-      this.currentStatus = "running";
+      this.setStatus("running");
       if (this.options.renderMode === "demand") this.render();
       else this.scheduleFrame();
       return;
@@ -675,7 +677,9 @@ class RuntimeHost implements RuntimeHostInstance {
     }
 
     this.context = gl;
-    this.currentStatus = "loading";
+    this.setStatus("loading");
+    // onStatusChange may have destroyed the host.
+    if (this.destroyed) return;
 
     try {
       this.applyObjectFit();
@@ -684,7 +688,8 @@ class RuntimeHost implements RuntimeHostInstance {
       this.measureSize();
       await this.options.onInit(gl, this.width, this.height);
       if (this.destroyed) return;
-      this.currentStatus = "ready";
+      this.setStatus("ready");
+      if (this.destroyed) return;
       this.readyResolve?.();
       this.options.onReady?.();
 
@@ -804,7 +809,8 @@ class RuntimeHost implements RuntimeHostInstance {
       this.statusBeforeLoss = this.currentStatus;
       this.cancelFrame();
       this.context = null;
-      this.currentStatus = "context-lost";
+      this.setStatus("context-lost");
+      if (this.destroyed) return;
       this.options.onContextLost?.();
       this.options.onError?.(new UnsupportedError("WebGL context lost."));
     };
@@ -818,11 +824,17 @@ class RuntimeHost implements RuntimeHostInstance {
       const afterRestore = async () => {
         try {
           await this.options.onContextRestored?.(gl, this.width, this.height);
+          if (this.destroyed) return;
+          if (this.contextRestoredShouldRun) {
+            // Gates may have closed during the loss; report only their result.
+            this.running = true;
+            this.reconcile(true);
+            return;
+          }
           // A stopped or manual-clock instance would otherwise stay
           // "context-lost", and render() would refuse to draw.
-          if (this.currentStatus === "context-lost") this.currentStatus = this.statusBeforeLoss;
-          if (this.contextRestoredShouldRun) this.start();
-          else if (!this.isManual) this.render();
+          if (this.currentStatus === "context-lost") this.setStatus(this.statusBeforeLoss);
+          if (!this.isManual) this.render();
         } catch (error) {
           this.fail(error instanceof Error ? error : new Error(String(error)));
         }
@@ -839,7 +851,7 @@ class RuntimeHost implements RuntimeHostInstance {
   }
 
   private failUnsupported(error: Error): void {
-    this.currentStatus = "unsupported";
+    this.setStatus("unsupported");
     this.debugWarn(error.message);
     this.options.onError?.(error);
     // An unsupported environment is expected; a missing target stays loud.
@@ -848,10 +860,17 @@ class RuntimeHost implements RuntimeHostInstance {
   }
 
   private fail(error: Error): void {
-    this.currentStatus = "error";
+    this.setStatus("error");
     this.debugWarn(error.message);
     this.options.onError?.(error);
     this.readyReject?.(error);
+  }
+
+  // The only writer of currentStatus, so onStatusChange sees every change once.
+  private setStatus(status: ShaderStatus): void {
+    if (status === this.currentStatus) return;
+    this.currentStatus = status;
+    this.options.onStatusChange?.(status);
   }
 
   // Keeps an unawaited `ready` from surfacing as an unhandled rejection, e.g.
@@ -862,7 +881,7 @@ class RuntimeHost implements RuntimeHostInstance {
 
   private debugWarn(message: string): void {
     if (this.options.debug) {
-      console.warn(`[frapx/runtime] ${message}`);
+      console.warn(`[frapx/core] ${message}`);
     }
   }
 }

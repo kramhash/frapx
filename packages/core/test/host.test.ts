@@ -692,6 +692,105 @@ describe("onResize", () => {
   });
 });
 
+describe("onStatusChange", () => {
+  it("reports each change of status once, in order", async () => {
+    const onStatusChange = vi.fn();
+    const { host } = create({ onStatusChange });
+    // Initialization starts on a microtask, so nothing is reported yet.
+    expect(host.status).toBe("idle");
+    expect(onStatusChange).not.toHaveBeenCalled();
+    await host.ready;
+    expect(onStatusChange.mock.calls.flat()).toEqual(["loading", "ready", "running"]);
+
+    setHidden(true);
+    setHidden(true);
+    expect(host.status).toBe("paused");
+    setHidden(false);
+    host.start();
+    host.destroy();
+
+    expect(onStatusChange.mock.calls.flat()).toEqual([
+      "loading",
+      "ready",
+      "running",
+      "paused",
+      "running",
+      "destroyed"
+    ]);
+  });
+
+  it.each(["loading", "ready"] as const)(
+    "stops initializing when destroyed from the %s callback",
+    async (when) => {
+      const onInit = vi.fn();
+      const onReady = vi.fn();
+      const before = resizeObservers;
+      let host!: ReturnType<typeof create>["host"];
+      const onStatusChange = vi.fn((status: string) => {
+        if (status === when) host.destroy();
+      });
+      host = create({ onInit, onReady, onStatusChange }).host;
+      await expect(host.ready).rejects.toBeInstanceOf(DestroyedError);
+
+      expect(onStatusChange.mock.calls.flat()).toEqual([
+        ...(when === "ready" ? ["loading"] : []),
+        when,
+        "destroyed"
+      ]);
+      expect(onReady).not.toHaveBeenCalled();
+      if (when === "loading") {
+        expect(onInit).not.toHaveBeenCalled();
+        expect(resizeObservers).toBe(before);
+      }
+    }
+  );
+
+  it("does not deliver onContextLost or onError after a destroy from the callback", async () => {
+    const onContextLost = vi.fn();
+    const onError = vi.fn();
+    let host!: ReturnType<typeof create>["host"];
+    const created = create({
+      onContextLost,
+      onError,
+      onStatusChange: (status) => {
+        if (status === "context-lost") host.destroy();
+      }
+    });
+    host = created.host;
+    await host.ready;
+
+    created.canvas.dispatch("webglcontextlost", { preventDefault: () => {} });
+
+    expect(host.status).toBe("destroyed");
+    expect(onContextLost).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("reports only the gated result when a context comes back hidden", async () => {
+    const onStatusChange = vi.fn();
+    const { host, canvas } = create({ onStatusChange });
+    await host.ready;
+    onStatusChange.mockClear();
+
+    canvas.dispatch("webglcontextlost", { preventDefault: () => {} });
+    setHidden(true);
+    canvas.dispatch("webglcontextrestored");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(host.status).toBe("paused");
+    expect(onStatusChange.mock.calls.flat()).toEqual(["context-lost", "paused"]);
+  });
+
+  it("reports unsupported without a WebGL context", async () => {
+    const onStatusChange = vi.fn();
+    const { host } = create({ createContext: () => null, onStatusChange });
+    await expect(host.ready).rejects.toBeInstanceOf(UnsupportedError);
+
+    expect(onStatusChange.mock.calls).toEqual([["unsupported"]]);
+  });
+});
+
 describe("detached canvas", () => {
   const createDetached = (overrides: Partial<RuntimeHostOptions> = {}) => {
     const frames: HostFrameState[] = [];

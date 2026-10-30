@@ -58,7 +58,7 @@
 - The offline video export roadmap and its design decisions live in `docs/frapx_export_addon.md`; its "2026-10-10 決定事項" section takes precedence over the body.
 - The plan for baked 3D SDF textures (generic 3D data textures in core, `@frapx/glsl-sdf-volume`, the fx-particles `sdf` option, and the KTX2 schema the Blender `3dsdf-texture` extension writes) lives in `docs/frapx_sdf_volume.md`; its "2026-10-28 決定事項" section takes precedence over the body. The work is tracked in the GitHub milestone "SDF volume".
 - The adoption plan (entry points, playground, docs and outreach work through 2027-01) lives in `docs/frapx_growth_plan.md`; its "2026-10-20 決定事項" section takes precedence over the body.
-- The 1.0 API inventory of `@frapx/fx-canvas` and `@frapx/react-canvas` (exports, known pains, breaking-change candidates) and the 1.0 plan live in `docs/frapx_1.0_api_inventory.md`; its "2026-10-28 決定事項" section takes precedence over the body. The work is tracked in the GitHub milestone "fx-canvas 1.0".
+- The 1.0 API inventory of `@frapx/fx-canvas` and `@frapx/react-canvas` (exports, known pains, breaking-change candidates) and the 1.0 plan live in `docs/frapx_1.0_api_inventory.md`; its "決定事項" sections (2026-10-28 and later) take precedence over the body. The work is tracked in the GitHub milestone "fx-canvas 1.0".
 - The frapx × vixeq fix plan (measured pains F1–F17 from the `frapx-vixeq-lab` prototype, the issue map across both repositories, and their order) lives in `docs/frapx_vixeq_integration.md`; its "2026-10-21 決定事項" section takes precedence over the body.
 
 ## Issues and Handoff

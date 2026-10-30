@@ -4,7 +4,12 @@
 
 ### Added
 
+- `onStatusChange(status)` host option: called synchronously with the new value each time `status` changes, never for the initial `"idle"` nor before the factory returns. Every status change now goes through one place, so a change is reported exactly once; a `destroy()` from the callback stops the transition. A restored context reports only what the gates allow (no passing `"running"` when it comes back hidden).
 - `time` on the instance: the time of the last frame drawn — the value `setTime()` would need to reproduce that frame. While gated it is the time the loop stopped at, and with a `timeSource` it is the last value read from the source. Lets a page read back where the picture is, for example to start audio at the same position or to render a frame counter.
+
+### Changed
+
+- Debug warnings start with `[frapx/core]` instead of the pre-rename `[frapx/runtime]`.
 
 ## 0.6.0 - 2026-10-23
 

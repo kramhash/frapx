@@ -18,9 +18,13 @@ import {
   type BoundSources
 } from "./internal/uniformSources";
 
+// onStatusChange is held back until the hook tracks `status` with it (#68).
 export type UseShaderBackgroundOptions<
   TUniforms extends UniformInputMap = UniformInputMap
-> = Omit<CreateShaderBackgroundOptions<TUniforms>, "target" | "onReady" | "onError"> & {
+> = Omit<
+  CreateShaderBackgroundOptions<TUniforms>,
+  "target" | "onReady" | "onError" | "onStatusChange"
+> & {
   onShaderReady?: (instance: ShaderBackgroundInstance<TUniforms>) => void;
   onShaderError?: (error: Error) => void;
   /**
