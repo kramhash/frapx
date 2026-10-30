@@ -39,6 +39,13 @@ export type TextureSet = {
     locations: ReadonlyMap<string, WebGLUniformLocation>,
     onMissing?: (uniformName: string) => void
   ): void;
+  /**
+   * Drops every loaded texture without deleting it. Used when the GL context
+   * is lost: the textures died with the context, so deleting them against the
+   * next context would only log INVALID_OPERATION. Inputs and units are kept,
+   * so a restore reloads the same inputs onto the same units.
+   */
+  forget(): void;
   /** Deletes every loaded texture. */
   dispose(gl: GLContext): void;
 };
@@ -81,6 +88,10 @@ export const createTextureSet = (inputs: TextureMap = {}): TextureSet => {
     },
 
     reserveUnit,
+
+    forget() {
+      textures = new Map();
+    },
 
     async loadAll(gl, isCancelled) {
       const loaded = new Map<string, LoadedTexture>();

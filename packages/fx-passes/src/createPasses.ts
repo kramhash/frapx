@@ -199,6 +199,7 @@ class Passes<TUniforms extends UniformInputMap> implements PassesInstance<TUnifo
 
       onContextLost: () => {
         this.cancelRefine();
+        this.textureSet.forget();
         // Their sources are already in the plans, compiled again on restore.
         this.pendingPrograms.clear();
         this.passes = [];

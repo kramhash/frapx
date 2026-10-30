@@ -85,6 +85,28 @@ describe("createTextureSet", () => {
     expect(set.textures.get("a")!.texture).toEqual({ id: "a2" });
   });
 
+  it("forgets the loaded textures without deleting them", async () => {
+    const gl = createMockGl();
+    const set = createTextureSet({ a: "a.png" });
+
+    const first = set.loadAll(gl, () => false);
+    pending.shift()!.resolve(loaded("a", "a1"));
+    await first;
+    expect(set.textures.size).toBe(1);
+
+    set.forget();
+    expect(set.textures.size).toBe(0);
+    expect(set.hasInput("a")).toBe(true);
+    expect(set.reserveUnit(gl, "a")).toBe(0);
+    expect(gl.deleteTexture).not.toHaveBeenCalled();
+
+    const second = set.loadAll(gl, () => false);
+    pending.shift()!.resolve(loaded("a", "a2"));
+    await second;
+    expect(gl.deleteTexture).not.toHaveBeenCalledWith({ id: "a1" });
+    expect(set.textures.get("a")!.texture).toEqual({ id: "a2" });
+  });
+
   it("drops a load superseded by a later set() for the same name", async () => {
     const gl = createMockGl();
     const set = createTextureSet();
