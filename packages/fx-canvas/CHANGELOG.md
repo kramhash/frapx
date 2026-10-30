@@ -10,6 +10,11 @@
 ### Changed
 
 - Debug warnings start with `[frapx/fx-canvas]` instead of the pre-rename `[frapx/shader]`.
+- Every public type is now declared by fx-canvas instead of re-exported from `@frapx/core`, so a change in core (0.x) no longer changes fx-canvas's API. The types are unchanged, and a type test keeps them equal to core's. Values (`keyframes`, the error classes, `glsl`, `glslUtils`, `hexToRgb`, `hexToRgba`) are still core's own, so `instanceof` keeps working across packages.
+
+### Deprecated
+
+- `createBlitter`, `createPingPong`, `createRenderTarget`, `supportsRenderTargetFormat` and the `Blitter`, `PingPong`, `RenderTarget`, `RenderTargetFormat`, `RenderTargetOptions` types. Import them from `@frapx/core` instead; core is 0.x and makes no stability promise. They will be removed from fx-canvas in 1.0.
 
 ## 0.11.0 - 2026-10-23
 

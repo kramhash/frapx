@@ -22,15 +22,22 @@ export type {
   ClockMode,
   CreateShaderBackgroundOptions,
   DprOption,
+  Ease,
   ExplicitUniformInput,
   FeedbackFormat,
   FeedbackOptions,
   GLContext,
+  Keyframe,
+  KeyframeOptions,
+  KeyframeTrack,
+  KeyframeValue,
   RenderMode,
   RenderState,
   Resolution,
   ShaderBackgroundInstance,
+  ShaderErrorLine,
   ShaderLayer,
+  ShaderStage,
   ShaderStatus,
   TextureInput,
   TextureMap,
@@ -41,6 +48,7 @@ export type {
   UniformInputMap,
   UniformRuntimeValue,
   UniformScalar,
+  UniformSource,
   UniformType,
   UniformVec2,
   UniformVec3,
@@ -54,13 +62,4 @@ export {
   TextureLoadError,
   UnsupportedError,
 } from "./internal/errors";
-export type { ShaderErrorLine, ShaderStage } from "@frapx/core";
 export { keyframes } from "@frapx/core";
-export type {
-  Ease,
-  Keyframe,
-  KeyframeOptions,
-  KeyframeTrack,
-  KeyframeValue,
-  UniformSource
-} from "@frapx/core";
