@@ -68,6 +68,18 @@ const wantsFloatFeedback = (
   feedback: CreateShaderBackgroundOptions["feedback"]
 ): boolean => typeof feedback === "object" && feedback.format === "rgba16f";
 
+const BUILTIN_UNIFORMS: ReadonlySet<string> = new Set([
+  "u_resolution",
+  "u_viewportSize",
+  "u_pixelRatio",
+  "u_time",
+  "u_delta",
+  "u_pointer",
+  "u_pointerUv",
+  "u_pointerActive",
+  "u_reducedMotion"
+]);
+
 class ShaderBackground<TUniforms extends UniformInputMap>
   implements ShaderBackgroundInstance<TUniforms>
 {
@@ -77,6 +89,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   private readonly uniformCache: Map<string, NormalizedUniform>;
   private readonly bindings: UniformBindings = createUniformBindings();
   private readonly warnedUniforms = new Set<string>();
+  private readonly warnedBuiltinUniforms = new Set<string>();
   private readonly host: RuntimeHostInstance;
 
   // Shader-specific GL state
@@ -97,6 +110,9 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     this.options = options;
     this.fragment = options.fragment;
     this.uniformCache = createUniformCache(options.uniforms);
+    for (const name of Object.keys(options.uniforms ?? {})) {
+      this.warnBuiltinUniform(toUniformName(name));
+    }
     this.textureSet = createTextureSet(options.textures, {
       warn: (message) => {
         if (options.debug) console.warn(`[frapx/fx-canvas] ${message}`);
@@ -335,7 +351,9 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   // values for the same names.
   private applyBoundUniforms(gl: GLContext, time: number): void {
     if (this.bindings.size === 0 || !this.shaderProgram) return;
-    applyUniforms(gl, this.shaderProgram.locations, this.bindings.evaluate(time), (name) =>
+    const values = this.bindings.evaluate(time);
+    for (const name of values.keys()) this.warnBuiltinUniform(name);
+    applyUniforms(gl, this.shaderProgram.locations, values, (name) =>
       this.warnUnknownUniform(name)
     );
   }
@@ -368,6 +386,7 @@ class ShaderBackground<TUniforms extends UniformInputMap>
   setUniform(name: string, value: UniformInput): void {
     if (this.shaderDestroyed) return;
     const uniformName = toUniformName(name);
+    this.warnBuiltinUniform(uniformName);
     this.uniformCache.set(uniformName, normalizeUniform(value));
 
     const gl = this._gl;
@@ -651,5 +670,15 @@ class ShaderBackground<TUniforms extends UniformInputMap>
     if (!this.options.debug || this.warnedUniforms.has(name)) return;
     this.warnedUniforms.add(name);
     console.warn(`[frapx/fx-canvas] Uniform not found or optimized out: ${name}`);
+  }
+
+  // A user value for a built-in uniform is overwritten every frame.
+  private warnBuiltinUniform(name: string): void {
+    if (!this.options.debug || !BUILTIN_UNIFORMS.has(name)) return;
+    if (this.warnedBuiltinUniforms.has(name)) return;
+    this.warnedBuiltinUniforms.add(name);
+    console.warn(
+      `[frapx/fx-canvas] Uniform ${name} is built in and set every frame; use a different name`
+    );
   }
 }

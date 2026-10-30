@@ -479,3 +479,40 @@ describe("instance contract", () => {
     await expect(fx.captureFrame()).rejects.toBeInstanceOf(DestroyedError);
   });
 });
+
+describe("built-in uniform names", () => {
+  it("warns once under debug when setUniform uses a built-in name", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fx = create({ debug: true });
+    await fx.ready;
+    fx.setUniform("time", 1);
+    fx.setUniform("u_time", 2);
+    const builtin = warn.mock.calls.filter((c) => String(c[0]).includes("built in"));
+    expect(builtin).toHaveLength(1);
+    expect(builtin[0]![0]).toMatch(/^\[frapx\/fx-canvas\] Uniform u_time is built in/);
+    warn.mockRestore();
+  });
+
+  it("warns for built-in names in the uniforms option and bound sources", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fx = create({ debug: true, uniforms: { resolution: [1, 1] } });
+    await fx.ready;
+    fx.bindUniforms({ get: () => ({ delta: 0.5 }) });
+    rafCallbacks.shift()?.(16);
+    const builtin = warn.mock.calls
+      .map((c) => String(c[0]))
+      .filter((m) => m.includes("built in"));
+    expect(builtin.some((m) => m.includes("u_resolution"))).toBe(true);
+    expect(builtin.some((m) => m.includes("u_delta"))).toBe(true);
+    warn.mockRestore();
+  });
+
+  it("does not warn without debug", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fx = create({ uniforms: { pointer: [0, 0] } });
+    await fx.ready;
+    fx.setUniform("time", 1);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
