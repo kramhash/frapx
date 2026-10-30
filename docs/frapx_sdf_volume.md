@@ -6,7 +6,7 @@ Oct 28, 2026 · @mark
 
 個々の作業は issue に書いてある。別セッションは issue 番号から着手し、全体の文脈が要るときにここを読む。判断の背景と却下した選択肢は個人の知識ベースに置き、ここには作業として実行する内容だけを書く。
 
-着手の順番（2026-10-30）: 1.0 の積み残し（#78〔PR #84 でマージ済み〕、#85、#86）を公開した後、プレイグラウンド（マイルストーン「Playground v1」）より前に行う。#71〜#73 をまとめて 1 回で公開する（core minor、fx-canvas 1.1、fx-passes / fx-particles minor、glsl-sdf-volume 0.1）。
+着手の順番（2026-10-30）: 1.0 の積み残し（#78〔PR #84 でマージ済み〕、#85、#86）を公開した後、プレイグラウンド（マイルストーン「Playground v1」）より前に行う。#71〜#73 をまとめて 1 回で公開する（core minor、fx-canvas 1.1、fx-passes / fx-particles minor、glsl-sdf-volume 0.1）。2026-10-31 に公開し、マイルストーン「SDF volume」を閉じた。
 
 ## 2026-10-28 決定事項（本文より優先）
 
@@ -105,6 +105,6 @@ Oct 28, 2026 · @mark
 | Issue | 内容 | 依存 | 状態 |
 |---|---|---|---|
 | — | Blender Extension に KTX2 の出力を足す（別リポジトリ `kramhash/3dsdf-texture`） | なし | 実装済み（2026-10-28）。0.1.0 は GitHub Releases で配布する |
-| [#71](https://github.com/kramhash/frapx/issues/71) | core に 3D データテクスチャ（fx-canvas / fx-passes）を足す | fx-canvas 1.0（#70） | PR #99 でマージ済み（未公開） |
-| [#72](https://github.com/kramhash/frapx/issues/72) | `@frapx/glsl-sdf-volume` を新設し、`examples/vite-sdf-volume` でレイマーチする。パッケージの README と docs から 3dsdf-texture へ「素材はこれで作れる」とリンクする | #71。実物の素材は KTX2 の出力が前提 | PR #100 でマージ済み（未公開） |
-| [#73](https://github.com/kramhash/frapx/issues/73) | fx-particles の `sdf`（引き寄せ・衝突・出現）と react-particles | #72 | 未着手 |
+| [#71](https://github.com/kramhash/frapx/issues/71) | core に 3D データテクスチャ（fx-canvas / fx-passes）を足す | fx-canvas 1.0（#70） | PR #99。2026-10-31 公開（core 0.9.0、fx-canvas 1.1.0、fx-passes 0.8.0） |
+| [#72](https://github.com/kramhash/frapx/issues/72) | `@frapx/glsl-sdf-volume` を新設し、`examples/vite-sdf-volume` でレイマーチする。パッケージの README と docs から 3dsdf-texture へ「素材はこれで作れる」とリンクする | #71。実物の素材は KTX2 の出力が前提 | PR #100。2026-10-31 公開（glsl-sdf-volume 0.1.0） |
+| [#73](https://github.com/kramhash/frapx/issues/73) | fx-particles の `sdf`（引き寄せ・衝突・出現）と react-particles | #72 | PR #102。2026-10-31 公開（fx-particles 0.6.0、react-particles 0.6.0） |
