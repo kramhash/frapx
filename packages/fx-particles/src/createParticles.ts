@@ -198,6 +198,7 @@ class Particles implements ParticlesInstance {
       onContextLost: () => {
         // Everything GL is gone with the context; rebuilt on restore.
         this.resources = null;
+        this.textureSet.forget();
       },
 
       onContextRestored: async (gl, width, height) => {
