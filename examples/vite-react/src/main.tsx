@@ -5,6 +5,7 @@ import {
   type ShaderBackgroundHandle
 } from "@frapx/react-canvas";
 import { glsl, hexToRgb, type UniformSource } from "@frapx/fx-canvas";
+import { HookPanel } from "./HookPanel";
 import "./styles.css";
 
 const fragment = glsl`
@@ -86,6 +87,7 @@ const App = () => {
           </button>
         </div>
       </section>
+      <HookPanel />
     </main>
   );
 };

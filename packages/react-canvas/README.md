@@ -85,6 +85,10 @@ optional second argument lists extra values whose change recreates the instance.
 `"paused"` while offscreen or hidden and `"context-lost"`. An `onStatusChange`
 prop is still called with every change.
 
+A runnable version is `HookPanel` in
+[`examples/vite-react`](https://github.com/kramhash/frapx/tree/main/examples/vite-react/src/HookPanel.tsx):
+it shows `status` and changes a uniform through `instance.setUniform()`.
+
 ## Imperative Handle
 
 ```tsx
