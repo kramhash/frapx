@@ -430,6 +430,29 @@ uniform float u_reducedMotion; // 1 when the OS prefers reduced motion, else 0
 
 ## Options
 
+### Recommended options
+
+Most production sites only need a few of the options below:
+
+```ts
+createShaderBackground({
+  target: ".hero",
+  fragment,
+  maxDpr: 1.5,
+  onReady(instance) {
+    instance.canvas?.setAttribute("aria-hidden", "true");
+  }
+  // pauseWhenOffscreen, pauseWhenHidden and respectReducedMotion: keep the defaults (true)
+});
+```
+
+- `maxDpr` — the fragment shader runs once per drawing-buffer pixel, so the cost grows with the square of the pixel ratio. A full-screen background rarely looks different above 1.5; lower it further for heavy shaders.
+- `aria-hidden` on the canvas — a decorative background carries no content, so hide it from assistive technology. Put it on the canvas, not on `target`, which usually holds the page's real content.
+- `pauseWhenOffscreen` / `pauseWhenHidden` — stop drawing (and draining the battery) while nobody can see the canvas.
+- `respectReducedMotion` — honours the OS "reduce motion" setting by holding a static frame. Turn it off only if the shader handles `u_reducedMotion` itself.
+
+### All options
+
 ```ts
 createShaderBackground({
   target: ".hero",
