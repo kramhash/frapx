@@ -7,6 +7,7 @@ on:
     paths:
       - "apps/docs/**"
       - "apps/flowmap-painter/**"
+      - "examples/vite-sdf-skull/**"
       - "packages/core/**"
       - "packages/fx-canvas/**"
       - "packages/fx-passes/**"
@@ -16,6 +17,7 @@ on:
       - "packages/glsl-flowmap/**"
       - "packages/glsl-noise/**"
       - "packages/glsl-sdf/**"
+      - "packages/glsl-sdf-volume/**"
       - "packages/glsl-raymarch/**"
       - "packages/tool-capture/**"
       - "packages/tool-render/**"
@@ -64,12 +66,22 @@ jobs:
       - name: Build flowmap-painter
         run: pnpm --filter @frapx/flowmap-painter build
 
+      - name: Build the sdf-skull demo
+        run: pnpm --filter @frapx/example-vite-sdf-skull build
+
       # The docs site is the Pages root (base "/frapx/"); flowmap-painter is
       # nested under it at "/frapx/playground/" (see its vite.config.ts base).
       - name: Merge flowmap-painter into docs under /playground
         run: |
           mkdir -p apps/docs/dist/playground
           cp -r apps/flowmap-painter/dist/. apps/docs/dist/playground/
+
+      # Showcase demos live at "/frapx/demos/<name>/"; their builds use a
+      # relative base, so they work from any folder.
+      - name: Merge demos into docs under /demos
+        run: |
+          mkdir -p apps/docs/dist/demos/sdf-skull
+          cp -r examples/vite-sdf-skull/dist/. apps/docs/dist/demos/sdf-skull/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
