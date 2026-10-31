@@ -7,6 +7,40 @@ import ShowcaseVideo from "../../components/ShowcaseVideo.astro";
 
 Work made with frapx. Client sites will be added here as they ship.
 
+## Baked SDF skull
+
+<ShowcaseVideo
+  src="/frapx/showcase/sdf-skull"
+  poster="/frapx/showcase/sdf-skull.jpg"
+  label="A white skull turning in the dark: orbiting spheres melt into it and pull away, then spines grow out of it as it rounds into a sea urchin, and it turns back into the skull."
+/>
+
+A skull baked from a mesh into a 3D signed distance texture, then treated in
+the shader like any other distance function. Orbiting spheres smooth-union into
+it and pull away; then the skull blends into an analytic sphere while spines —
+cones placed on rings of latitude — grow out of its surface until it is a sea
+urchin, and everything runs back. None of this needs the mesh: the volume is
+sampled with `frapx_sdVolume` from
+[`@frapx/glsl-sdf-volume`](/frapx/packages/glsl-sdf-volume/), blended with
+[`@frapx/glsl-sdf`](/frapx/packages/glsl-sdf/) operators and marched with
+[`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/). The 12-second loop is
+a pure function of time, so the live page and the clip are the same frames.
+
+- **Live:** [/frapx/demos/sdf-skull/](/frapx/demos/sdf-skull/) (WebGL2; the
+  pointer nudges the camera)
+- **Packages:** [`@frapx/fx-canvas`](/frapx/packages/fx-canvas/),
+  [`@frapx/glsl-sdf-volume`](/frapx/packages/glsl-sdf-volume/),
+  [`@frapx/glsl-sdf`](/frapx/packages/glsl-sdf/),
+  [`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/) and
+  [`@frapx/tool-render`](/frapx/packages/tool-render/)
+- **Source:** [`examples/vite-sdf-skull`](https://github.com/kramhash/frapx/tree/main/examples/vite-sdf-skull)
+  — its README has the bake and render steps.
+- **Model:** [ScatteringSkull](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/ScatteringSkull)
+  by Vladimir Petkovic (CC0), baked to `r16f` by the 3dsdf-texture Blender
+  extension.
+
+The clip above is a muted 720p, 60 fps render of the page.
+
 ## LIMINAL VEIN
 
 <ShowcaseVideo
