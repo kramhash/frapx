@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1 - 2026-10-31
+
+### Fixed
+
+- Restoring a lost WebGL context no longer logs `INVALID_OPERATION: delete` warnings when textures are in use: the lost context's textures are dropped instead of deleted against the restored one (#95).
+
 ## 0.8.0 - 2026-10-31
 
 ### Added

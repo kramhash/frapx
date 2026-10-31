@@ -1,6 +1,6 @@
 {
   "name": "@frapx/core",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Shared WebGL runtime host for frapx packages.",
   "keywords": [
     "webgl",

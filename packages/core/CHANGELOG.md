@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 - 2026-10-31
+
+### Added
+
+- `TextureSet.forget()` drops the loaded textures without deleting them, keeping the inputs and their units, so a runtime can let go of a lost context's textures and reload the same inputs on restore (#95).
+
 ## 0.9.0 - 2026-10-31
 
 ### Added

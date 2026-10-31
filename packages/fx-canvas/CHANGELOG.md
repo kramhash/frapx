@@ -1,10 +1,19 @@
 # Changelog
 
-## 1.1.0 - 2026-10-31
+## 1.1.1 - 2026-10-31
 
 ### Added
 
 - `debug: true` warns once per name when a user uniform (from `uniforms`, `setUniform()`, `setUniforms()` or `bindUniforms()`) uses a built-in name such as `time` / `u_time`, since fx-canvas overwrites it every frame (#88).
+
+### Fixed
+
+- Restoring a lost WebGL context no longer logs `INVALID_OPERATION: delete` warnings when textures are in use: the lost context's textures are dropped instead of deleted against the restored one (#95).
+
+## 1.1.0 - 2026-10-31
+
+### Added
+
 - 3D data textures: `textures`, `setTexture()` and `setTextures()` accept `{ data, size: [nx, ny, nz], format: "r8" | "r16f" | "r32f" }`, sampled as `sampler3D` in a `#version 300 es` shader with a vec3 `u_<name>Size`. WebGL2 only. New types `DataTextureFormat` and `DataTextureOptions`.
 
 ## 1.0.1 - 2026-10-30
