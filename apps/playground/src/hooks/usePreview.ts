@@ -13,7 +13,7 @@ type Running = { readonly fx: ShaderBackgroundInstance; readonly version: "100" 
 /**
  * Renders `expanded` into `target`. Edits go through setFragment() so time
  * and uniforms carry over; a new instance is created only when the GLSL
- * version changes or the current instance never compiled (growth plan
+ * version changes or the current instance never compiled or is unsupported (growth plan
  * decision 17). Returns the problems to show in the editor.
  */
 export function usePreview(
@@ -55,7 +55,15 @@ export function usePreview(
 
     const version = glslVersion(expanded.code);
     const current = running.current;
-    if (current !== null && current.version === version && current.fx.status !== "error") {
+    // An instance that never compiled, or has no context (e.g. 300 es without
+    // WebGL2), returns null from setFragment without drawing anything, so it
+    // is replaced to report the error again.
+    const usable =
+      current !== null &&
+      current.version === version &&
+      current.fx.status !== "error" &&
+      current.fx.status !== "unsupported";
+    if (current !== null && usable) {
       const error = current.fx.setFragment(expanded.code);
       if (error === null) succeed();
       else fail(error);

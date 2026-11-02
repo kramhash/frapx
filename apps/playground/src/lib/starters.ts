@@ -32,7 +32,8 @@ uniform float u_speed; // @range 0 1 @default 0.12 @step 0.01
 uniform vec3 u_colorA; // @color @default #0b1026
 uniform vec3 u_colorB; // @color @default #f2a65a
 
-// Pulls in frapx_fbm3d from @frapx/glsl-noise.
+// Pulls in frapx_fbm3d from @frapx/glsl-noise. The noise snippets share
+// helpers, so for several noise functions include noise3d (all of them) once.
 // @include fbm3d
 
 void main() {
