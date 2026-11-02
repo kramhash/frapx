@@ -19,6 +19,10 @@ describe("parseControls", () => {
     expect(b).toMatchObject({ type: "vec3", defaults: [1, 2, 3], line: 2 });
   });
 
+  it("clamps a default into the range", () => {
+    expect(parseControls("uniform vec2 u_a; // @range 0 1 @default 5 -2")[0]?.defaults).toEqual([1, 0]);
+  });
+
   it("defaults to min and a hundredth of the range", () => {
     expect(parseControls("uniform float u_x; // @range 2 4")[0]).toMatchObject({
       defaults: [2],

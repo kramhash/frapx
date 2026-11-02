@@ -143,6 +143,8 @@ const parseControl = (
     if (parsed.length === 1) defaults = defaults.map(() => parsed[0]!);
     else if (parsed.length === components) defaults = parsed;
     else return null;
+    // A slider cannot show a value outside its range, so neither do we.
+    defaults = defaults.map((value) => Math.min(max, Math.max(min, value)));
   }
 
   for (const tag of tags.keys()) {

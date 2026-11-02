@@ -174,10 +174,15 @@ body {
   color: var(--text-muted);
 }
 
-.tabs {
+.tabs-row {
   display: flex;
   gap: 4px;
   margin-bottom: 8px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
 }
 
 .tab,
@@ -247,4 +252,13 @@ body {
     border-right: 0;
     border-top: 1px solid var(--border);
   }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

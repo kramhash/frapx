@@ -68,6 +68,16 @@ describe("generateInstallCode", () => {
     expect(es3.react).not.toContain("uniforms");
   });
 
+  it("escapes backticks, ${ and </script> so the literal still parses", () => {
+    const text = "// see `rotate2d`, ${fbm3d} and </script>\nvoid main() {}";
+    const html = generate(text).html;
+    expect(html).toContain("// see \\`rotate2d\\`, \\${fbm3d} and <\\/script>");
+    expect(html.match(/<\/script>/g)).toHaveLength(1);
+    const literal = /const fragment = (glsl`[\s\S]*?\n`);/.exec(generate(text).vanilla)?.[1];
+    const evaluate = new Function("glsl", `return ${literal};`) as (tag: typeof String.raw) => string;
+    expect(evaluate(String.raw)).toContain("void main() {}");
+  });
+
   it("leaves unknown includes as comments", () => {
     expect(generate("// @include nope\nvoid main() {}").vanilla).toContain("// @include nope");
   });

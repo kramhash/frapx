@@ -47,12 +47,21 @@ type Prepared = {
   readonly uniforms: readonly string[];
 };
 
+/**
+ * Makes GLSL text safe inside a `glsl` template literal in a `<script>`.
+ * GLSL itself never uses these characters outside comments; `glsl` is
+ * String.raw, so the added backslash stays in the shader, where a comment
+ * ignores it.
+ */
+export const escapeForLiteral = (text: string): string =>
+  text.replace(/`|\$\{/g, (match) => `\\${match}`).replace(/<\/script/gi, "<\\/script");
+
 const prepare = (input: InstallInput): Prepared => {
   const imports = new Map<string, Set<string>>([[FX_CANVAS, new Set(["glsl"])]]);
   const lines = input.source.replace(/\s+$/, "").split("\n").map((text) => {
     const name = parseInclude(text);
     const snippet = name === null ? undefined : input.snippets.get(name);
-    if (snippet === undefined) return text;
+    if (snippet === undefined) return escapeForLiteral(text);
     const bindings = imports.get(snippet.module) ?? new Set<string>();
     bindings.add(snippet.binding);
     imports.set(snippet.module, bindings);
