@@ -904,6 +904,33 @@ describe("ready rejection", () => {
     return reasons;
   };
 
+  it("does not set up a canvas or context when destroyed before init runs", async () => {
+    // React StrictMode runs effects mount -> cleanup -> mount synchronously,
+    // so the first host is destroyed before its init microtask (#109).
+    const createContext = vi.fn(createMockGl);
+    const onStatusChange = vi.fn();
+    const before = resizeObservers;
+    // No target or canvas: init would create a detached canvas of its own.
+    const host = createRuntimeHost({
+      clock: "manual",
+      resolution: [64, 64],
+      createContext,
+      onStatusChange,
+      onInit: () => {},
+      onDraw: () => {}
+    });
+    host.destroy();
+    await expect(host.ready).rejects.toBeInstanceOf(DestroyedError);
+    await Promise.resolve();
+
+    expect(createContext).not.toHaveBeenCalled();
+    expect(createdElements).toHaveLength(0);
+    expect(host.canvas).toBeNull();
+    expect(resizeObservers).toBe(before);
+    expect(onStatusChange.mock.calls.flat()).toEqual(["destroyed"]);
+    expect(host.status).toBe("destroyed");
+  });
+
   it("does not surface an unawaited ready when destroyed before ready", async () => {
     let host!: ReturnType<typeof create>["host"];
     const reasons = await collectUnhandled(() => {

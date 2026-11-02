@@ -620,6 +620,9 @@ class RuntimeHost implements RuntimeHostInstance {
   }
 
   private async init(): Promise<void> {
+    // destroy() can run before this microtask (e.g. React StrictMode's
+    // mount -> cleanup -> mount); then there is nothing to set up.
+    if (this.destroyed) return;
     if (typeof window === "undefined" || typeof document === "undefined") {
       this.failUnsupported(new UnsupportedError("WebGL requires a browser."));
       return;
