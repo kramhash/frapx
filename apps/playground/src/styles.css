@@ -309,3 +309,31 @@ body {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+.volumes {
+  margin-bottom: 10px;
+}
+
+.volume-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume-pick select {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+  max-width: 60%;
+}
+
+.volume-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}

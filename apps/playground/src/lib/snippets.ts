@@ -2,6 +2,7 @@ import { glslUtils } from "@frapx/fx-canvas";
 import * as noise from "@frapx/glsl-noise";
 import * as raymarch from "@frapx/glsl-raymarch";
 import * as sdf from "@frapx/glsl-sdf";
+import * as sdfVolume from "@frapx/glsl-sdf-volume";
 
 /** A GLSL snippet that `// @include <name>` can pull in. */
 export type Snippet = {
@@ -43,6 +44,7 @@ export const snippets: ReadonlyMap<string, Snippet> = new Map([
     "raymarchCamera",
     "raymarchCameraUniforms"
   ]),
+  ...pick("@frapx/glsl-sdf-volume", sdfVolume, ["sdfVolume"]),
   ...Object.entries(glslUtils).map(([key, source]): [string, Snippet] => [
     `glslUtils.${key}`,
     {

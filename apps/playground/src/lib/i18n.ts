@@ -24,6 +24,13 @@ const en = {
   emptyPanel: ["Add ", " or ", " after a uniform to get a control."],
   badShare: "Couldn't open the shared link, so the default starter is shown.",
   unknownSnippet: (name: string) => `Unknown snippet "${name}"`,
+  openFile: "Open file…",
+  volumeLoading: "Loading…",
+  volumeMissing: (file: string) => `Open ${file} to show it here.`,
+  useSample: (label: string) => `Use ${label}`,
+  volumeError: (message: string) => `Couldn't load the volume: ${message}`,
+  unknownSample: (value: string) => `No sample named "${value}".`,
+  notSdfFile: "Choose a .sdf.ktx2 file baked with 3dsdf-texture.",
   dismiss: "Dismiss"
 };
 
@@ -49,6 +56,13 @@ const ja: Messages = {
   emptyPanel: ["uniform 宣言の行末に ", " や ", " を書くと、ここに操作パネルが出ます。"],
   badShare: "共有リンクを読み込めなかったので、既定のスターターを表示しています。",
   unknownSnippet: (name: string) => `「${name}」というスニペットはありません`,
+  openFile: "ファイルを開く…",
+  volumeLoading: "読み込み中…",
+  volumeMissing: (file: string) => `${file} を開くと、ここに表示されます。`,
+  useSample: (label: string) => `${label} を使う`,
+  volumeError: (message: string) => `ボリュームを読み込めませんでした: ${message}`,
+  unknownSample: (value: string) => `「${value}」というサンプルはありません。`,
+  notSdfFile: "3dsdf-texture で焼いた .sdf.ktx2 のファイルを選んでください。",
   dismiss: "閉じる"
 };
 
