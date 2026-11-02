@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { parseControls } from "../lib/annotations";
 import type { Control } from "../lib/annotations";
 import type { UniformValues } from "../lib/uniforms";
 
@@ -11,10 +12,14 @@ const signature = (control: Control): string =>
 
 type Edited = Readonly<Record<string, { readonly signature: string; readonly value: readonly number[] }>>;
 
-/** Current value per control, and a setter for slider input. */
-export function useUniformValues(
-  controls: readonly Control[]
-): [UniformValues, (control: Control, value: readonly number[]) => void] {
+export type UniformValueActions = {
+  readonly set: (control: Control, value: readonly number[]) => void;
+  /** Replaces every value with `values` for the controls `source` declares (a shared link). */
+  readonly restore: (source: string, values: UniformValues) => void;
+};
+
+/** Current value per control, and the actions that change them. */
+export function useUniformValues(controls: readonly Control[]): [UniformValues, UniformValueActions] {
   const [edited, setEdited] = useState<Edited>({});
 
   const values = useMemo(() => {
@@ -27,9 +32,21 @@ export function useUniformValues(
     return result;
   }, [controls, edited]);
 
-  const setValue = useCallback((control: Control, value: readonly number[]) => {
+  const set = useCallback((control: Control, value: readonly number[]) => {
     setEdited((previous) => ({ ...previous, [control.name]: { signature: signature(control), value } }));
   }, []);
 
-  return [values, setValue];
+  const restore = useCallback((source: string, shared: UniformValues) => {
+    const next: Record<string, { signature: string; value: readonly number[] }> = {};
+    for (const control of parseControls(source)) {
+      const value = shared[control.name];
+      if (value !== undefined && value.length === control.defaults.length) {
+        next[control.name] = { signature: signature(control), value };
+      }
+    }
+    setEdited(next);
+  }, []);
+
+  const actions = useMemo(() => ({ set, restore }), [set, restore]);
+  return [values, actions];
 }

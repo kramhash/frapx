@@ -9,6 +9,7 @@ frapx is a set of small npm packages under the `@frapx` scope, named by category
 - [Getting Started](https://kramhash.github.io/frapx/getting-started/): install `@frapx/fx-canvas` and render a first shader background, plus React usage
 - [Home and package decision table](https://kramhash.github.io/frapx/): which package to install for a given task
 - [はじめに（日本語）](https://kramhash.github.io/frapx/ja/getting-started/): Japanese Getting Started, including Astro usage
+- [Playground](https://kramhash.github.io/frapx/playground/): write a fragment shader in the browser, adjust annotated uniforms (`uniform float u_speed; // @range 0 2 @default 1`) with sliders, include `glsl-*` snippets with `// @include <name>`, and copy install code for HTML, Vanilla, React or Astro
 
 ## Effect runtimes
 

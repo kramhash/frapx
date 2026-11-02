@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { INSTALL_TABS } from "../lib/codegen";
 import type { InstallTab } from "../lib/codegen";
+import type { Messages } from "../lib/i18n";
 
 const LABELS: Record<InstallTab, string> = {
   html: "HTML",
@@ -10,10 +11,10 @@ const LABELS: Record<InstallTab, string> = {
   astro: "Astro"
 };
 
-type Props = { readonly code: Readonly<Record<InstallTab, string>> };
+type Props = { readonly code: Readonly<Record<InstallTab, string>>; readonly t: Messages };
 
 /** The generated install code, one tab per setup, with a copy button. */
-export function InstallCode({ code }: Props) {
+export function InstallCode({ code, t }: Props) {
   const [tab, setTab] = useState<InstallTab>("html");
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
   const tabRefs = useRef<Partial<Record<InstallTab, HTMLButtonElement | null>>>({});
@@ -55,7 +56,7 @@ export function InstallCode({ code }: Props) {
   return (
     <div className="install">
       <div className="tabs-row">
-      <div className="tabs" role="tablist" aria-label="Install code">
+      <div className="tabs" role="tablist" aria-label={t.installTabs}>
         {INSTALL_TABS.map((id) => (
           <button
             key={id}
@@ -77,10 +78,10 @@ export function InstallCode({ code }: Props) {
         ))}
       </div>
         <button type="button" className="copy" onClick={copy}>
-          {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
+          {copyState === "copied" ? t.copied : copyState === "failed" ? t.copyFailed : t.copy}
         </button>
         <span className="visually-hidden" role="status">
-          {copyState === "copied" ? "Copied to the clipboard" : copyState === "failed" ? "Copy failed" : ""}
+          {copyState === "copied" ? t.copiedStatus : copyState === "failed" ? t.copyFailed : ""}
         </span>
       </div>
       <pre id="install-code" role="tabpanel" aria-labelledby={`install-tab-${tab}`} className="code" tabIndex={0}>

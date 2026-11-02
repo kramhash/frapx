@@ -54,6 +54,7 @@ export default defineConfig({
             { label: "@frapx/core", slug: "packages/core" },
           ],
         },
+        { label: "Playground", link: "/playground/" },
         { label: "Live Demo", slug: "live-demo" },
         { label: "Showcase", slug: "showcase" },
         { label: "Migration guide", slug: "migration" },

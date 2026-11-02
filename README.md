@@ -16,6 +16,8 @@ fragment shader behind any element in about 11 kB (min+gzip, including
 `@frapx/core`) and handles what bites in production: pausing offscreen and in
 hidden tabs, reduced motion, SSR-safe imports, and WebGL1 as well as WebGL2.
 
+**Try it in the browser:** write GLSL in the [playground](https://kramhash.github.io/frapx/playground/), adjust it with sliders, and copy the install code for HTML, React or Astro.
+
 frapx started from wanting a fragment shader on a page without shipping a 3D
 engine. Here is the same full-screen shader with each:
 
