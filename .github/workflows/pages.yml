@@ -59,11 +59,17 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # GA4 (growth plan decision 41): the repository variable
+      # GA_MEASUREMENT_ID turns measurement on; without it no tag is emitted.
       - name: Build docs site
         run: pnpm --filter @frapx/docs build
+        env:
+          PUBLIC_GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
 
       - name: Build playground
         run: pnpm --filter @frapx/playground build
+        env:
+          VITE_GA_MEASUREMENT_ID: ${{ vars.GA_MEASUREMENT_ID }}
 
       - name: Build flowmap-painter
         run: pnpm --filter @frapx/flowmap-painter build

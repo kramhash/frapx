@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import { track } from "../lib/analytics";
 import { INSTALL_TABS } from "../lib/codegen";
 import type { InstallTab } from "../lib/codegen";
 import type { Messages } from "../lib/i18n";
@@ -27,7 +28,10 @@ export function InstallCode({ code, t }: Props) {
 
   const copy = () => {
     navigator.clipboard.writeText(code[tab]).then(
-      () => setCopyState("copied"),
+      () => {
+        setCopyState("copied");
+        track({ name: "install_code_copy", params: { tab } });
+      },
       () => setCopyState("failed")
     );
   };

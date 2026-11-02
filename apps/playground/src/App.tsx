@@ -9,6 +9,7 @@ import { usePreview } from "./hooks/usePreview";
 import { useShareHash } from "./hooks/useShareHash";
 import { useUniformValues } from "./hooks/useUniformValues";
 import { useVolumes } from "./hooks/useVolumes";
+import { track } from "./lib/analytics";
 import { parseControls } from "./lib/annotations";
 import { unknownIncludeProblems } from "./lib/errors";
 import { generateInstallCode } from "./lib/codegen";
@@ -82,6 +83,7 @@ export default function App() {
     (slot: VolumeSlot, id: string) => {
       setFileError(null);
       rewrite(setVolumeValue(sourceRef.current, slot.name, id));
+      track({ name: "volume_open", params: { source: "sample" } });
     },
     [rewrite]
   );
@@ -95,6 +97,7 @@ export default function App() {
         }
         setFileError(null);
         rewrite(setVolumeValue(sourceRef.current, slot.name, value));
+        track({ name: "volume_open", params: { source: "file" } });
       });
     },
     [openFile, rewrite, t]
@@ -139,14 +142,19 @@ export default function App() {
         navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${hash}`)
       )
       .then(
-        () => setShareState("copied"),
+        () => {
+          setShareState("copied");
+          track({ name: "share_url_copy", params: {} });
+        },
         () => setShareState("failed")
       );
   };
 
   const pickStarter = (id: string) => {
     const starter = starters.find((candidate) => candidate.id === id);
-    if (starter !== undefined) load(starter.source, starter.id);
+    if (starter === undefined) return;
+    load(starter.source, starter.id);
+    track({ name: "starter_select", params: { starter: starter.id } });
   };
 
   const shareLabel =
@@ -195,6 +203,9 @@ export default function App() {
           </label>
           <a className="docs-link" href={language === "ja" ? "/frapx/ja/getting-started/" : "/frapx/"}>
             {t.docs}
+          </a>
+          <a className="docs-link" href="/frapx/privacy/">
+            {t.privacy}
           </a>
         </div>
       </header>
