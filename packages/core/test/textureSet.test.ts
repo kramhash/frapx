@@ -87,6 +87,39 @@ describe("createTextureSet", () => {
     expect(set.textures.get("a")!.texture).toEqual({ id: "a2" });
   });
 
+  it("deletes textures that finish loading after a cancellation (#117)", async () => {
+    const gl = createMockGl();
+    const set = createTextureSet({ a: "a.png", b: "b.png" });
+    let cancelled = false;
+
+    const loading = set.loadAll(gl, () => cancelled);
+    pending.shift()!.resolve(loaded("a", "a1"));
+    await flush();
+    // The runtime is destroyed (and the set disposed) while b is in flight.
+    cancelled = true;
+    set.dispose(gl);
+    pending.shift()!.resolve(loaded("b", "b1"));
+    await loading;
+
+    expect(gl.deleteTexture).toHaveBeenCalledWith({ id: "a1" });
+    expect(gl.deleteTexture).toHaveBeenCalledWith({ id: "b1" });
+    expect(set.textures.size).toBe(0);
+  });
+
+  it("deletes what it loaded when a later load fails", async () => {
+    const gl = createMockGl();
+    const set = createTextureSet({ a: "a.png", b: "b.png" });
+
+    const loading = set.loadAll(gl, () => false);
+    pending.shift()!.resolve(loaded("a", "a1"));
+    await flush();
+    pending.shift()!.reject(new Error("b failed"));
+
+    await expect(loading).rejects.toThrow("b failed");
+    expect(gl.deleteTexture).toHaveBeenCalledWith({ id: "a1" });
+    expect(set.textures.size).toBe(0);
+  });
+
   it("forgets the loaded textures without deleting them", async () => {
     const gl = createMockGl();
     const set = createTextureSet({ a: "a.png" });
