@@ -6,6 +6,23 @@ import starlight from "@astrojs/starlight";
 // The playground and flowmap-painter apps are built separately and copied
 // into dist/playground/ and dist/tools/flowmap-painter/ by
 // .github/workflows/pages.yml, so they live under this same base.
+// GA4 (growth plan decision 41): only when the Pages build passes the
+// repository variable GA_MEASUREMENT_ID, so forks and local builds never
+// measure. See src/content/docs/privacy.mdx.
+const gaId = process.env.PUBLIC_GA_MEASUREMENT_ID?.trim() ?? "";
+const analyticsHead = /^G-[A-Z0-9]{4,20}$/.test(gaId)
+  ? [
+      {
+        tag: /** @type {const} */ ("script"),
+        attrs: { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${gaId}` }
+      },
+      {
+        tag: /** @type {const} */ ("script"),
+        content: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","${gaId}");`
+      }
+    ]
+  : [];
+
 export default defineConfig({
   site: "https://kramhash.github.io",
   base: "/frapx",
@@ -22,6 +39,10 @@ export default defineConfig({
         },
       ],
       routeMiddleware: "./src/routeData.ts",
+      head: analyticsHead,
+      components: {
+        Footer: "./src/components/Footer.astro",
+      },
       sidebar: [
         { label: "Getting Started", slug: "getting-started" },
         {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { replaceStateQuietly } from "../lib/analytics";
 import { decodeShare, encodeShare } from "../lib/share";
 import type { SharedState } from "../lib/share";
 
@@ -56,7 +57,7 @@ export function useShareHash(
       void encodeShare(state).then((hash) => {
         if (cancelled || hash === window.location.hash) return;
         try {
-          window.history.replaceState(window.history.state, "", hash);
+          replaceStateQuietly(hash);
           written.current = hash;
         } catch {
           // Rate-limited or blocked: the next settled change tries again.
