@@ -70,16 +70,28 @@ frapx を多くの人に使ってもらうための 3 ヶ月計画（2026-10-20 
     - 単体テスト（注釈、`@include`、コード生成、ハッシュ）と e2e（下の検証 5 項目）を付ける。
     - 「貼ると同じ絵」は手で確かめる。
 
+## 2026-11-02 決定事項（本文より優先）
+
+27. **P2 はこのまま #90→#93 で進める。** スカルデモ（#106）は P2 と並行して別に進め、P2 の順番には入れない。
+28. **P3 の中身と順番は、#93 のマージ後に別の grill で決める。** 対象は発信（Zenn・X）、自社案件の採用事例、v1.1 の候補（焼いた SDF のスターターなど）。
+
 ## 進捗
 
 - **Phase 0 — 看板作品と痛みの解消（完了、2026-10-20）**
   - LIMINAL VEIN（`examples/vite-liminal-vein`）を完成させた（PR #31）。
   - 作品で見つかったライブラリの痛み #28〜#30 を解消した（PR #32〜#34）。
   - 次の版を公開した: core 0.5.1、fx-canvas 0.10.1、fx-passes 0.3.0、tool-capture 0.3.0、tool-render 0.2.0。
-- **Phase 1 — 入口の整備（進行中）**
+- **Phase 1 — 入口の整備（完了、2026-10-30）**
   - README のヒーローと価値提案（PR #49）、npm メタデータとコミュニティの最小セット（PR #50）、GitHub の description / topics / homepage と Discussions を済ませた。good first issue は #51〜#53、#56 を起票した。
   - docs サイト（#58）: Showcase（LIMINAL VEIN。レンダーから 720p60 の AV1 webm 1.5 MB と H.264 mp4 2.0 MB を書き出し、reduced motion のときは自動再生しない）、日本語の Getting Started（`/ja/getting-started/`。トップの hero とサイドバーからリンク）、`llms.txt` を置いた。
-  - 1.0 の材料として、fx-canvas と react-canvas の API を棚卸しした（`docs/frapx_1.0_api_inventory.md`）。2026-10-28 に 1.0 の grill を済ませた。決定事項と作業単位（マイルストーン「fx-canvas 1.0」、#66〜#70）は同じドキュメントにある。1.0 はプレイグラウンドの前に出す。
+  - 1.0 の材料として、fx-canvas と react-canvas の API を棚卸しした（`docs/frapx_1.0_api_inventory.md`）。2026-10-28 に 1.0 の grill を済ませた。決定事項と作業単位（マイルストーン「fx-canvas 1.0」、#66〜#70）は同じドキュメントにある。
+  - 2026-10-30 に fx-canvas 1.0.0 / react-canvas 1.0.0 を公開した（PR #83）。
+- **P2 の前の 2 つ（決定 15、完了）**
+  - 1.0 の積み残しとバグ（PR #84・#96・#97）を片付け、SDF volume（#71〜#73）を公開した。
+  - 2026-10-31 に棚卸しのパッチを公開した: core 0.9.1、fx-canvas 1.1.1、fx-passes 0.8.1、fx-particles 0.6.1。
+- **Phase 2 — プレイグラウンド（進行中、2026-11-02〜）**
+  - #90: flowmap-painter を `/frapx/tools/flowmap-painter/` へ移し、`apps/playground` の足場を `/frapx/playground/` に置く。
+  - P3 の中身と順番は決定 28 のとおり、#93 のマージ後に決める。
 
 ## Phase 1 — 入口の整備と 1.0 の材料集め（11 月前半）
 

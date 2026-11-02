@@ -3,9 +3,9 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
 // Deployed at https://kramhash.github.io/frapx/ (GitHub Pages project site).
-// The flowmap-painter demo app is built separately and copied into
-// dist/playground/ by .github/workflows/pages.yml, so it lives at
-// https://kramhash.github.io/frapx/playground/ under this same base.
+// The playground and flowmap-painter apps are built separately and copied
+// into dist/playground/ and dist/tools/flowmap-painter/ by
+// .github/workflows/pages.yml, so they live under this same base.
 export default defineConfig({
   site: "https://kramhash.github.io",
   base: "/frapx",

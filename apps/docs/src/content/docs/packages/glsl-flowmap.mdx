@@ -64,7 +64,7 @@ Flowmap textures must follow the frapx RG convention:
 | G byte | `round(127.5 - dy * 127.5)` (canvas Y negated to match WebGL Y-up) |
 | Neutral (no flow) | `rgb(128, 128, 0)` |
 
-Textures painted with the [frapx-flowmap-painter demo](/frapx/playground/)
+Textures painted with the [frapx-flowmap-painter demo](/frapx/tools/flowmap-painter/)
 already follow this convention. If you upload a flow texture yourself,
 `@frapx/fx-canvas` uploads with `flipY: true` by default, matching the table
 above — set `UNPACK_FLIP_Y_WEBGL` accordingly if you upload manually.

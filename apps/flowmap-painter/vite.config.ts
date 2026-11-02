@@ -5,8 +5,9 @@ import { defineConfig } from "vite";
 export default defineConfig({
   // Deployed under the docs site's base path — see .github/workflows/pages.yml,
   // which builds @frapx/docs and this app separately and merges this app's
-  // dist/ into the docs dist/playground/ before uploading the Pages artifact.
-  base: "/frapx/playground/",
+  // dist/ into the docs dist/tools/flowmap-painter/ before uploading the
+  // Pages artifact.
+  base: "/frapx/tools/flowmap-painter/",
   plugins: [react()],
   resolve: {
     alias: [
