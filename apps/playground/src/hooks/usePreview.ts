@@ -47,6 +47,15 @@ export function usePreview(
     };
   }, [target]);
 
+  // Declared before the effect that creates instances: effects run in
+  // order, so a recreation in this commit sees this source's uniforms and
+  // textures, not the previous shader's (a 3D volume on a WebGL1 instance
+  // fails with TextureLoadError).
+  useEffect(() => {
+    latestUniforms.current = uniforms;
+    latestTextures.current = textures;
+  }, [uniforms, textures]);
+
   useEffect(() => {
     const element = target.current;
     const errors = overlay.current;
@@ -102,13 +111,11 @@ export function usePreview(
   // Declared after the effect above, so an instance it just created gets the
   // values too.
   useEffect(() => {
-    latestUniforms.current = uniforms;
     running.current?.fx.setUniforms(toUniformInputs(uniforms));
   }, [uniforms]);
 
   // Volumes load after the shader often; hand each new one to the instance.
   useEffect(() => {
-    latestTextures.current = textures;
     const fx = running.current?.fx;
     if (fx === undefined) return;
     for (const [name, texture] of Object.entries(textures)) {

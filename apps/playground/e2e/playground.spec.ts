@@ -200,3 +200,18 @@ void main() {
     await expect(other.locator(".volume-note")).toHaveCount(0);
   });
 });
+
+test("switching from Baked SDF to a GLSL ES 1.00 starter and back works", async ({ page }) => {
+  await page.locator(".topbar select").first().selectOption("baked-sdf");
+  await expect(page.locator(".volume-pick select")).toHaveValue("suzanne");
+  await expect(page.locator(".volume-note")).toHaveCount(0);
+  // Waves is GLSL ES 1.00: the preview is recreated on WebGL1, where the
+  // previous shader's 3D volume must not be passed along.
+  await page.locator(".topbar select").first().selectOption("waves");
+  await page.waitForTimeout(800);
+  expect(await overlayVisible(page)).toBe(false);
+  await page.locator(".topbar select").first().selectOption("baked-sdf");
+  await expect(page.locator(".volume-note")).toHaveCount(0);
+  await page.waitForTimeout(800);
+  expect(await overlayVisible(page)).toBe(false);
+});
