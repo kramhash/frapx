@@ -225,3 +225,252 @@ createShaderBackground({
 });
 "
 `;
+
+exports[`generateInstallCode with baked volumes > astro tab with a zstd volume 1`] = `
+"---
+// npm install @frapx/fx-canvas @frapx/glsl-sdf-volume fzstd
+// The runtime needs the browser, so it runs in <script>, not in this frontmatter.
+---
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>Hello</h1>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+  }
+</style>
+
+<script>
+  import { createShaderBackground, glsl } from "@frapx/fx-canvas";
+  import { loadSdfVolume } from "@frapx/glsl-sdf-volume";
+  import { decompress } from "fzstd";
+
+  const fragment = glsl\`#version 300 es
+  precision highp float;
+  uniform highp sampler3D u_sdf; // @volume suzanne
+  uniform float u_level; // @range 0 1 @default 0.5
+  out vec4 fragColor;
+  void main() { fragColor = vec4(u_level); }
+  \`;
+
+  // Serve Suzanne.r8-zstd.sdf.ktx2 at /sdf/Suzanne.r8-zstd.sdf.ktx2 (e.g. put it in public/sdf/).
+  loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
+    zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
+  }).then((bakedSdf) => {
+    createShaderBackground({
+      target: ".hero",
+      fragment,
+      textures: {
+        sdf: bakedSdf.texture
+      },
+      uniforms: {
+        ...bakedSdf.uniforms("sdf"),
+        level: 0.5
+      },
+      // Holds a still frame when the visitor asks the OS to reduce motion.
+      respectReducedMotion: true,
+      // Stops drawing while the tab is in the background.
+      pauseWhenHidden: true,
+      onReady(instance) {
+        // The background is decorative; hide it from assistive technology.
+        instance.canvas?.setAttribute("aria-hidden", "true");
+      }
+    });
+  });
+</script>
+"
+`;
+
+exports[`generateInstallCode with baked volumes > html tab with a zstd volume 1`] = `
+"<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>frapx</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .hero {
+        position: relative;
+        min-height: 100vh;
+      }
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Hello</h1>
+      </div>
+    </section>
+    <script type="module">
+      import { createShaderBackground, glsl } from "https://cdn.jsdelivr.net/npm/@frapx/fx-canvas@1/+esm";
+      import { loadSdfVolume } from "https://cdn.jsdelivr.net/npm/@frapx/glsl-sdf-volume@0.1/+esm";
+      import { decompress } from "https://cdn.jsdelivr.net/npm/fzstd@0.1/+esm";
+
+      const fragment = glsl\`#version 300 es
+      precision highp float;
+      uniform highp sampler3D u_sdf; // @volume suzanne
+      uniform float u_level; // @range 0 1 @default 0.5
+      out vec4 fragColor;
+      void main() { fragColor = vec4(u_level); }
+      \`;
+
+      // Serve Suzanne.r8-zstd.sdf.ktx2 at ./sdf/Suzanne.r8-zstd.sdf.ktx2 (e.g. put it in public/sdf/).
+      loadSdfVolume("./sdf/Suzanne.r8-zstd.sdf.ktx2", {
+        zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
+      }).then((bakedSdf) => {
+        createShaderBackground({
+          target: ".hero",
+          fragment,
+          textures: {
+            sdf: bakedSdf.texture
+          },
+          uniforms: {
+            ...bakedSdf.uniforms("sdf"),
+            level: 0.5
+          },
+          // Holds a still frame when the visitor asks the OS to reduce motion.
+          respectReducedMotion: true,
+          // Stops drawing while the tab is in the background.
+          pauseWhenHidden: true,
+          onReady(instance) {
+            // The background is decorative; hide it from assistive technology.
+            instance.canvas?.setAttribute("aria-hidden", "true");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
+"
+`;
+
+exports[`generateInstallCode with baked volumes > react tab with a zstd volume 1`] = `
+"// npm install @frapx/react-canvas @frapx/fx-canvas @frapx/glsl-sdf-volume fzstd
+// React 19: use() below reads the loading volume.
+import { Suspense, use, useMemo } from "react";
+import { ShaderBackground } from "@frapx/react-canvas";
+import { glsl } from "@frapx/fx-canvas";
+import { loadSdfVolume } from "@frapx/glsl-sdf-volume";
+import { decompress } from "fzstd";
+
+const fragment = glsl\`#version 300 es
+precision highp float;
+uniform highp sampler3D u_sdf; // @volume suzanne
+uniform float u_level; // @range 0 1 @default 0.5
+out vec4 fragColor;
+void main() { fragColor = vec4(u_level); }
+\`;
+
+// Serve Suzanne.r8-zstd.sdf.ktx2 at /sdf/Suzanne.r8-zstd.sdf.ktx2 (e.g. put it in public/sdf/).
+// Started once in the browser (never during server rendering). A failed
+// load (e.g. a missing file) resolves to null and leaves the page as is.
+const bakedSdfLoad =
+  typeof window === "undefined"
+    ? null
+    : loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
+      zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
+    }).catch((error) => {
+      console.error(error);
+      return null;
+    });
+
+function Background() {
+  const bakedSdf = bakedSdfLoad ? use(bakedSdfLoad) : null;
+  // Memoized: a new textures object would upload the volume again.
+  const textures = useMemo(
+    () => (bakedSdf ? { sdf: bakedSdf.texture } : undefined),
+    [bakedSdf]
+  );
+  if (!bakedSdf || !textures) return null;
+  return (
+    <ShaderBackground
+      fragment={fragment}
+      textures={textures}
+      uniforms={{
+        ...bakedSdf.uniforms("sdf"),
+        level: 0.5
+      }}
+      // Holds a still frame when the visitor asks the OS to reduce motion.
+      respectReducedMotion
+      // Stops drawing while the tab is in the background.
+      pauseWhenHidden
+      // The background is decorative; hide it from assistive technology.
+      aria-hidden="true"
+      style={{ position: "absolute", inset: 0 }}
+    />
+  );
+}
+
+export function Hero() {
+  return (
+    <section style={{ position: "relative", minHeight: "100vh" }}>
+      <Suspense fallback={null}>
+        <Background />
+      </Suspense>
+      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>
+        <h1>Hello</h1>
+      </div>
+    </section>
+  );
+}
+"
+`;
+
+exports[`generateInstallCode with baked volumes > vanilla tab with a zstd volume 1`] = `
+"// npm install @frapx/fx-canvas @frapx/glsl-sdf-volume fzstd
+import { createShaderBackground, glsl } from "@frapx/fx-canvas";
+import { loadSdfVolume } from "@frapx/glsl-sdf-volume";
+import { decompress } from "fzstd";
+
+const fragment = glsl\`#version 300 es
+precision highp float;
+uniform highp sampler3D u_sdf; // @volume suzanne
+uniform float u_level; // @range 0 1 @default 0.5
+out vec4 fragColor;
+void main() { fragColor = vec4(u_level); }
+\`;
+
+// Serve Suzanne.r8-zstd.sdf.ktx2 at /sdf/Suzanne.r8-zstd.sdf.ktx2 (e.g. put it in public/sdf/).
+loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
+  zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
+}).then((bakedSdf) => {
+  createShaderBackground({
+    target: ".hero",
+    fragment,
+    textures: {
+      sdf: bakedSdf.texture
+    },
+    uniforms: {
+      ...bakedSdf.uniforms("sdf"),
+      level: 0.5
+    },
+    // Holds a still frame when the visitor asks the OS to reduce motion.
+    respectReducedMotion: true,
+    // Stops drawing while the tab is in the background.
+    pauseWhenHidden: true,
+    onReady(instance) {
+      // The background is decorative; hide it from assistive technology.
+      instance.canvas?.setAttribute("aria-hidden", "true");
+    }
+  });
+});
+"
+`;

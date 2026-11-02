@@ -160,11 +160,74 @@ void main() {
 }
 `;
 
+// WebGL2: the baked volume is a sampler3D. Pick another volume, or open your
+// own .sdf.ktx2 from Blender's 3dsdf-texture, in the panel.
+const bakedSdf = `#version 300 es
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_blend; // @range 0 0.6 @default 0.25 @step 0.01
+uniform float u_orbit; // @range 0 1 @default 0.3 @step 0.01
+uniform vec3 u_albedo; // @color @default #e8b07a
+
+// The baked volume and the box and decode values frapx_sdVolume needs.
+uniform highp sampler3D u_sdf; // @volume suzanne
+uniform vec3 u_sdfMin;
+uniform vec3 u_sdfMax;
+uniform float u_sdfScale;
+uniform float u_sdfOffset;
+
+out vec4 fragColor;
+
+#define FRAPX_RAYMARCH_STEPS 160
+
+// @include sdf3d
+// @include sdfOps
+// @include sdfVolume
+// @include raymarchCamera
+// @include raymarch
+
+float orbiter(vec3 p) {
+  float a = u_time * 0.7;
+  vec3 c = vec3(1.25 * cos(a), 0.15 + 0.25 * sin(a * 2.0), 1.25 * sin(a));
+  return frapx_sdSphere(p - c, 0.32);
+}
+
+// glsl-raymarch marches whatever frapx_map returns.
+float frapx_map(vec3 p) {
+  float baked = frapx_sdVolume(u_sdf, p, u_sdfMin, u_sdfMax, u_sdfScale, u_sdfOffset);
+  return frapx_opSmoothUnion(baked, orbiter(p), max(u_blend, 1e-3));
+}
+
+void main() {
+  float angle = u_time * u_orbit;
+  vec3 eye = vec3(3.6 * sin(angle), 0.6, 3.6 * cos(angle));
+  vec3 rd = frapx_cameraRay(gl_FragCoord.xy, u_resolution, eye, vec3(0.0), radians(45.0));
+  vec3 color = vec3(0.02, 0.02, 0.03);
+
+  float t = frapx_raymarch(eye, rd, 0.0, 20.0);
+  if (t > 0.0) {
+    vec3 p = eye + rd * t;
+    // About a voxel apart: closer samples pick up the trilinear facets.
+    vec3 n = frapx_normal(p, 0.015);
+    vec3 light = normalize(vec3(0.43, 0.5, 0.75));
+    float diffuse = max(dot(n, light), 0.0);
+    float occlusion = frapx_ao(p, n, 0.25);
+    float rim = pow(1.0 - max(dot(n, -rd), 0.0), 3.0);
+    color = u_albedo * (0.15 * occlusion + 0.9 * diffuse) + 0.25 * rim;
+  }
+
+  fragColor = vec4(pow(color, vec3(0.4545)), 1.0);
+}
+`;
+
 export const starters: readonly Starter[] = [
   { id: "waves", label: "Waves", source: waves },
   { id: "noise", label: "Noise", source: noise },
   { id: "sdf", label: "SDF", source: sdf },
-  { id: "raymarch", label: "Raymarch", source: raymarch }
+  { id: "raymarch", label: "Raymarch", source: raymarch },
+  { id: "baked-sdf", label: "Baked SDF", source: bakedSdf }
 ];
 
 export const defaultStarter = starters[0]!;

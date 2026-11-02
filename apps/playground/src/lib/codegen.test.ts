@@ -83,6 +83,76 @@ describe("generateInstallCode", () => {
   });
 });
 
+describe("generateInstallCode with baked volumes", () => {
+  const volumeSource = `#version 300 es
+precision highp float;
+uniform highp sampler3D u_sdf; // @volume suzanne
+uniform float u_level; // @range 0 1 @default 0.5
+out vec4 fragColor;
+void main() { fragColor = vec4(u_level); }`;
+  const withVolumes = (volumes: { name: string; file: string; zstd: boolean }[]) =>
+    generateInstallCode({
+      source: volumeSource,
+      controls: parseControls(volumeSource),
+      values: {},
+      snippets,
+      versions: { ...versions, "@frapx/glsl-sdf-volume": "0.1.0", fzstd: "0.1.1" },
+      volumes
+    });
+  const zstd = withVolumes([{ name: "sdf", file: "Suzanne.r8-zstd.sdf.ktx2", zstd: true }]);
+
+  it.each(INSTALL_TABS)("%s tab with a zstd volume", (tab) => {
+    expect(zstd[tab]).toMatchSnapshot();
+  });
+
+  it("loads the volume before creating the background", () => {
+    expect(zstd.vanilla).toContain('import { loadSdfVolume } from "@frapx/glsl-sdf-volume";');
+    expect(zstd.vanilla).toContain('import { decompress } from "fzstd";');
+    expect(zstd.vanilla).toContain(".then((bakedSdf) => {");
+    expect(zstd.vanilla).toContain("sdf: bakedSdf.texture");
+    expect(zstd.vanilla).toContain('...bakedSdf.uniforms("sdf"),');
+    expect(zstd.vanilla).toContain("npm install @frapx/fx-canvas @frapx/glsl-sdf-volume fzstd");
+    expect(zstd.html).toContain('loadSdfVolume("./sdf/Suzanne.r8-zstd.sdf.ktx2"');
+    expect(zstd.html).toContain("https://cdn.jsdelivr.net/npm/fzstd@0.1/+esm");
+  });
+
+  it("leaves out fzstd for an uncompressed volume", () => {
+    const plain = withVolumes([{ name: "sdf", file: "Mesh.r16f.sdf.ktx2", zstd: false }]);
+    expect(plain.vanilla).not.toContain("fzstd");
+    expect(plain.vanilla).toContain('loadSdfVolume("/sdf/Mesh.r16f.sdf.ktx2").then(');
+  });
+
+  it("waits for every volume", () => {
+    const two = withVolumes([
+      { name: "sdf", file: "A.sdf.ktx2", zstd: false },
+      { name: "other", file: "B.sdf.ktx2", zstd: true }
+    ]);
+    expect(two.vanilla).toContain("]).then(([bakedSdf, bakedOther]) => {");
+    expect(two.react).toContain("const bakedOther = bakedOtherLoad ? use(bakedOtherLoad) : null;");
+    expect(two.react).toContain("if (!bakedSdf || !bakedOther || !textures) return null;");
+  });
+
+  it("numbers bindings that would collide", () => {
+    const clash = withVolumes([
+      { name: "sdf", file: "A.sdf.ktx2", zstd: false },
+      { name: "Sdf", file: "B.sdf.ktx2", zstd: false }
+    ]);
+    expect(clash.vanilla).toContain("]).then(([bakedSdf, bakedSdf2]) => {");
+    expect(clash.vanilla).toContain("Sdf: bakedSdf2.texture");
+  });
+
+  it("keeps React loading out of server rendering and failures off the page", () => {
+    expect(zstd.react).toContain('typeof window === "undefined"');
+    expect(zstd.react).toContain(".catch((error) => {");
+    expect(zstd.react).toContain("// React 19: use() below reads the loading volume.");
+  });
+
+  it("produces JavaScript that parses", () => {
+    const body = zstd.vanilla.replace(/^import .*$/gm, "");
+    expect(() => new Function("glsl", "createShaderBackground", "loadSdfVolume", "decompress", body)).not.toThrow();
+  });
+});
+
 describe("cdnRange", () => {
   it("uses the major from 1.0 and major.minor below", () => {
     expect(cdnRange("1.4.2")).toBe("1");

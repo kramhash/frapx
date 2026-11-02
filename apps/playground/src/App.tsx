@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InstallCode } from "./components/InstallCode";
 import { UniformPanel } from "./components/UniformPanel";
+import { VolumePanel } from "./components/VolumePanel";
 import { useCodeMirror } from "./hooks/useCodeMirror";
 import { useDebouncedValue } from "./hooks/useDebouncedValue";
 import { useLanguage } from "./hooks/useLanguage";
 import { usePreview } from "./hooks/usePreview";
 import { useShareHash } from "./hooks/useShareHash";
 import { useUniformValues } from "./hooks/useUniformValues";
+import { useVolumes } from "./hooks/useVolumes";
 import { parseControls } from "./lib/annotations";
 import { unknownIncludeProblems } from "./lib/errors";
 import { generateInstallCode } from "./lib/codegen";
@@ -16,6 +18,8 @@ import { encodeShare } from "./lib/share";
 import type { SharedState } from "./lib/share";
 import { snippets } from "./lib/snippets";
 import { defaultStarter, starters } from "./lib/starters";
+import { parseVolumes, setVolumeValue } from "./lib/volumes";
+import type { VolumeSlot } from "./lib/volumes";
 
 const lookup = (name: string) => snippets.get(name)?.source;
 
@@ -41,18 +45,60 @@ export default function App() {
   const expanded = useMemo(() => expandIncludes(compiled, lookup), [compiled]);
   const controls = useMemo(() => parseControls(compiled), [compiled]);
   const [values, uniformActions] = useUniformValues(controls);
-  const compileProblems = usePreview(previewRef, compiled, expanded, values);
+  const slots = useMemo(() => parseVolumes(compiled), [compiled]);
+  const volumes = useVolumes(slots);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const previewUniforms = useMemo(() => ({ ...volumes.uniforms, ...values }), [volumes.uniforms, values]);
+  const compileProblems = usePreview(previewRef, compiled, expanded, previewUniforms, volumes.textures);
   const problems = useMemo(
     () => [...unknownIncludeProblems(expanded, t.unknownSnippet), ...compileProblems],
     [expanded, t, compileProblems]
   );
   const installCode = useMemo(
     () =>
-      generateInstallCode({ source: compiled, controls, values, snippets, versions: __FRAPX_VERSIONS__ }),
-    [compiled, controls, values]
+      generateInstallCode({
+        source: compiled,
+        controls,
+        values,
+        snippets,
+        versions: __FRAPX_VERSIONS__,
+        volumes: volumes.install
+      }),
+    [compiled, controls, values, volumes.install]
   );
 
   const onChange = useCallback((value: string) => setSource(value), []);
+  // The latest typed source, for panel actions that rewrite one line of it.
+  const sourceRef = useRef(source);
+  useEffect(() => {
+    sourceRef.current = source;
+  }, [source]);
+  const rewrite = useCallback((text: string) => {
+    setLoaded({ text });
+    setSource(text);
+  }, []);
+
+  const pickSample = useCallback(
+    (slot: VolumeSlot, id: string) => {
+      setFileError(null);
+      rewrite(setVolumeValue(sourceRef.current, slot.name, id));
+    },
+    [rewrite]
+  );
+  const { openFile } = volumes;
+  const openVolumeFile = useCallback(
+    (slot: VolumeSlot, file: File) => {
+      void openFile(file).then((value) => {
+        if (value instanceof Error) {
+          setFileError(value.message === "not .sdf.ktx2" ? t.notSdfFile : t.volumeError(value.message));
+          return;
+        }
+        setFileError(null);
+        rewrite(setVolumeValue(sourceRef.current, slot.name, value));
+      });
+    },
+    [openFile, rewrite, t]
+  );
   useCodeMirror(editorRef, loaded, onChange, problems);
 
   const load = useCallback((text: string, id: string) => {
@@ -167,7 +213,17 @@ export default function App() {
           <div className="panel">
             <section className="panel-uniforms" aria-labelledby="uniforms-heading">
               <h2 id="uniforms-heading">{t.uniforms}</h2>
-              <UniformPanel controls={controls} values={values} onChange={uniformActions.set} t={t} />
+              <VolumePanel
+                states={volumes.states}
+                onPickSample={pickSample}
+                onOpenFile={openVolumeFile}
+                onRetry={(slot) => volumes.retry(slot.value)}
+                fileError={fileError}
+                t={t}
+              />
+              {(controls.length > 0 || slots.length === 0) && (
+                <UniformPanel controls={controls} values={values} onChange={uniformActions.set} t={t} />
+              )}
             </section>
             <section className="panel-install" aria-labelledby="install-heading">
               <h2 id="install-heading">{t.install}</h2>

@@ -122,3 +122,96 @@ test("a share URL pasted into the open tab is restored", async ({ page, context 
   await expect(other.locator(".notice")).toBeVisible();
   await expect(other.locator(".topbar select").first()).toHaveValue("waves");
 });
+
+test.describe("baked SDF volumes", () => {
+  const pickBaked = async (page: Page) => {
+    await page.locator(".topbar select").first().selectOption("baked-sdf");
+    await expect(page.locator(".volume-pick select")).toHaveValue("suzanne");
+    // The sample is fetched and decoded after the shader compiles.
+    await expect(page.locator(".volume-note")).toHaveCount(0);
+  };
+
+  test("the Baked SDF starter renders the bundled sample", async ({ page }) => {
+    await pickBaked(page);
+    expect(await overlayVisible(page)).toBe(false);
+  });
+
+  test("opening a file loads the volume into the preview", async ({ page }) => {
+    // A static slice through the volume: black until the file is loaded.
+    await setSource(
+      page,
+      `#version 300 es
+precision highp float;
+uniform vec2 u_resolution;
+uniform highp sampler3D u_sdf; // @volume Copy.r8-zstd.sdf.ktx2
+uniform vec3 u_sdfMin;
+uniform vec3 u_sdfMax;
+uniform float u_sdfScale;
+uniform float u_sdfOffset;
+out vec4 fragColor;
+// @include sdfVolume
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution * 2.0 - 1.0;
+  float d = frapx_sdVolume(u_sdf, vec3(uv * 1.5, 0.0), u_sdfMin, u_sdfMax, u_sdfScale, u_sdfOffset);
+  fragColor = vec4(vec3(d < 0.0 ? 1.0 : 0.0), 1.0);
+}
+`
+    );
+    await expect(page.locator(".volume-note")).toContainText("Copy.r8-zstd.sdf.ktx2");
+    const before = await preview(page);
+    await page.locator('input[data-volume="sdf"]').setInputFiles("e2e/fixtures/Copy.r8-zstd.sdf.ktx2");
+    await expect(page.locator(".volume-note")).toHaveCount(0);
+    await page.waitForTimeout(500);
+    expect((await preview(page)).equals(before)).toBe(false);
+    expect(await overlayVisible(page)).toBe(false);
+  });
+
+  test("opening a file rewrites @volume and the install code", async ({ page }) => {
+    await pickBaked(page);
+    await page.locator('input[data-volume="sdf"]').setInputFiles("e2e/fixtures/Copy.r8-zstd.sdf.ktx2");
+    await expect(page.locator(".cm-content")).toContainText("// @volume Copy.r8-zstd.sdf.ktx2");
+    await expect(page.locator(".volume-pick select")).toHaveValue("Copy.r8-zstd.sdf.ktx2");
+    await expect(page.locator("#install-code")).toContainText('loadSdfVolume("./sdf/Copy.r8-zstd.sdf.ktx2"');
+    expect(await overlayVisible(page)).toBe(false);
+  });
+
+  test("a share URL naming a local file asks for it", async ({ page, context }) => {
+    await pickBaked(page);
+    await page.locator('input[data-volume="sdf"]').setInputFiles("e2e/fixtures/Copy.r8-zstd.sdf.ktx2");
+    await expect(page.locator(".cm-content")).toContainText("// @volume Copy.r8-zstd.sdf.ktx2");
+    await page.waitForTimeout(900);
+    const hash = await page.evaluate(() => location.hash);
+
+    const other = await context.newPage();
+    await other.goto(`${PLAYGROUND}${hash}`);
+    await expect(other.locator(".volume-note")).toContainText("Copy.r8-zstd.sdf.ktx2");
+    await other.getByRole("button", { name: "Use Suzanne" }).click();
+    await expect(other.locator(".cm-content")).toContainText("// @volume suzanne");
+    await expect(other.locator(".volume-note")).toHaveCount(0);
+  });
+
+  test("a share URL with a sample restores it", async ({ page, context }) => {
+    await pickBaked(page);
+    await page.waitForTimeout(900);
+    const hash = await page.evaluate(() => location.hash);
+    const other = await context.newPage();
+    await other.goto(`${PLAYGROUND}${hash}`);
+    await expect(other.locator(".volume-pick select")).toHaveValue("suzanne");
+    await expect(other.locator(".volume-note")).toHaveCount(0);
+  });
+});
+
+test("switching from Baked SDF to a GLSL ES 1.00 starter and back works", async ({ page }) => {
+  await page.locator(".topbar select").first().selectOption("baked-sdf");
+  await expect(page.locator(".volume-pick select")).toHaveValue("suzanne");
+  await expect(page.locator(".volume-note")).toHaveCount(0);
+  // Waves is GLSL ES 1.00: the preview is recreated on WebGL1, where the
+  // previous shader's 3D volume must not be passed along.
+  await page.locator(".topbar select").first().selectOption("waves");
+  await page.waitForTimeout(800);
+  expect(await overlayVisible(page)).toBe(false);
+  await page.locator(".topbar select").first().selectOption("baked-sdf");
+  await expect(page.locator(".volume-note")).toHaveCount(0);
+  await page.waitForTimeout(800);
+  expect(await overlayVisible(page)).toBe(false);
+});

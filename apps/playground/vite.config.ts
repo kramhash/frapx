@@ -16,12 +16,21 @@ const versionOf = (dir: string): string => {
   return version;
 };
 
+const fzstdManifest: unknown = JSON.parse(
+  readFileSync(resolve(__dirname, "node_modules/fzstd/package.json"), "utf8")
+);
+const fzstdVersion =
+  typeof fzstdManifest === "object" && fzstdManifest !== null && "version" in fzstdManifest
+    ? String(fzstdManifest.version)
+    : "0.1.1";
+
 const versions = Object.fromEntries(
-  ["fx-canvas", "react-canvas", "glsl-noise", "glsl-sdf", "glsl-raymarch"].map((dir) => [
+  ["fx-canvas", "react-canvas", "glsl-noise", "glsl-sdf", "glsl-raymarch", "glsl-sdf-volume"].map((dir) => [
     `@frapx/${dir}`,
     versionOf(dir)
   ])
 );
+versions["fzstd"] = fzstdVersion;
 
 export default defineConfig({
   // Deployed under the docs site's base path — see .github/workflows/pages.yml,
@@ -50,7 +59,7 @@ export default defineConfig({
         find: /^@frapx\/fx-canvas\/(.*)$/,
         replacement: resolve(__dirname, "../../packages/fx-canvas/src/$1.ts")
       },
-      ...["glsl-noise", "glsl-sdf", "glsl-raymarch", "tool-dev"].map((name) => ({
+      ...["glsl-noise", "glsl-sdf", "glsl-raymarch", "glsl-sdf-volume", "tool-dev"].map((name) => ({
         find: new RegExp(`^@frapx/${name}$`),
         replacement: resolve(__dirname, `../../packages/${name}/src/index.ts`)
       }))

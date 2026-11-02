@@ -19,9 +19,22 @@ export type InstallInput = {
   readonly snippets: ReadonlyMap<string, Snippet>;
   /** Published version per package name, e.g. `{"@frapx/fx-canvas": "1.1.1"}`. */
   readonly versions: Readonly<Record<string, string>>;
+  /** Baked SDF volumes bound with `@volume`, in source order. */
+  readonly volumes?: readonly InstallVolume[];
+};
+
+export type InstallVolume = {
+  /** The sampler's JS name: texture key and uniforms prefix. */
+  readonly name: string;
+  /** File name the snippet loads from the site's `sdf/` folder. */
+  readonly file: string;
+  /** Whether the file needs the zstd decoder. */
+  readonly zstd: boolean;
 };
 
 const FX_CANVAS = "@frapx/fx-canvas";
+const SDF_VOLUME = "@frapx/glsl-sdf-volume";
+const FZSTD = "fzstd";
 const REACT_CANVAS = "@frapx/react-canvas";
 
 /** The version range a CDN URL pins: the major from 1.0, else major.minor. */
@@ -45,6 +58,9 @@ type Prepared = {
   readonly imports: ReadonlyMap<string, readonly string[]>;
   /** `name: value` lines for the `uniforms` object; empty when none. */
   readonly uniforms: readonly string[];
+  /** `name: bakedX.texture` lines for the `textures` object; empty without volumes. */
+  readonly textures: readonly string[];
+  readonly volumes: readonly (InstallVolume & { readonly binding: string })[];
 };
 
 /**
@@ -72,14 +88,36 @@ const prepare = (input: InstallInput): Prepared => {
   const body = lines.join("\n");
   const literal = `glsl\`${/^#version/.test(body) ? "" : "\n"}${body}\n\``;
 
-  const uniforms = input.controls.map(
-    (control) => `${control.name}: ${formatValue(input.values[control.name] ?? control.defaults)}`
-  );
+  // u_sdf and u_Sdf would both be bakedSdf; number repeats.
+  const usedBindings = new Set<string>();
+  const volumes = (input.volumes ?? []).map((volume) => {
+    const base = `baked${volume.name.charAt(0).toUpperCase()}${volume.name.slice(1)}`;
+    let binding = base;
+    for (let n = 2; usedBindings.has(binding); n++) binding = `${base}${n}`;
+    usedBindings.add(binding);
+    return { ...volume, binding };
+  });
+  if (volumes.length > 0) {
+    const bindings = imports.get(SDF_VOLUME) ?? new Set<string>();
+    bindings.add("loadSdfVolume");
+    imports.set(SDF_VOLUME, bindings);
+  }
+  if (volumes.some((volume) => volume.zstd)) imports.set(FZSTD, new Set(["decompress"]));
+
+  const uniforms = [
+    ...volumes.map((volume) => `...${volume.binding}.uniforms("${volume.name}")`),
+    ...input.controls.map(
+      (control) => `${control.name}: ${formatValue(input.values[control.name] ?? control.defaults)}`
+    )
+  ];
+  const textures = volumes.map((volume) => `${volume.name}: ${volume.binding}.texture`);
 
   return {
     literal,
     imports: new Map([...imports].map(([module, names]) => [module, [...names].sort()])),
-    uniforms
+    uniforms,
+    textures,
+    volumes
   };
 };
 
@@ -98,6 +136,7 @@ const importLines = (
 const optionLines = (prepared: Prepared): string[] => [
   `target: ".hero",`,
   `fragment,`,
+  ...(prepared.textures.length > 0 ? ["textures: {", ...objectLines(prepared.textures), "},"] : []),
   ...(prepared.uniforms.length > 0
     ? ["uniforms: {", ...objectLines(prepared.uniforms), "},"]
     : []),
@@ -114,8 +153,37 @@ const optionLines = (prepared: Prepared): string[] => [
 const objectLines = (lines: readonly string[]): string[] =>
   lines.map((line, i) => `  ${line}${i < lines.length - 1 ? "," : ""}`);
 
-const createCall = (prepared: Prepared): string =>
-  ["createShaderBackground({", indent(optionLines(prepared).join("\n"), 2), "});"].join("\n");
+const loadCall = (volume: Prepared["volumes"][number], folder: string): string =>
+  volume.zstd
+    ? `loadSdfVolume("${folder}${volume.file}", {\n  zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))\n})`
+    : `loadSdfVolume("${folder}${volume.file}")`;
+
+const serveComment = (prepared: Prepared, folder: string): string[] =>
+  prepared.volumes.map((volume) => `// Serve ${volume.file} at ${folder}${volume.file} (e.g. put it in public/sdf/).`);
+
+/** createShaderBackground(...), after the volumes load when there are any. */
+const createCall = (prepared: Prepared, folder = "/sdf/"): string => {
+  const create = ["createShaderBackground({", indent(optionLines(prepared).join("\n"), 2), "});"].join("\n");
+  const { volumes } = prepared;
+  if (volumes.length === 0) return create;
+  if (volumes.length === 1) {
+    const volume = volumes[0]!;
+    return [
+      ...serveComment(prepared, folder),
+      `${loadCall(volume, folder)}.then((${volume.binding}) => {`,
+      indent(create, 2),
+      "});"
+    ].join("\n");
+  }
+  return [
+    ...serveComment(prepared, folder),
+    "Promise.all([",
+    indent(volumes.map((volume) => loadCall(volume, folder)).join(",\n"), 2),
+    `]).then(([${volumes.map((volume) => volume.binding).join(", ")}]) => {`,
+    indent(create, 2),
+    "});"
+  ].join("\n");
+};
 
 const fxImports = (prepared: Prepared, add: string): Map<string, readonly string[]> => {
   const imports = new Map(prepared.imports);
@@ -149,7 +217,7 @@ const html = (prepared: Prepared, input: InstallInput): string => {
     "",
     `const fragment = ${prepared.literal};`,
     "",
-    createCall(prepared)
+    createCall(prepared, "./sdf/")
   ].join("\n");
   return `<!doctype html>
 <html lang="en">
@@ -188,8 +256,10 @@ const vanilla = (prepared: Prepared): string => {
 };
 
 const react = (prepared: Prepared): string => {
+  const { volumes } = prepared;
   const props = [
     "fragment={fragment}",
+    ...(volumes.length > 0 ? ["textures={textures}"] : []),
     // Inline, so TypeScript reads vectors as tuples (works in .jsx too).
     ...(prepared.uniforms.length > 0
       ? ["uniforms={{", ...objectLines(prepared.uniforms), "}}"]
@@ -202,25 +272,62 @@ const react = (prepared: Prepared): string => {
     'aria-hidden="true"',
     'style={{ position: "absolute", inset: 0 }}'
   ];
-  return [
-    `// ${installCommand([REACT_CANVAS, ...prepared.imports.keys()])}`,
-    `import { ShaderBackground } from "${REACT_CANVAS}";`,
-    ...importLines(prepared.imports, (module) => module),
-    "",
-    `const fragment = ${prepared.literal};`,
-    "",
+  const background = ["<ShaderBackground", indent(props.join("\n"), 2), "/>"].join("\n");
+  const hero = (inner: string) => [
     "export function Hero() {",
     "  return (",
     '    <section style={{ position: "relative", minHeight: "100vh" }}>',
-    "      <ShaderBackground",
-    indent(props.join("\n"), 8),
-    "      />",
+    indent(inner, 6),
     '      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>',
     "        <h1>Hello</h1>",
     "      </div>",
     "    </section>",
     "  );",
+    "}"
+  ];
+
+  const header = [
+    `// ${installCommand([REACT_CANVAS, ...prepared.imports.keys()])}`,
+    ...(volumes.length > 0
+      ? ["// React 19: use() below reads the loading volume.", 'import { Suspense, use, useMemo } from "react";']
+      : []),
+    `import { ShaderBackground } from "${REACT_CANVAS}";`,
+    ...importLines(prepared.imports, (module) => module),
+    "",
+    `const fragment = ${prepared.literal};`,
+    ""
+  ];
+  if (volumes.length === 0) return [...header, ...hero(background), ""].join("\n");
+
+  return [
+    ...header,
+    ...serveComment(prepared, "/sdf/"),
+    "// Started once in the browser (never during server rendering). A failed",
+    "// load (e.g. a missing file) resolves to null and leaves the page as is.",
+    ...volumes.map(
+      (volume) =>
+        `const ${volume.binding}Load =\n  typeof window === "undefined"\n    ? null\n${indent(
+          `: ${loadCall(volume, "/sdf/")}.catch((error) => {\n  console.error(error);\n  return null;\n});`,
+          4
+        )}`
+    ),
+    "",
+    "function Background() {",
+    ...volumes.map(
+      (volume) => `  const ${volume.binding} = ${volume.binding}Load ? use(${volume.binding}Load) : null;`
+    ),
+    "  // Memoized: a new textures object would upload the volume again.",
+    "  const textures = useMemo(",
+    `    () => (${volumes.map((volume) => volume.binding).join(" && ")} ? { ${prepared.textures.join(", ")} } : undefined),`,
+    `    [${volumes.map((volume) => volume.binding).join(", ")}]`,
+    "  );",
+    `  if (${volumes.map((volume) => `!${volume.binding}`).join(" || ")} || !textures) return null;`,
+    "  return (",
+    indent(background, 4),
+    "  );",
     "}",
+    "",
+    ...hero(["<Suspense fallback={null}>", "  <Background />", "</Suspense>"].join("\n")),
     ""
   ].join("\n");
 };

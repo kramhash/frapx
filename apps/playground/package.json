@@ -20,8 +20,10 @@
     "@frapx/glsl-noise": "workspace:*",
     "@frapx/glsl-raymarch": "workspace:*",
     "@frapx/glsl-sdf": "workspace:*",
+    "@frapx/glsl-sdf-volume": "workspace:*",
     "@frapx/tool-dev": "workspace:*",
     "codemirror": "^6.0.2",
+    "fzstd": "^0.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },

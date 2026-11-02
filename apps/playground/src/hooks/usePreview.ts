@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { createShaderBackground } from "@frapx/fx-canvas";
-import type { ShaderBackgroundInstance } from "@frapx/fx-canvas";
+import type { ShaderBackgroundInstance, TextureInput } from "@frapx/fx-canvas";
 import { createErrorOverlay } from "@frapx/tool-dev";
 import type { ErrorOverlay } from "@frapx/tool-dev";
 import { glslVersion, toEditorProblems } from "../lib/errors";
@@ -23,13 +23,17 @@ export function usePreview(
   target: RefObject<HTMLElement | null>,
   source: string,
   expanded: ExpandedSource,
-  uniforms: UniformValues
+  uniforms: UniformValues,
+  textures: Readonly<Record<string, TextureInput>>
 ): readonly EditorProblem[] {
   const running = useRef<Running | null>(null);
   const overlay = useRef<ErrorOverlay | null>(null);
   const [problems, setProblems] = useState<readonly EditorProblem[]>([]);
   // Read when an instance is created, so a new one starts with the sliders' values.
   const latestUniforms = useRef(uniforms);
+  const latestTextures = useRef(textures);
+  // What the running instance holds per texture name, so only changes upload.
+  const appliedTextures = useRef<Readonly<Record<string, TextureInput>>>({});
 
   useEffect(() => {
     const element = target.current;
@@ -42,6 +46,15 @@ export function usePreview(
       overlay.current = null;
     };
   }, [target]);
+
+  // Declared before the effect that creates instances: effects run in
+  // order, so a recreation in this commit sees this source's uniforms and
+  // textures, not the previous shader's (a 3D volume on a WebGL1 instance
+  // fails with TextureLoadError).
+  useEffect(() => {
+    latestUniforms.current = uniforms;
+    latestTextures.current = textures;
+  }, [uniforms, textures]);
 
   useEffect(() => {
     const element = target.current;
@@ -79,8 +92,10 @@ export function usePreview(
     const fx = createShaderBackground({
       target: element,
       fragment: expanded.code,
-      uniforms: toUniformInputs(latestUniforms.current)
+      uniforms: toUniformInputs(latestUniforms.current),
+      textures: { ...latestTextures.current }
     });
+    appliedTextures.current = latestTextures.current;
     running.current = { fx, version };
     // Ignore an instance that was replaced before it settled.
     fx.ready.then(
@@ -96,9 +111,21 @@ export function usePreview(
   // Declared after the effect above, so an instance it just created gets the
   // values too.
   useEffect(() => {
-    latestUniforms.current = uniforms;
     running.current?.fx.setUniforms(toUniformInputs(uniforms));
   }, [uniforms]);
+
+  // Volumes load after the shader often; hand each new one to the instance.
+  useEffect(() => {
+    const fx = running.current?.fx;
+    if (fx === undefined) return;
+    for (const [name, texture] of Object.entries(textures)) {
+      if (appliedTextures.current[name] === texture) continue;
+      void fx.setTexture(name, texture).catch(() => {
+        // The instance was replaced or destroyed meanwhile; the next one gets it at creation.
+      });
+    }
+    appliedTextures.current = textures;
+  }, [textures]);
 
   return problems;
 }
