@@ -1,4 +1,9 @@
-# frapx
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/frapx-logo.svg">
+    <img src="./assets/brand/frapx-logo-light.svg" width="300" alt="frapx">
+  </picture>
+</h1>
 
 <p align="center">
   <a href="./examples/vite-liminal-vein">

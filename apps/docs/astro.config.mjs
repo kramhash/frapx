@@ -29,6 +29,13 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "frapx",
+      // Originals live in assets/brand (not MIT-licensed, see README).
+      logo: {
+        light: "./src/assets/frapx-logo-light.svg",
+        dark: "./src/assets/frapx-logo-dark.svg",
+        alt: "frapx",
+        replacesTitle: true,
+      },
       description:
         "Web graphics utilities for building lightweight visual effects on the web.",
       social: [
