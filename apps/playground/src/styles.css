@@ -13,6 +13,7 @@
   --text: #e8eaf0;
   --text-muted: rgba(232 234 240 / 0.55);
   --topbar-h: 52px;
+  --accent: #60a5fa;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
@@ -74,6 +75,143 @@ body {
   border-right: 1px solid var(--border);
 }
 
+.side {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.panel {
+  overflow: auto;
+  border-top: 1px solid var(--border);
+  padding: 12px 16px 24px;
+  display: grid;
+  /* minmax(0, …) so long install-code lines scroll instead of widening the panel. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-content: start;
+}
+
+.panel h2 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.panel-empty {
+  color: var(--text-muted);
+}
+
+.panel code,
+.code {
+  font-family: var(--mono);
+}
+
+.controls {
+  display: grid;
+  gap: 10px;
+}
+
+.control {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.control-name {
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.control-inputs {
+  display: grid;
+  gap: 4px;
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 1.25em minmax(0, 1fr) 4.5em;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider > input {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.slider > output {
+  grid-column: 3;
+}
+
+.slider input[type="range"] {
+  justify-self: stretch;
+  accent-color: var(--accent);
+}
+
+.slider input[type="color"] {
+  width: 40px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  padding: 0;
+}
+
+.slider output {
+  font-family: var(--mono);
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.axis {
+  font-family: var(--mono);
+  color: var(--text-muted);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.tab,
+.copy {
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.copy {
+  margin-left: auto;
+  color: var(--text);
+}
+
+.code {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow: auto;
+  max-height: 360px;
+}
+
 .preview {
   position: relative;
   min-height: 0;
@@ -87,14 +225,22 @@ body {
     min-height: 100vh;
   }
 
-  /* Preview first, editor below. */
+  /* Preview first, then the editor, then the panel. */
   .workspace {
     grid-template-columns: 1fr;
-    grid-template-rows: 50vh 60vh;
+  }
+
+  .side {
+    display: contents;
   }
 
   .preview {
     order: -1;
+    height: 50vh;
+  }
+
+  .editor {
+    height: 60vh;
   }
 
   .editor {
