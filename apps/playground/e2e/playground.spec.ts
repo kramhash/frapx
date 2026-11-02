@@ -37,6 +37,13 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator(".preview canvas").last()).toBeVisible();
 });
 
+test("the preview holds exactly one canvas under StrictMode", async ({ page }) => {
+  // The dev server renders in StrictMode, which destroys the first preview
+  // before its deferred init; that one must leave nothing behind (#109).
+  await page.waitForTimeout(300);
+  await expect(page.locator(".preview canvas")).toHaveCount(1);
+});
+
 test("an edit changes the preview", async ({ page }) => {
   await setSource(page, flat("vec3(1.0, 0.0, 0.0)"));
   const red = await preview(page);
