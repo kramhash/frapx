@@ -28,6 +28,8 @@ export type Volumes = {
   readonly install: readonly InstallVolume[];
   /** Loads a local file; resolves to its `@volume` value, or an Error. */
   readonly openFile: (file: File) => Promise<string | Error>;
+  /** Fetches a bundled sample again after it failed. */
+  readonly retry: (value: string) => void;
 };
 
 const read = async (buffer: ArrayBuffer): Promise<Entry> => {
@@ -48,7 +50,7 @@ const read = async (buffer: ArrayBuffer): Promise<Entry> => {
 const sampleUrl = (file: string) => `${import.meta.env.BASE_URL}sdf/${file}`;
 
 /** `@volume` values with spaces and other characters a source line can't carry replaced. */
-const toVolumeValue = (fileName: string): string => fileName.replace(/[^\w.-]/g, "_");
+const toVolumeValue = (fileName: string): string => fileName.replace(/[^\p{L}\p{N}_.-]/gu, "_");
 
 /**
  * Loads the volume each `@volume` sampler names: bundled samples from the
@@ -58,6 +60,7 @@ const toVolumeValue = (fileName: string): string => fileName.replace(/[^\w.-]/g,
 export function useVolumes(slots: readonly VolumeSlot[]): Volumes {
   const [entries, setEntries] = useState<Readonly<Record<string, Entry>>>({});
   const started = useRef(new Set<string>());
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     for (const { value } of slots) {
@@ -73,15 +76,27 @@ export function useVolumes(slots: readonly VolumeSlot[]): Volumes {
         .then(read, (error: unknown): Entry => ({ status: "error", message: String(error) }))
         .then((entry) => setEntries((previous) => ({ ...previous, [value]: entry })));
     }
-  }, [slots]);
+    // `attempt` re-runs this after retry() cleared a failed sample.
+  }, [slots, attempt]);
 
   const openFile = useCallback(async (file: File): Promise<string | Error> => {
     const value = toVolumeValue(file.name);
     if (!isFileValue(value)) return new Error("not .sdf.ktx2");
-    setEntries((previous) => ({ ...previous, [value]: { status: "loading" } }));
     const entry = await read(await file.arrayBuffer());
+    // A file that fails to load does not replace a good volume of the same name.
+    if (entry.status === "error") return new Error(entry.message);
     setEntries((previous) => ({ ...previous, [value]: entry }));
-    return entry.status === "error" ? new Error(entry.message) : value;
+    return value;
+  }, []);
+
+  const retry = useCallback((value: string) => {
+    started.current.delete(value);
+    setEntries((previous) => {
+      const next = { ...previous };
+      delete next[value];
+      return next;
+    });
+    setAttempt((count) => count + 1);
   }, []);
 
   return useMemo(() => {
@@ -107,6 +122,6 @@ export function useVolumes(slots: readonly VolumeSlot[]): Volumes {
         install.push({ name: slot.name, ...volumeFile(slot.value, ready?.zstd) });
       }
     }
-    return { states, textures, uniforms, install, openFile };
-  }, [slots, entries, openFile]);
+    return { states, textures, uniforms, install, openFile, retry };
+  }, [slots, entries, openFile, retry]);
 }

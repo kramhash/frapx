@@ -17,6 +17,8 @@ describe("parseVolumes", () => {
     ["a sampler2D", "uniform sampler2D u_tex; // @volume suzanne"],
     ["a float", "uniform float u_a; // @volume suzanne"],
     ["no value", "uniform highp sampler3D u_sdf; // @volume"],
+    ["a space", "uniform highp sampler3D u_sdf; // @volume a b.sdf.ktx2"],
+    ["a quote", "uniform highp sampler3D u_sdf; // @volume a\"b.sdf.ktx2"],
     ["a path", "uniform highp sampler3D u_sdf; // @volume ../secret.sdf.ktx2"],
     ["another extension", "uniform highp sampler3D u_sdf; // @volume mesh.ktx2"],
     ["a URL", "uniform highp sampler3D u_sdf; // @volume https://example.com/a.sdf.ktx2"],
@@ -24,6 +26,12 @@ describe("parseVolumes", () => {
     ["no annotation", "uniform highp sampler3D u_sdf;"]
   ])("ignores %s", (_, source) => {
     expect(parseVolumes(source)).toEqual([]);
+  });
+
+  it("accepts file names in any script", () => {
+    expect(parseVolumes("uniform highp sampler3D u_sdf; // @volume 頭部_v2.sdf.ktx2")).toEqual([
+      { name: "sdf", line: 1, value: "頭部_v2.sdf.ktx2" }
+    ]);
   });
 
   it("keeps the first of two declarations", () => {

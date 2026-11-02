@@ -128,7 +128,23 @@ void main() { fragColor = vec4(u_level); }`;
       { name: "other", file: "B.sdf.ktx2", zstd: true }
     ]);
     expect(two.vanilla).toContain("]).then(([bakedSdf, bakedOther]) => {");
-    expect(two.react).toContain("const bakedOther = use(bakedOtherLoad);");
+    expect(two.react).toContain("const bakedOther = bakedOtherLoad ? use(bakedOtherLoad) : null;");
+    expect(two.react).toContain("if (!bakedSdf || !bakedOther || !textures) return null;");
+  });
+
+  it("numbers bindings that would collide", () => {
+    const clash = withVolumes([
+      { name: "sdf", file: "A.sdf.ktx2", zstd: false },
+      { name: "Sdf", file: "B.sdf.ktx2", zstd: false }
+    ]);
+    expect(clash.vanilla).toContain("]).then(([bakedSdf, bakedSdf2]) => {");
+    expect(clash.vanilla).toContain("Sdf: bakedSdf2.texture");
+  });
+
+  it("keeps React loading out of server rendering and failures off the page", () => {
+    expect(zstd.react).toContain('typeof window === "undefined"');
+    expect(zstd.react).toContain(".catch((error) => {");
+    expect(zstd.react).toContain("// React 19: use() below reads the loading volume.");
   });
 
   it("produces JavaScript that parses", () => {

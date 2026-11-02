@@ -217,6 +217,7 @@ export default function App() {
                 states={volumes.states}
                 onPickSample={pickSample}
                 onOpenFile={openVolumeFile}
+                onRetry={(slot) => volumes.retry(slot.value)}
                 fileError={fileError}
                 t={t}
               />

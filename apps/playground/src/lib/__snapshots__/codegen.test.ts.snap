@@ -364,6 +364,7 @@ exports[`generateInstallCode with baked volumes > html tab with a zstd volume 1`
 
 exports[`generateInstallCode with baked volumes > react tab with a zstd volume 1`] = `
 "// npm install @frapx/react-canvas @frapx/fx-canvas @frapx/glsl-sdf-volume fzstd
+// React 19: use() below reads the loading volume.
 import { Suspense, use, useMemo } from "react";
 import { ShaderBackground } from "@frapx/react-canvas";
 import { glsl } from "@frapx/fx-canvas";
@@ -379,18 +380,26 @@ void main() { fragColor = vec4(u_level); }
 \`;
 
 // Serve Suzanne.r8-zstd.sdf.ktx2 at /sdf/Suzanne.r8-zstd.sdf.ktx2 (e.g. put it in public/sdf/).
-// Started once, outside the component; use() below waits for it (React 19).
-const bakedSdfLoad = loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
-  zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
-});
+// Started once in the browser (never during server rendering). A failed
+// load (e.g. a missing file) resolves to null and leaves the page as is.
+const bakedSdfLoad =
+  typeof window === "undefined"
+    ? null
+    : loadSdfVolume("/sdf/Suzanne.r8-zstd.sdf.ktx2", {
+      zstd: (bytes, size) => decompress(bytes, new Uint8Array(size))
+    }).catch((error) => {
+      console.error(error);
+      return null;
+    });
 
 function Background() {
-  const bakedSdf = use(bakedSdfLoad);
+  const bakedSdf = bakedSdfLoad ? use(bakedSdfLoad) : null;
   // Memoized: a new textures object would upload the volume again.
   const textures = useMemo(
-    () => ({ sdf: bakedSdf.texture }),
+    () => (bakedSdf ? { sdf: bakedSdf.texture } : undefined),
     [bakedSdf]
   );
+  if (!bakedSdf || !textures) return null;
   return (
     <ShaderBackground
       fragment={fragment}

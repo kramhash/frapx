@@ -88,10 +88,15 @@ const prepare = (input: InstallInput): Prepared => {
   const body = lines.join("\n");
   const literal = `glsl\`${/^#version/.test(body) ? "" : "\n"}${body}\n\``;
 
-  const volumes = (input.volumes ?? []).map((volume) => ({
-    ...volume,
-    binding: `baked${volume.name.charAt(0).toUpperCase()}${volume.name.slice(1)}`
-  }));
+  // u_sdf and u_Sdf would both be bakedSdf; number repeats.
+  const usedBindings = new Set<string>();
+  const volumes = (input.volumes ?? []).map((volume) => {
+    const base = `baked${volume.name.charAt(0).toUpperCase()}${volume.name.slice(1)}`;
+    let binding = base;
+    for (let n = 2; usedBindings.has(binding); n++) binding = `${base}${n}`;
+    usedBindings.add(binding);
+    return { ...volume, binding };
+  });
   if (volumes.length > 0) {
     const bindings = imports.get(SDF_VOLUME) ?? new Set<string>();
     bindings.add("loadSdfVolume");
@@ -283,7 +288,9 @@ const react = (prepared: Prepared): string => {
 
   const header = [
     `// ${installCommand([REACT_CANVAS, ...prepared.imports.keys()])}`,
-    ...(volumes.length > 0 ? ['import { Suspense, use, useMemo } from "react";'] : []),
+    ...(volumes.length > 0
+      ? ["// React 19: use() below reads the loading volume.", 'import { Suspense, use, useMemo } from "react";']
+      : []),
     `import { ShaderBackground } from "${REACT_CANVAS}";`,
     ...importLines(prepared.imports, (module) => module),
     "",
@@ -295,16 +302,26 @@ const react = (prepared: Prepared): string => {
   return [
     ...header,
     ...serveComment(prepared, "/sdf/"),
-    "// Started once, outside the component; use() below waits for it (React 19).",
-    ...volumes.map((volume) => `const ${volume.binding}Load = ${loadCall(volume, "/sdf/")};`),
+    "// Started once in the browser (never during server rendering). A failed",
+    "// load (e.g. a missing file) resolves to null and leaves the page as is.",
+    ...volumes.map(
+      (volume) =>
+        `const ${volume.binding}Load =\n  typeof window === "undefined"\n    ? null\n${indent(
+          `: ${loadCall(volume, "/sdf/")}.catch((error) => {\n  console.error(error);\n  return null;\n});`,
+          4
+        )}`
+    ),
     "",
     "function Background() {",
-    ...volumes.map((volume) => `  const ${volume.binding} = use(${volume.binding}Load);`),
+    ...volumes.map(
+      (volume) => `  const ${volume.binding} = ${volume.binding}Load ? use(${volume.binding}Load) : null;`
+    ),
     "  // Memoized: a new textures object would upload the volume again.",
     "  const textures = useMemo(",
-    `    () => ({ ${prepared.textures.join(", ")} }),`,
+    `    () => (${volumes.map((volume) => volume.binding).join(" && ")} ? { ${prepared.textures.join(", ")} } : undefined),`,
     `    [${volumes.map((volume) => volume.binding).join(", ")}]`,
     "  );",
+    `  if (${volumes.map((volume) => `!${volume.binding}`).join(" || ")} || !textures) return null;`,
     "  return (",
     indent(background, 4),
     "  );",

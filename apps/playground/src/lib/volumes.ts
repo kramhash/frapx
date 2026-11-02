@@ -34,7 +34,8 @@ const SAMPLER =
   /^(\s*uniform\s+(?:(?:lowp|mediump|highp)\s+)?sampler3D\s+(u_\w+)\s*;\s*\/\/\s*@volume\s+)(\S+)(\s*)$/;
 
 const SAMPLE_ID = /^[a-z][a-z0-9-]*$/;
-const FILE_NAME = /^[\w.-]+\.sdf\.ktx2$/i;
+// Letters and digits in any script (Blender object names are often Japanese), `_ . -`.
+const FILE_NAME = /^[\p{L}\p{N}_.-]+\.sdf\.ktx2$/iu;
 
 export const isVolumeValue = (value: string): boolean => SAMPLE_ID.test(value) || FILE_NAME.test(value);
 

@@ -9,6 +9,8 @@ type Props = {
   /** Sets the slot's `@volume` value to a sample id. */
   readonly onPickSample: (slot: VolumeSlot, id: string) => void;
   readonly onOpenFile: (slot: VolumeSlot, file: File) => void;
+  /** Fetches a bundled sample again after it failed. */
+  readonly onRetry: (slot: VolumeSlot) => void;
   /** A message about the last file that could not be opened, or null. */
   readonly fileError: string | null;
   readonly t: Messages;
@@ -19,6 +21,7 @@ function VolumeRow({
   state,
   onPickSample,
   onOpenFile,
+  onRetry,
   t
 }: Omit<Props, "states" | "fileError"> & { slot: VolumeSlot; state: VolumeState }) {
   const input = useRef<HTMLInputElement>(null);
@@ -75,6 +78,11 @@ function VolumeRow({
         {note !== null && (
           <p className="volume-note" role={state.status === "loading" ? undefined : "status"}>
             {note}
+            {state.status === "error" && findSample(slot.value) !== undefined && (
+              <button type="button" className="button" onClick={() => onRetry(slot)}>
+                {t.retry}
+              </button>
+            )}
             {(state.status === "missing" || state.status === "unknown") && (
               <button type="button" className="button" onClick={() => onPickSample(slot, DEFAULT_VOLUME_SAMPLE.id)}>
                 {t.useSample(DEFAULT_VOLUME_SAMPLE.label)}
@@ -88,12 +96,20 @@ function VolumeRow({
 }
 
 /** One row per `@volume` sampler: sample select, file picker, load state. */
-export function VolumePanel({ states, onPickSample, onOpenFile, fileError, t }: Props) {
+export function VolumePanel({ states, onPickSample, onOpenFile, onRetry, fileError, t }: Props) {
   if (states.length === 0) return null;
   return (
     <div className="controls volumes">
       {states.map(({ slot, state }) => (
-        <VolumeRow key={slot.name} slot={slot} state={state} onPickSample={onPickSample} onOpenFile={onOpenFile} t={t} />
+        <VolumeRow
+          key={slot.name}
+          slot={slot}
+          state={state}
+          onPickSample={onPickSample}
+          onOpenFile={onOpenFile}
+          onRetry={onRetry}
+          t={t}
+        />
       ))}
       {fileError !== null && (
         <p className="volume-note" role="alert">
