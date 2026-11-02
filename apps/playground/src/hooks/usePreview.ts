@@ -4,7 +4,7 @@ import { createShaderBackground } from "@frapx/fx-canvas";
 import type { ShaderBackgroundInstance } from "@frapx/fx-canvas";
 import { createErrorOverlay } from "@frapx/tool-dev";
 import type { ErrorOverlay } from "@frapx/tool-dev";
-import { glslVersion, toEditorProblems, unknownIncludeProblems } from "../lib/errors";
+import { glslVersion, toEditorProblems } from "../lib/errors";
 import type { EditorProblem } from "../lib/errors";
 import type { ExpandedSource } from "../lib/include";
 import { toUniformInputs } from "../lib/uniforms";
@@ -16,8 +16,8 @@ type Running = { readonly fx: ShaderBackgroundInstance; readonly version: "100" 
  * Renders `expanded` into `target`. Edits go through setFragment() so time
  * and uniforms carry over; a new instance is created only when the GLSL
  * version changes or the current instance never compiled or is unsupported (growth plan
- * decision 17). `uniforms` are the slider values. Returns the problems to
- * show in the editor.
+ * decision 17). `uniforms` are the slider values. Returns the compile
+ * problems to show in the editor.
  */
 export function usePreview(
   target: RefObject<HTMLElement | null>,
@@ -48,15 +48,14 @@ export function usePreview(
     const errors = overlay.current;
     if (element === null || errors === null) return;
 
-    const included = unknownIncludeProblems(expanded);
     const succeed = () => {
       errors.clear();
-      setProblems(included);
+      setProblems([]);
     };
     const fail = (error: unknown) => {
       const mapped = toEditorProblems(error, expanded, source);
       errors.show(mapped.overlay);
-      setProblems([...included, ...mapped.problems]);
+      setProblems(mapped.problems);
     };
 
     const version = glslVersion(expanded.code);

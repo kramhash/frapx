@@ -36,7 +36,7 @@ describe("toEditorProblems", () => {
 describe("unknownIncludeProblems", () => {
   it("reports each unknown include", () => {
     const result = expandIncludes("// @include nope", () => undefined);
-    expect(unknownIncludeProblems(result)).toEqual([{ line: 1, message: 'Unknown snippet "nope"' }]);
+    expect(unknownIncludeProblems(result, (name) => `? ${name}`)).toEqual([{ line: 1, message: "? nope" }]);
   });
 });
 

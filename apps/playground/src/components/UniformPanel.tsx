@@ -1,11 +1,13 @@
 import { parseHexColor, toHexColor } from "../lib/annotations";
 import type { ColorControl, Control, RangeControl } from "../lib/annotations";
+import type { Messages } from "../lib/i18n";
 import type { UniformValues } from "../lib/uniforms";
 
 type Props = {
   readonly controls: readonly Control[];
   readonly values: UniformValues;
   readonly onChange: (control: Control, value: readonly number[]) => void;
+  readonly t: Messages;
 };
 
 const AXES = ["x", "y", "z", "w"];
@@ -102,12 +104,15 @@ function ColorRow({
 }
 
 /** One slider (or color picker) per annotated uniform. */
-export function UniformPanel({ controls, values, onChange }: Props) {
+export function UniformPanel({ controls, values, onChange, t }: Props) {
   if (controls.length === 0) {
     return (
       <p className="panel-empty">
-        Add <code>// @range 0 1 @default 0.5</code> or <code>// @color @default #ff8800</code> after a
-        uniform to get a control.
+        {t.emptyPanel[0]}
+        <code>// @range 0 1 @default 0.5</code>
+        {t.emptyPanel[1]}
+        <code>// @color @default #ff8800</code>
+        {t.emptyPanel[2]}
       </p>
     );
   }

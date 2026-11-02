@@ -1,0 +1,124 @@
+import { expect, test, type Page } from "@playwright/test";
+
+// The five checks of growth plan Phase 2. Shaders here are static (no
+// u_time) so two screenshots of the preview differ only when the change under
+// test changed the picture.
+
+const PLAYGROUND = "/frapx/playground/";
+
+const flat = (color: string, extra = "") => `precision highp float;
+uniform float u_level; // @range 0 1 @default 0.2
+${extra}
+void main() {
+  gl_FragColor = vec4(${color}, 1.0);
+}
+`;
+
+const setSource = async (page: Page, text: string) => {
+  await page.locator(".cm-content").click();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.insertText(text);
+  // Past the 250 ms debounce and the compile.
+  await page.waitForTimeout(700);
+};
+
+const overlayVisible = (page: Page) =>
+  page.evaluate(() => {
+    const panel = document.querySelector("frapx-error-overlay")?.shadowRoot?.querySelector(".panel");
+    return panel instanceof HTMLElement && !panel.hidden;
+  });
+
+const preview = (page: Page) => page.locator(".preview").screenshot();
+
+test.beforeEach(async ({ page }) => {
+  await page.goto(PLAYGROUND);
+  await expect(page.locator(".cm-content")).toBeVisible();
+  await expect(page.locator(".preview canvas").last()).toBeVisible();
+});
+
+test("an edit changes the preview", async ({ page }) => {
+  await setSource(page, flat("vec3(1.0, 0.0, 0.0)"));
+  const red = await preview(page);
+  await setSource(page, flat("vec3(0.0, 0.0, 1.0)"));
+  const blue = await preview(page);
+  expect(red.equals(blue)).toBe(false);
+  expect(await overlayVisible(page)).toBe(false);
+});
+
+test("an annotated uniform's slider changes the preview", async ({ page }) => {
+  await setSource(page, flat("vec3(u_level)"));
+  const before = await preview(page);
+  await page.getByLabel("level", { exact: true }).fill("0.9");
+  await page.waitForTimeout(200);
+  const after = await preview(page);
+  expect(before.equals(after)).toBe(false);
+});
+
+test("every install tab has code with the slider value baked in", async ({ page }) => {
+  await setSource(page, flat("vec3(u_level)"));
+  await page.getByLabel("level", { exact: true }).fill("0.9");
+  const expected: Record<string, string> = {
+    HTML: "https://cdn.jsdelivr.net/npm/@frapx/fx-canvas@",
+    Vanilla: "createShaderBackground({",
+    React: "<ShaderBackground",
+    Astro: "<script>"
+  };
+  for (const [tab, marker] of Object.entries(expected)) {
+    await page.getByRole("tab", { name: tab }).click();
+    const code = page.locator("#install-code");
+    await expect(code).toContainText(marker);
+    await expect(code).toContainText("level: 0.9");
+  }
+});
+
+test("reopening the share URL restores the source and slider values", async ({ page, context }) => {
+  await setSource(page, flat("vec3(u_level, 0.5, 0.25)", "// shared marker"));
+  await page.getByLabel("level", { exact: true }).fill("0.75");
+  // The hash is written once the state has been still for 300 ms.
+  await page.waitForTimeout(900);
+  const hash = await page.evaluate(() => location.hash);
+  expect(hash).toMatch(/^#v1=/);
+
+  const reopened = await context.newPage();
+  await reopened.goto(`${PLAYGROUND}${hash}`);
+  await expect(reopened.locator(".cm-content")).toContainText("// shared marker");
+  await expect(reopened.getByLabel("level", { exact: true })).toHaveValue("0.75");
+  await expect(reopened.locator(".topbar select").first()).toHaveValue("custom");
+});
+
+test("a compile error shows the overlay, and fixing it clears it", async ({ page }) => {
+  await setSource(page, flat("vec3(1.0)", "float broken = ;"));
+  await expect.poll(() => overlayVisible(page)).toBe(true);
+  await expect(page.locator(".cm-lintRange-error")).toHaveCount(1);
+  await setSource(page, flat("vec3(1.0)"));
+  await expect.poll(() => overlayVisible(page)).toBe(false);
+});
+
+test("a bad share link falls back to the default starter with a notice", async ({ page }) => {
+  await page.goto("about:blank");
+  await page.goto(`${PLAYGROUND}#v1=not-a-real-link`);
+  await expect(page.locator(".notice")).toBeVisible();
+  await expect(page.locator(".topbar select").first()).toHaveValue("waves");
+});
+
+test("a share URL pasted into the open tab is restored", async ({ page, context }) => {
+  await setSource(page, flat("vec3(u_level)", "// pasted marker"));
+  await page.waitForTimeout(900);
+  const hash = await page.evaluate(() => location.hash);
+
+  const other = await context.newPage();
+  await other.goto(PLAYGROUND);
+  await expect(other.locator(".cm-content")).not.toContainText("// pasted marker");
+  // Same document, new hash: what pasting a link into the address bar does.
+  await other.evaluate((next) => {
+    location.hash = next;
+  }, hash);
+  await expect(other.locator(".cm-content")).toContainText("// pasted marker");
+
+  await other.evaluate(() => {
+    location.hash = "#v1=broken";
+  });
+  await expect(other.locator(".notice")).toBeVisible();
+  await expect(other.locator(".topbar select").first()).toHaveValue("waves");
+});

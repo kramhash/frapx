@@ -29,17 +29,43 @@ body {
 }
 
 .app {
-  display: grid;
-  grid-template-rows: var(--topbar-h) 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100vh;
 }
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 24px;
-  padding: 0 16px;
+  gap: 8px 20px;
+  min-height: var(--topbar-h);
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border);
+}
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.docs-link {
+  color: var(--accent);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(250 204 21 / 0.12);
+  border-bottom: 1px solid rgba(250 204 21 / 0.35);
+}
+
+.notice .button {
+  margin-left: auto;
 }
 
 .topbar h1 {
@@ -47,14 +73,14 @@ body {
   font-weight: 600;
 }
 
-.starter {
+.field {
   display: flex;
   align-items: center;
   gap: 8px;
   color: var(--text-muted);
 }
 
-.starter select {
+.field select {
   background: var(--bg-raised);
   color: var(--text);
   border: 1px solid var(--border);
@@ -64,6 +90,7 @@ body {
 }
 
 .workspace {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
@@ -185,6 +212,7 @@ body {
   gap: 4px;
 }
 
+.button,
 .tab,
 .copy {
   background: var(--bg-raised);
@@ -201,9 +229,13 @@ body {
   border-color: var(--accent);
 }
 
+.button,
+.copy {
+  color: var(--text);
+}
+
 .copy {
   margin-left: auto;
-  color: var(--text);
 }
 
 .code {
@@ -230,26 +262,41 @@ body {
     min-height: 100vh;
   }
 
-  /* Preview first, then the editor, then the panel. */
+  /* Preview, sliders, editor, install code. */
   .workspace {
-    grid-template-columns: 1fr;
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .side {
+  .side,
+  .panel {
     display: contents;
   }
 
   .preview {
-    order: -1;
+    order: 1;
     height: 50vh;
   }
 
-  .editor {
-    height: 60vh;
+  .panel-uniforms {
+    order: 2;
   }
 
   .editor {
+    order: 3;
+    height: 60vh;
     border-right: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .panel-install {
+    order: 4;
+  }
+
+  .panel-uniforms,
+  .panel-install {
+    min-width: 0;
+    padding: 12px 16px 16px;
     border-top: 1px solid var(--border);
   }
 }
