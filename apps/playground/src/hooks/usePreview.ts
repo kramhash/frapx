@@ -7,6 +7,8 @@ import type { ErrorOverlay } from "@frapx/tool-dev";
 import { glslVersion, toEditorProblems, unknownIncludeProblems } from "../lib/errors";
 import type { EditorProblem } from "../lib/errors";
 import type { ExpandedSource } from "../lib/include";
+import { toUniformInputs } from "../lib/uniforms";
+import type { UniformValues } from "../lib/uniforms";
 
 type Running = { readonly fx: ShaderBackgroundInstance; readonly version: "100" | "300 es" };
 
@@ -14,16 +16,20 @@ type Running = { readonly fx: ShaderBackgroundInstance; readonly version: "100" 
  * Renders `expanded` into `target`. Edits go through setFragment() so time
  * and uniforms carry over; a new instance is created only when the GLSL
  * version changes or the current instance never compiled or is unsupported (growth plan
- * decision 17). Returns the problems to show in the editor.
+ * decision 17). `uniforms` are the slider values. Returns the problems to
+ * show in the editor.
  */
 export function usePreview(
   target: RefObject<HTMLElement | null>,
   source: string,
-  expanded: ExpandedSource
+  expanded: ExpandedSource,
+  uniforms: UniformValues
 ): readonly EditorProblem[] {
   const running = useRef<Running | null>(null);
   const overlay = useRef<ErrorOverlay | null>(null);
   const [problems, setProblems] = useState<readonly EditorProblem[]>([]);
+  // Read when an instance is created, so a new one starts with the sliders' values.
+  const latestUniforms = useRef(uniforms);
 
   useEffect(() => {
     const element = target.current;
@@ -71,7 +77,11 @@ export function usePreview(
     }
 
     current?.fx.destroy();
-    const fx = createShaderBackground({ target: element, fragment: expanded.code });
+    const fx = createShaderBackground({
+      target: element,
+      fragment: expanded.code,
+      uniforms: toUniformInputs(latestUniforms.current)
+    });
     running.current = { fx, version };
     // Ignore an instance that was replaced before it settled.
     fx.ready.then(
@@ -83,6 +93,13 @@ export function usePreview(
       }
     );
   }, [target, source, expanded]);
+
+  // Declared after the effect above, so an instance it just created gets the
+  // values too.
+  useEffect(() => {
+    latestUniforms.current = uniforms;
+    running.current?.fx.setUniforms(toUniformInputs(uniforms));
+  }, [uniforms]);
 
   return problems;
 }

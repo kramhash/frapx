@@ -1,0 +1,227 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateInstallCode > astro tab 1`] = `
+"---
+// npm install @frapx/fx-canvas @frapx/glsl-noise
+// The runtime needs the browser, so it runs in <script>, not in this frontmatter.
+---
+
+<section class="hero">
+  <div class="hero-content">
+    <h1>Hello</h1>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    padding: 2rem;
+  }
+</style>
+
+<script>
+  import { createShaderBackground, glsl, glslUtils } from "@frapx/fx-canvas";
+  import { fbm3d } from "@frapx/glsl-noise";
+
+  const fragment = glsl\`
+  precision highp float;
+
+  uniform vec2 u_resolution;
+  uniform float u_time;
+  uniform float u_speed; // @range 0 4 @default 1.5
+  uniform vec3 u_tint; // @color @default #ff8000
+
+  \${fbm3d}
+  \${glslUtils.rotate2d}
+
+  void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution;
+    gl_FragColor = vec4(u_tint * frapx_fbm3d(vec3(uv, u_time * u_speed)), 1.0);
+  }
+  \`;
+
+  createShaderBackground({
+    target: ".hero",
+    fragment,
+    uniforms: {
+      speed: 0.25,
+      tint: [1, 0.502, 0]
+    },
+    // Holds a still frame when the visitor asks the OS to reduce motion.
+    respectReducedMotion: true,
+    // Stops drawing while the tab is in the background.
+    pauseWhenHidden: true,
+    onReady(instance) {
+      // The background is decorative; hide it from assistive technology.
+      instance.canvas?.setAttribute("aria-hidden", "true");
+    }
+  });
+</script>
+"
+`;
+
+exports[`generateInstallCode > html tab 1`] = `
+"<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>frapx</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      .hero {
+        position: relative;
+        min-height: 100vh;
+      }
+      .hero-content {
+        position: relative;
+        z-index: 1;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Hello</h1>
+      </div>
+    </section>
+    <script type="module">
+      import { createShaderBackground, glsl, glslUtils } from "https://cdn.jsdelivr.net/npm/@frapx/fx-canvas@1/+esm";
+      import { fbm3d } from "https://cdn.jsdelivr.net/npm/@frapx/glsl-noise@0.3/+esm";
+
+      const fragment = glsl\`
+      precision highp float;
+
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform float u_speed; // @range 0 4 @default 1.5
+      uniform vec3 u_tint; // @color @default #ff8000
+
+      \${fbm3d}
+      \${glslUtils.rotate2d}
+
+      void main() {
+        vec2 uv = gl_FragCoord.xy / u_resolution;
+        gl_FragColor = vec4(u_tint * frapx_fbm3d(vec3(uv, u_time * u_speed)), 1.0);
+      }
+      \`;
+
+      createShaderBackground({
+        target: ".hero",
+        fragment,
+        uniforms: {
+          speed: 0.25,
+          tint: [1, 0.502, 0]
+        },
+        // Holds a still frame when the visitor asks the OS to reduce motion.
+        respectReducedMotion: true,
+        // Stops drawing while the tab is in the background.
+        pauseWhenHidden: true,
+        onReady(instance) {
+          // The background is decorative; hide it from assistive technology.
+          instance.canvas?.setAttribute("aria-hidden", "true");
+        }
+      });
+    </script>
+  </body>
+</html>
+"
+`;
+
+exports[`generateInstallCode > react tab 1`] = `
+"// npm install @frapx/react-canvas @frapx/fx-canvas @frapx/glsl-noise
+import { ShaderBackground } from "@frapx/react-canvas";
+import { glsl, glslUtils } from "@frapx/fx-canvas";
+import { fbm3d } from "@frapx/glsl-noise";
+
+const fragment = glsl\`
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_speed; // @range 0 4 @default 1.5
+uniform vec3 u_tint; // @color @default #ff8000
+
+\${fbm3d}
+\${glslUtils.rotate2d}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  gl_FragColor = vec4(u_tint * frapx_fbm3d(vec3(uv, u_time * u_speed)), 1.0);
+}
+\`;
+
+export function Hero() {
+  return (
+    <section style={{ position: "relative", minHeight: "100vh" }}>
+      <ShaderBackground
+        fragment={fragment}
+        uniforms={{
+          speed: 0.25,
+          tint: [1, 0.502, 0]
+        }}
+        // Holds a still frame when the visitor asks the OS to reduce motion.
+        respectReducedMotion
+        // Stops drawing while the tab is in the background.
+        pauseWhenHidden
+        // The background is decorative; hide it from assistive technology.
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0 }}
+      />
+      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>
+        <h1>Hello</h1>
+      </div>
+    </section>
+  );
+}
+"
+`;
+
+exports[`generateInstallCode > vanilla tab 1`] = `
+"// npm install @frapx/fx-canvas @frapx/glsl-noise
+import { createShaderBackground, glsl, glslUtils } from "@frapx/fx-canvas";
+import { fbm3d } from "@frapx/glsl-noise";
+
+const fragment = glsl\`
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_speed; // @range 0 4 @default 1.5
+uniform vec3 u_tint; // @color @default #ff8000
+
+\${fbm3d}
+\${glslUtils.rotate2d}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  gl_FragColor = vec4(u_tint * frapx_fbm3d(vec3(uv, u_time * u_speed)), 1.0);
+}
+\`;
+
+createShaderBackground({
+  target: ".hero",
+  fragment,
+  uniforms: {
+    speed: 0.25,
+    tint: [1, 0.502, 0]
+  },
+  // Holds a still frame when the visitor asks the OS to reduce motion.
+  respectReducedMotion: true,
+  // Stops drawing while the tab is in the background.
+  pauseWhenHidden: true,
+  onReady(instance) {
+    // The background is decorative; hide it from assistive technology.
+    instance.canvas?.setAttribute("aria-hidden", "true");
+  }
+});
+"
+`;
