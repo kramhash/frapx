@@ -103,10 +103,26 @@ export const createTextureSet = (
 
     async loadAll(gl, isCancelled) {
       const loaded = new Map<string, LoadedTexture>();
-      for (const [name, input] of textureInputs) {
-        if (isCancelled()) break;
-        const unit = reserveUnit(gl, name);
-        loaded.set(name, await loadTexture(gl, name, input, unit, options.warn));
+      // Textures this call created and nobody else owns yet. A cancellation
+      // (the runtime was destroyed, which already disposed the set) or a
+      // failed load would otherwise leave them on the GPU (#117).
+      const discard = () => {
+        for (const texture of loaded.values()) gl.deleteTexture(texture.texture);
+      };
+      try {
+        for (const [name, input] of textureInputs) {
+          if (isCancelled()) break;
+          const unit = reserveUnit(gl, name);
+          loaded.set(name, await loadTexture(gl, name, input, unit, options.warn));
+        }
+      } catch (error) {
+        discard();
+        throw error;
+      }
+      // Checked after the last await too: a destroy while it was in flight.
+      if (isCancelled()) {
+        discard();
+        return;
       }
 
       for (const texture of textures.values()) {
