@@ -7,6 +7,7 @@ on:
     paths:
       - "apps/docs/**"
       - "apps/flowmap-painter/**"
+      - "apps/playground/**"
       - "packages/core/**"
       - "packages/fx-canvas/**"
       - "packages/fx-passes/**"
@@ -53,23 +54,31 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # @frapx/docs (Live Demo page) and @frapx/flowmap-painter both depend
-      # on published packages' dist/ output, not their source.
+      # @frapx/docs (Live Demo page) depends on published packages' dist/
+      # output, not their source.
       - name: Build packages
         run: pnpm build
 
       - name: Build docs site
         run: pnpm --filter @frapx/docs build
 
+      - name: Build playground
+        run: pnpm --filter @frapx/playground build
+
       - name: Build flowmap-painter
         run: pnpm --filter @frapx/flowmap-painter build
 
-      # The docs site is the Pages root (base "/frapx/"); flowmap-painter is
-      # nested under it at "/frapx/playground/" (see its vite.config.ts base).
-      - name: Merge flowmap-painter into docs under /playground
+      # The docs site is the Pages root (base "/frapx/"); each app is nested
+      # under it at the path its vite.config.ts base names.
+      - name: Merge playground into docs under /playground
         run: |
           mkdir -p apps/docs/dist/playground
-          cp -r apps/flowmap-painter/dist/. apps/docs/dist/playground/
+          cp -r apps/playground/dist/. apps/docs/dist/playground/
+
+      - name: Merge flowmap-painter into docs under /tools/flowmap-painter
+        run: |
+          mkdir -p apps/docs/dist/tools/flowmap-painter
+          cp -r apps/flowmap-painter/dist/. apps/docs/dist/tools/flowmap-painter/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

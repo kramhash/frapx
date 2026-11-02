@@ -3,8 +3,9 @@
 The frapx documentation site — [Astro](https://astro.build) +
 [Starlight](https://starlight.astro.build). Deployed to GitHub Pages at
 `https://kramhash.github.io/frapx/` alongside the
-[flowmap-painter](../flowmap-painter) demo (served at `/frapx/playground/`)
-by `.github/workflows/pages.yml`.
+[playground](../playground) (served at `/frapx/playground/`) and the
+[flowmap-painter](../flowmap-painter) tool (served at
+`/frapx/tools/flowmap-painter/`) by `.github/workflows/pages.yml`.
 
 Content lives under `src/content/docs/` as `.md`/`.mdx` files. Use `.mdx`
 whenever a page imports a Starlight component (e.g. `Badge`, `Card`) —
