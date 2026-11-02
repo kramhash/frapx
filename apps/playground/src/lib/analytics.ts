@@ -22,6 +22,22 @@ declare global {
 
 const MEASUREMENT_ID = /^G-[A-Z0-9]{4,20}$/;
 
+/**
+ * The browser's own replaceState, taken when this module loads, before gtag.
+ * gtag wraps history.replaceState to report "page changes"; with GA's
+ * enhanced measurement on, every share-hash write would then send a page view
+ * whose URL holds the shader. Writing the hash through this one bypasses the
+ * wrapper, whatever the GA admin settings are.
+ */
+const nativeReplaceState: History["replaceState"] | null =
+  typeof History === "undefined" ? null : History.prototype.replaceState;
+
+/** Replaces the URL without going through analytics' history hooks. */
+export const replaceStateQuietly = (url: string): void => {
+  if (nativeReplaceState === null) return;
+  nativeReplaceState.call(window.history, window.history.state, "", url);
+};
+
 /** The measurement ID to use, or null when this build must not measure. */
 export const measurementId = (
   env: { readonly PROD: boolean; readonly VITE_GA_MEASUREMENT_ID?: string | undefined } = import.meta.env
