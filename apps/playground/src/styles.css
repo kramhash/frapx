@@ -9,8 +9,11 @@
 :root {
   --bg: #141518;
   --border: rgba(255 255 255 / 0.1);
+  --bg-raised: #242529;
   --text: #e8eaf0;
+  --text-muted: rgba(232 234 240 / 0.55);
   --topbar-h: 52px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 body {
@@ -33,6 +36,7 @@ body {
 .topbar {
   display: flex;
   align-items: center;
+  gap: 24px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
 }
@@ -42,7 +46,59 @@ body {
   font-weight: 600;
 }
 
+.starter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.starter select {
+  background: var(--bg-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font: inherit;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.editor {
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+
 .preview {
   position: relative;
   min-height: 0;
+  /* Makes the error overlay (position: fixed) sit inside this frame. */
+  contain: layout paint;
+}
+
+@media (max-width: 768px) {
+  .app {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Preview first, editor below. */
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: 50vh 60vh;
+  }
+
+  .preview {
+    order: -1;
+  }
+
+  .editor {
+    border-right: 0;
+    border-top: 1px solid var(--border);
+  }
 }

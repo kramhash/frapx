@@ -25,7 +25,11 @@ export default defineConfig({
       {
         find: /^@frapx\/fx-canvas\/(.*)$/,
         replacement: resolve(__dirname, "../../packages/fx-canvas/src/$1.ts")
-      }
+      },
+      ...["glsl-noise", "glsl-sdf", "glsl-raymarch", "tool-dev"].map((name) => ({
+        find: new RegExp(`^@frapx/${name}$`),
+        replacement: resolve(__dirname, `../../packages/${name}/src/index.ts`)
+      }))
     ]
   }
 });
