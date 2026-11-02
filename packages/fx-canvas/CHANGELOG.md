@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.2 - 2026-11-02
+
+### Fixed
+
+- Destroying an instance right after creating it (for example under React StrictMode) no longer leaves a stray canvas and WebGL context behind; requires `@frapx/core` 0.9.2 (#109).
+
+### Documentation
+
+- The README links to the playground, where you write a shader, adjust it with sliders and copy install code.
+
 ## 1.1.1 - 2026-10-31
 
 ### Added

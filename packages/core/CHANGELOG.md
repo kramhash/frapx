@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.2 - 2026-11-02
+
+### Fixed
+
+- A runtime host destroyed before its deferred initialization ran (React StrictMode's mount → cleanup → mount does this on every mount) no longer sets up a canvas, creates a WebGL context, or reports `loading` after `destroyed` (#109).
+
 ## 0.9.1 - 2026-10-31
 
 ### Added
