@@ -75,10 +75,10 @@ test("every install tab has code with the slider value baked in", async ({ page 
 test("reopening the share URL restores the source and slider values", async ({ page, context }) => {
   await setSource(page, flat("vec3(u_level, 0.5, 0.25)", "// shared marker"));
   await page.getByLabel("level", { exact: true }).fill("0.75");
-  await expect.poll(() => page.evaluate(() => location.hash)).toMatch(/^#v1=/);
-  // Let the hash catch up with the last slider move.
-  await page.waitForTimeout(300);
+  // The hash is written once the state has been still for 300 ms.
+  await page.waitForTimeout(900);
   const hash = await page.evaluate(() => location.hash);
+  expect(hash).toMatch(/^#v1=/);
 
   const reopened = await context.newPage();
   await reopened.goto(`${PLAYGROUND}${hash}`);
@@ -96,9 +96,29 @@ test("a compile error shows the overlay, and fixing it clears it", async ({ page
 });
 
 test("a bad share link falls back to the default starter with a notice", async ({ page }) => {
-  // A hash-only change on the open page is not a load; start from elsewhere.
   await page.goto("about:blank");
   await page.goto(`${PLAYGROUND}#v1=not-a-real-link`);
   await expect(page.locator(".notice")).toBeVisible();
   await expect(page.locator(".topbar select").first()).toHaveValue("waves");
+});
+
+test("a share URL pasted into the open tab is restored", async ({ page, context }) => {
+  await setSource(page, flat("vec3(u_level)", "// pasted marker"));
+  await page.waitForTimeout(900);
+  const hash = await page.evaluate(() => location.hash);
+
+  const other = await context.newPage();
+  await other.goto(PLAYGROUND);
+  await expect(other.locator(".cm-content")).not.toContainText("// pasted marker");
+  // Same document, new hash: what pasting a link into the address bar does.
+  await other.evaluate((next) => {
+    location.hash = next;
+  }, hash);
+  await expect(other.locator(".cm-content")).toContainText("// pasted marker");
+
+  await other.evaluate(() => {
+    location.hash = "#v1=broken";
+  });
+  await expect(other.locator(".notice")).toBeVisible();
+  await expect(other.locator(".topbar select").first()).toHaveValue("waves");
 });

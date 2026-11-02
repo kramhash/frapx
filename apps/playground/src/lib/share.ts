@@ -11,14 +11,35 @@ export type SharedState = {
   readonly values: Readonly<Record<string, readonly number[]>>;
 };
 
+// A link longer than this, or one that inflates past MAX_BYTES, is refused
+// instead of loading megabytes of source into the editor and the compiler.
+const MAX_HASH_LENGTH = 64 * 1024;
+const MAX_BYTES = 1024 * 1024;
+
 const pipe = async (
   bytes: Uint8Array<ArrayBuffer>,
   stream: CompressionStream | DecompressionStream
 ): Promise<Uint8Array<ArrayBuffer>> => {
-  const buffer = await new Response(
-    new Blob([bytes]).stream().pipeThrough(stream)
-  ).arrayBuffer();
-  return new Uint8Array(buffer);
+  const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_BYTES) {
+      await reader.cancel();
+      throw new Error("Share data too large");
+    }
+    chunks.push(value);
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
 };
 
 const toBase64Url = (bytes: Uint8Array): string => {
@@ -58,6 +79,7 @@ export const encodeShare = async (state: SharedState): Promise<string> => {
 export const decodeShare = async (hash: string): Promise<SharedState | null | Error> => {
   if (hash === "" || hash === "#") return null;
   if (!hash.startsWith(PREFIX)) return new Error("Unsupported share link");
+  if (hash.length > MAX_HASH_LENGTH) return new Error("Share link too long");
   try {
     const bytes = await pipe(fromBase64Url(hash.slice(PREFIX.length)), new DecompressionStream("deflate-raw"));
     const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));

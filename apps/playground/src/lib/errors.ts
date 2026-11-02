@@ -50,8 +50,10 @@ export const toEditorProblems = (
   return { problems, overlay: { name, message, stage: error.stage, lines } };
 };
 
-export const unknownIncludeProblems = (expanded: ExpandedSource): EditorProblem[] =>
-  expanded.unknown.map(({ line, name }) => ({ line, message: `Unknown snippet "${name}"` }));
+export const unknownIncludeProblems = (
+  expanded: ExpandedSource,
+  message: (name: string) => string
+): EditorProblem[] => expanded.unknown.map(({ line, name }) => ({ line, message: message(name) }));
 
 /** `"300 es"` when the code opens with `#version 300 es`, else GLSL ES 1.00. */
 export const glslVersion = (code: string): "100" | "300 es" =>

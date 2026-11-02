@@ -23,6 +23,7 @@ const en = {
   copiedStatus: "Copied to the clipboard",
   emptyPanel: ["Add ", " or ", " after a uniform to get a control."],
   badShare: "Couldn't open the shared link, so the default starter is shown.",
+  unknownSnippet: (name: string) => `Unknown snippet "${name}"`,
   dismiss: "Dismiss"
 };
 
@@ -47,6 +48,7 @@ const ja: Messages = {
   copiedStatus: "クリップボードにコピーしました",
   emptyPanel: ["uniform 宣言の行末に ", " や ", " を書くと、ここに操作パネルが出ます。"],
   badShare: "共有リンクを読み込めなかったので、既定のスターターを表示しています。",
+  unknownSnippet: (name: string) => `「${name}」というスニペットはありません`,
   dismiss: "閉じる"
 };
 

@@ -8,6 +8,7 @@ import { usePreview } from "./hooks/usePreview";
 import { useShareHash } from "./hooks/useShareHash";
 import { useUniformValues } from "./hooks/useUniformValues";
 import { parseControls } from "./lib/annotations";
+import { unknownIncludeProblems } from "./lib/errors";
 import { generateInstallCode } from "./lib/codegen";
 import { isLanguage, LANGUAGE_NAMES, LANGUAGES, messages } from "./lib/i18n";
 import { expandIncludes } from "./lib/include";
@@ -40,7 +41,11 @@ export default function App() {
   const expanded = useMemo(() => expandIncludes(compiled, lookup), [compiled]);
   const controls = useMemo(() => parseControls(compiled), [compiled]);
   const [values, uniformActions] = useUniformValues(controls);
-  const problems = usePreview(previewRef, compiled, expanded, values);
+  const compileProblems = usePreview(previewRef, compiled, expanded, values);
+  const problems = useMemo(
+    () => [...unknownIncludeProblems(expanded, t.unknownSnippet), ...compileProblems],
+    [expanded, t, compileProblems]
+  );
   const installCode = useMemo(
     () =>
       generateInstallCode({ source: compiled, controls, values, snippets, versions: __FRAPX_VERSIONS__ }),
@@ -64,7 +69,11 @@ export default function App() {
     },
     [load, uniformActions]
   );
-  const unreadable = useCallback(() => setBadShare(true), []);
+  const unreadable = useCallback(() => {
+    setBadShare(true);
+    load(defaultStarter.source, defaultStarter.id);
+    uniformActions.restore(defaultStarter.source, {});
+  }, [load, uniformActions]);
   // Only a settled state goes into the hash, never one still debouncing.
   const settled = useMemo<SharedState | null>(
     () => (compiled === source ? { source: compiled, values } : null),

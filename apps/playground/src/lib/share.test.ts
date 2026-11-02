@@ -30,6 +30,14 @@ describe("share hash", () => {
     expect(await decodeShare("#v1=AAAA")).toBeInstanceOf(Error);
   });
 
+  it("rejects links that are too long or inflate too far", async () => {
+    expect(await decodeShare(`#v1=${"A".repeat(70 * 1024)}`)).toBeInstanceOf(Error);
+    // About 2 MB of source compresses to a few kilobytes.
+    const bomb = await encodeShare({ source: " ".repeat(2 * 1024 * 1024), values: {} });
+    expect(bomb.length).toBeLessThan(64 * 1024);
+    expect(await decodeShare(bomb)).toBeInstanceOf(Error);
+  });
+
   it("rejects well-formed data of the wrong shape", async () => {
     const wrong = await encodeShare({ source: "x", values: { a: [] } });
     expect(await decodeShare(wrong)).toBeInstanceOf(Error);
