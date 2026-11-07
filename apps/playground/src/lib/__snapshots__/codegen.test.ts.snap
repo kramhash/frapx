@@ -21,6 +21,7 @@ exports[`generateInstallCode > astro tab 1`] = `
     position: relative;
     z-index: 1;
     padding: 2rem;
+    color: #fff;
   }
 </style>
 
@@ -84,6 +85,7 @@ exports[`generateInstallCode > html tab 1`] = `
         position: relative;
         z-index: 1;
         padding: 2rem;
+        color: #fff;
       }
     </style>
   </head>
@@ -176,7 +178,7 @@ export function Hero() {
         aria-hidden="true"
         style={{ position: "absolute", inset: 0 }}
       />
-      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>
+      <div style={{ position: "relative", zIndex: 1, color: "#fff", padding: "2rem" }}>
         <h1>Hello</h1>
       </div>
     </section>
@@ -247,6 +249,7 @@ exports[`generateInstallCode with baked volumes > astro tab with a zstd volume 1
     position: relative;
     z-index: 1;
     padding: 2rem;
+    color: #fff;
   }
 </style>
 
@@ -310,6 +313,7 @@ exports[`generateInstallCode with baked volumes > html tab with a zstd volume 1`
         position: relative;
         z-index: 1;
         padding: 2rem;
+        color: #fff;
       }
     </style>
   </head>
@@ -425,7 +429,7 @@ export function Hero() {
       <Suspense fallback={null}>
         <Background />
       </Suspense>
-      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>
+      <div style={{ position: "relative", zIndex: 1, color: "#fff", padding: "2rem" }}>
         <h1>Hello</h1>
       </div>
     </section>

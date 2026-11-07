@@ -201,6 +201,7 @@ const HERO_STYLE = `.hero {
   position: relative;
   z-index: 1;
   padding: 2rem;
+  color: #fff;
 }`;
 
 const HERO_MARKUP = `<section class="hero">
@@ -278,7 +279,7 @@ const react = (prepared: Prepared): string => {
     "  return (",
     '    <section style={{ position: "relative", minHeight: "100vh" }}>',
     indent(inner, 6),
-    '      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>',
+    '      <div style={{ position: "relative", zIndex: 1, color: "#fff", padding: "2rem" }}>',
     "        <h1>Hello</h1>",
     "      </div>",
     "    </section>",
