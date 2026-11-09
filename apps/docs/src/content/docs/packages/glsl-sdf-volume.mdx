@@ -130,6 +130,8 @@ Compression pays off mainly for `r8` (about 20–30% of the file).
 
 ## Example
 
+The [baked SDF skull demo](/frapx/demos/sdf-skull/) ([source](https://github.com/kramhash/frapx/tree/main/examples/vite-sdf-skull), [Showcase](/frapx/showcase/#baked-sdf-skull)) fuses a baked skull with spheres and grows it into a sea urchin, from an `r16f` volume so wide blends stay smooth.
+
 [`examples/vite-sdf-volume`](https://github.com/kramhash/frapx/tree/main/examples/vite-sdf-volume) raymarches Suzanne from a zstd `r8` file and smooth-unions it with an orbiting sphere. `?still` shows it from the camera of 3dsdf-texture's three.js viewer. `?view=particles` and `?view=surface` drive [`@frapx/fx-particles`](/frapx/packages/fx-particles/#following-a-baked-sdf) with the same volume.
 
 ## License
