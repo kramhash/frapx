@@ -171,7 +171,7 @@ test("inside the box, the distance is within half a voxel of the sphere's", asyn
   }
 });
 
-test("outside the box, the distance is max(b, e - b): a lower bound above the box distance", async ({
+test("outside the box, the distance is sqrt(b² + e²): a lower bound above the box distance", async ({
   page
 }) => {
   const probes = [
@@ -186,10 +186,31 @@ test("outside the box, the distance is max(b, e - b): a lower bound above the bo
     expect(d, `at ${p}`).toBeGreaterThanOrEqual(b - 1e-4);
   }
 
-  // Close to a face the e - b term takes over: at x = 1.2 the box is 0.2
-  // away, the face value is 0.5, the true distance 0.7.
+  // At x = 1.2 the box is 0.2 away and the face samples the outermost voxel
+  // centre (0.5 - VOXEL / 2 from the sphere); the true distance is 0.7.
+  const face = 1 - VOXEL / 2 - RADIUS;
   const [near] = await run(page, "r16f", [[1.2, 0, 0]]);
-  expect(near!.d).toBeCloseTo(0.3, 1);
+  expect(near!.d).toBeCloseTo(Math.hypot(0.2, face), 2);
+});
+
+// A bound that falls while a ray leaves the box (max(b, e - b) did) makes
+// frapx_softShadow's closest-approach estimate draw thin dark lines (#126).
+test("outside the box, the distance never decreases moving away from a face", async ({ page }) => {
+  const steps = Array.from({ length: 16 }, (_, i) => 0.005 + i * 0.08);
+  for (const [axis, sign] of [0, 1, 2].flatMap((a) => [[a, 1], [a, -1]] as const)) {
+    // Four rays per face, from points spread over it, run in one draw.
+    const rays = points(4, -0.95, 0.95, 6 + axis * 2 + (sign > 0 ? 0 : 1)).map(([u, v]) => {
+      const start = axis === 0 ? [sign, u!, v!] : axis === 1 ? [u!, sign, v!] : [u!, v!, sign];
+      return steps.map((t) => start.map((c, i) => (i === axis ? c + sign * t : c)));
+    });
+    const results = await run(page, "r16f", rays.flat());
+    rays.forEach((ray, r) => {
+      const d = results.slice(r * steps.length, (r + 1) * steps.length).map((x) => x.d);
+      for (let i = 1; i < d.length; i += 1) {
+        expect(d[i]!, `along ${ray[0]} at step ${i}`).toBeGreaterThanOrEqual(d[i - 1]! - 1e-4);
+      }
+    });
+  }
 });
 
 test("the gradient points away from the sphere with unit length", async ({ page }) => {

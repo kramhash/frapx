@@ -99,8 +99,8 @@ vec3 frapx_sdVolumeGrad(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float
 float frapx_sdVolumeSample(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset);
 ```
 
-- `frapx_sdVolume` is the signed distance at `p` (negative inside), in the units of the source object. Inside the box it is the sampled value `v * scale + offset`. Outside, with `b` the distance to the box and `e` the value at the nearest point on it, it is `max(b, e - b)`: both are lower bounds of the true distance, so sphere tracing from outside never steps through the surface.
-- `frapx_sdVolumeGrad` points away from the surface. Inside the box it is the gradient from central differences one voxel apart; normalize it for a surface normal. Outside it is the unit vector from the surface point nearest the box point to `p`. That is not the gradient of `frapx_sdVolume` there: `e - b` shrinks as `p` moves away from the box, so that gradient would point inward near it.
+- `frapx_sdVolume` is the signed distance at `p` (negative inside), in the units of the source object. Inside the box it is the sampled value `v * scale + offset`. Outside, with `b` the distance to the box and `e` the value at the nearest point on it, it is `sqrt(b² + max(e, 0)²)`. The shape lies inside the box and the box is convex, so this is a lower bound of the true distance: sphere tracing from outside never steps through the surface. It also rises steadily as `p` moves away from the box, which soft shadows that estimate the closest approach from consecutive samples (`frapx_softShadow` in `@frapx/glsl-raymarch`) rely on.
+- `frapx_sdVolumeGrad` points away from the surface. Inside the box it is the gradient from central differences one voxel apart; normalize it for a surface normal. Outside it is the unit vector from the surface point nearest the box point to `p`. That is not the gradient of `frapx_sdVolume` there.
 - `frapx_sdVolumeSample` is the decoded value at `p` clamped into the box, with no distance added outside.
 - Placement is yours: transform `p` into the volume's space before the call (`p = inverse(rotation) * (p - position) / scale`) and multiply the result by `scale`.
 
