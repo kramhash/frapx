@@ -15,17 +15,19 @@ const glsl = String.raw;
  * `frapx_sdVolume(tex, p, bmin, bmax, scale, offset)` is the distance at `p`
  * in the volume's own coordinates. Inside the box it is the sampled value
  * `v * scale + offset`. Outside, with `b` the distance to the box and `e` the
- * value at the nearest point on it, it is `max(b, e - b)`: both terms are
- * lower bounds of the true distance (the shape lies inside the box, and a
- * distance changes by at most `b` over `b`), so sphere tracing from outside
- * never steps through the surface.
+ * value at the nearest point `q` on it, it is `sqrt(b² + max(e, 0)²)`. The
+ * shape lies inside the box, and the box is convex, so every surface point
+ * `s` satisfies |p - s|² ≥ |p - q|² + |q - s|² with |q - s| ≥ e. The value is
+ * therefore a lower bound of the true distance, so sphere tracing from
+ * outside never steps through the surface, and it rises with `b`. A bound that
+ * falls as `p` leaves the box (such as `e - b`) makes soft shadows that
+ * estimate the closest approach from consecutive samples draw thin dark lines.
  *
  * `frapx_sdVolumeGrad` points away from the surface. Inside the box it is the
  * gradient from central differences one voxel apart (normalize it for a
  * surface normal). Outside it is the unit vector from the surface point
  * nearest the box point to `p`. It is not the gradient of `frapx_sdVolume`
- * there: `e - b` falls as `p` moves away from the box, so that gradient
- * points inward near it.
+ * there.
  *
  * To place the shape, transform `p` into volume space before the call and
  * multiply the result by the scale you applied.
@@ -39,7 +41,8 @@ float frapx_sdVolume(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float sc
   vec3 q = clamp(p, bmin, bmax);
   float e = frapx_sdVolumeSample(tex, q, bmin, bmax, scale, offset);
   float b = length(p - q);
-  return b > 0.0 ? max(b, e - b) : e;
+  float o = max(e, 0.0);
+  return b > 0.0 ? sqrt(b * b + o * o) : e;
 }
 
 vec3 frapx_sdVolumeGrad(highp sampler3D tex, vec3 p, vec3 bmin, vec3 bmax, float scale, float offset) {
