@@ -14,7 +14,7 @@ released, tagged, and documented on its own.
 | `@frapx/glsl-flowmap` | `packages/glsl-flowmap` | `@frapx/glsl-flowmap@0.4.1` | |
 | `@frapx/glsl-sdf` | `packages/glsl-sdf` | `@frapx/glsl-sdf@0.1.0` | |
 | `@frapx/glsl-raymarch` | `packages/glsl-raymarch` | `@frapx/glsl-raymarch@0.1.0` | |
-| `@frapx/glsl-sdf-volume` | `packages/glsl-sdf-volume` | `@frapx/glsl-sdf-volume@0.1.0` | WebGL2. No dependencies. |
+| `@frapx/glsl-sdf-volume` | `packages/glsl-sdf-volume` | `@frapx/glsl-sdf-volume@0.1.1` | WebGL2. No dependencies. |
 | `@frapx/fx-passes` | `packages/fx-passes` | `@frapx/fx-passes@0.8.2` | Depends on `@frapx/core`. Publish after it. |
 | `@frapx/fx-particles` | `packages/fx-particles` | `@frapx/fx-particles@0.6.2` | Depends on `@frapx/core`, `@frapx/glsl-noise` and `@frapx/glsl-sdf-volume`. Publish after them. |
 | `@frapx/tool-capture` | `packages/tool-capture` | `@frapx/tool-capture@0.3.0` | Browser export tool. Structurally typed; no runtime dependency on `@frapx/fx-canvas`. |

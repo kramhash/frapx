@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 - 2026-11-09
+
+### Fixed
+
+- Outside the box, `frapx_sdVolume` returns `sqrt(b² + max(e, 0)²)` instead of `max(b, e - b)`. Both are lower bounds of the true distance, but the new one is never smaller and rises steadily as the point moves away from the box. The old `e - b` term fell, which made `frapx_softShadow` (`@frapx/glsl-raymarch`) draw thin dark lines on lit surfaces whenever the light lined up with a face of the volume's box. Sphere tracing from outside also takes longer steps (#126).
+
 ## 0.1.0 - 2026-10-31
 
 ### Added

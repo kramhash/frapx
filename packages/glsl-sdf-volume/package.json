@@ -1,6 +1,6 @@
 {
   "name": "@frapx/glsl-sdf-volume",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Baked 3D signed distance fields for frapx shaders — load .sdf.ktx2 volumes from the 3dsdf-texture Blender extension and sample them in GLSL.",
   "keywords": [
     "webgl",
