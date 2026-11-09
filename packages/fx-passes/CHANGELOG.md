@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.2 - 2026-11-09
+
+### Fixed
+
+- Textures that finish loading after `destroy()`, or before a later texture fails to load, are deleted instead of left on the GPU (#117).
+- A `setTexture()` made while the initial textures (or the textures after a context restore) are still loading is no longer overwritten when that load finishes; requires `@frapx/core` 0.9.3 (#122).
+
 ## 0.8.1 - 2026-10-31
 
 ### Fixed

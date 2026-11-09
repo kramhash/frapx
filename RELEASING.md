@@ -7,7 +7,7 @@ released, tagged, and documented on its own.
 
 | Package | Directory | Latest tag | Notes |
 | --- | --- | --- | --- |
-| `@frapx/fx-canvas` | `packages/fx-canvas` | `@frapx/fx-canvas@1.1.2` | Depends on `@frapx/core`. Publish after it. |
+| `@frapx/fx-canvas` | `packages/fx-canvas` | `@frapx/fx-canvas@1.1.3` | Depends on `@frapx/core`. Publish after it. |
 | `@frapx/react-canvas` | `packages/react-canvas` | `@frapx/react-canvas@1.0.0` | Depends on `@frapx/fx-canvas`. Publish after it. |
 | `@frapx/react-particles` | `packages/react-particles` | `@frapx/react-particles@0.6.0` | Depends on `@frapx/fx-particles`. Publish after it. |
 | `@frapx/glsl-noise` | `packages/glsl-noise` | `@frapx/glsl-noise@0.3.0` | |
@@ -15,12 +15,12 @@ released, tagged, and documented on its own.
 | `@frapx/glsl-sdf` | `packages/glsl-sdf` | `@frapx/glsl-sdf@0.1.0` | |
 | `@frapx/glsl-raymarch` | `packages/glsl-raymarch` | `@frapx/glsl-raymarch@0.1.0` | |
 | `@frapx/glsl-sdf-volume` | `packages/glsl-sdf-volume` | `@frapx/glsl-sdf-volume@0.1.0` | WebGL2. No dependencies. |
-| `@frapx/fx-passes` | `packages/fx-passes` | `@frapx/fx-passes@0.8.1` | Depends on `@frapx/core`. Publish after it. |
-| `@frapx/fx-particles` | `packages/fx-particles` | `@frapx/fx-particles@0.6.1` | Depends on `@frapx/core`, `@frapx/glsl-noise` and `@frapx/glsl-sdf-volume`. Publish after them. |
+| `@frapx/fx-passes` | `packages/fx-passes` | `@frapx/fx-passes@0.8.2` | Depends on `@frapx/core`. Publish after it. |
+| `@frapx/fx-particles` | `packages/fx-particles` | `@frapx/fx-particles@0.6.2` | Depends on `@frapx/core`, `@frapx/glsl-noise` and `@frapx/glsl-sdf-volume`. Publish after them. |
 | `@frapx/tool-capture` | `packages/tool-capture` | `@frapx/tool-capture@0.3.0` | Browser export tool. Structurally typed; no runtime dependency on `@frapx/fx-canvas`. |
 | `@frapx/tool-render` | `packages/tool-render` | `@frapx/tool-render@0.3.0` | Node CLI (`frapx-render`). Depends only on `playwright-core`; renders pages that use `@frapx/tool-capture`. |
 | `@frapx/tool-dev` | `packages/tool-dev` | `@frapx/tool-dev@0.1.0` | Development helpers (shader error overlay). No dependencies. |
-| `@frapx/core` | `packages/core` | `@frapx/core@0.9.2` | Shared runtime. Publish before the `fx-*` packages. |
+| `@frapx/core` | `packages/core` | `@frapx/core@0.9.3` | Shared runtime. Publish before the `fx-*` packages. |
 
 These packages were renamed on 2026-07-12 (formerly `@frapx/runtime`, `@frapx/shader`,
 `@frapx/shader-react`, `@frapx/shader-noise`, `@frapx/shader-flowmap`). The old npm

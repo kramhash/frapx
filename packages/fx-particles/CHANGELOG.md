@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2 - 2026-11-09
+
+### Fixed
+
+- Textures that finish loading after `destroy()`, or before a later texture fails to load, are deleted instead of left on the GPU; requires `@frapx/core` 0.9.3 (#117).
+
 ## 0.6.1 - 2026-10-31
 
 ### Fixed

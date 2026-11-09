@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.3 - 2026-11-09
+
+### Fixed
+
+- `TextureSet.loadAll` deletes the textures it loaded when it is cancelled (the runtime was destroyed while it was in flight) or a later load fails, instead of leaving them on the GPU (#117).
+- `TextureSet.loadAll` no longer undoes a `set()` made while it runs: that name keeps the `set()` texture, a name `set()` added is not loaded a second time, and only the textures actually replaced are deleted (#122).
+
 ## 0.9.2 - 2026-11-02
 
 ### Fixed
