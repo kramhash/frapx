@@ -201,6 +201,11 @@ const HERO_STYLE = `.hero {
   position: relative;
   z-index: 1;
   padding: 2rem;
+  color: #fff;
+}
+/* Page styles often color headings directly (h1 { color: ... }). */
+.hero-content h1 {
+  color: inherit;
 }`;
 
 const HERO_MARKUP = `<section class="hero">
@@ -278,8 +283,8 @@ const react = (prepared: Prepared): string => {
     "  return (",
     '    <section style={{ position: "relative", minHeight: "100vh" }}>',
     indent(inner, 6),
-    '      <div style={{ position: "relative", zIndex: 1, padding: "2rem" }}>',
-    "        <h1>Hello</h1>",
+    '      <div style={{ position: "relative", zIndex: 1, color: "#fff", padding: "2rem" }}>',
+    '        <h1 style={{ color: "inherit" }}>Hello</h1>',
     "      </div>",
     "    </section>",
     "  );",
