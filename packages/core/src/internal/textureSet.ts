@@ -15,7 +15,8 @@ export type TextureSet = {
   reserveUnit(gl: GLContext, name: string): number;
   /**
    * Loads every input, then replaces the previously loaded textures. Used for
-   * the initial load and after a context restore.
+   * the initial load and after a context restore. A `set()` made while it
+   * runs takes precedence for its name.
    */
   loadAll(gl: GLContext, isCancelled: () => boolean): Promise<void>;
   /**
@@ -102,6 +103,11 @@ export const createTextureSet = (
     },
 
     async loadAll(gl, isCancelled) {
+      // A set() made while this runs claims its name: it bumps the version,
+      // and its texture wins over the one loaded here (#122). The inputs are
+      // copied so a name set() adds meanwhile is not loaded a second time.
+      const inputs = [...textureInputs];
+      const startVersions = new Map(inputs.map(([name]) => [name, versions.get(name) ?? 0]));
       const loaded = new Map<string, LoadedTexture>();
       // Textures this call created and nobody else owns yet. A cancellation
       // (the runtime was destroyed, which already disposed the set) or a
@@ -110,7 +116,7 @@ export const createTextureSet = (
         for (const texture of loaded.values()) gl.deleteTexture(texture.texture);
       };
       try {
-        for (const [name, input] of textureInputs) {
+        for (const [name, input] of inputs) {
           if (isCancelled()) break;
           const unit = reserveUnit(gl, name);
           loaded.set(name, await loadTexture(gl, name, input, unit, options.warn));
@@ -125,10 +131,15 @@ export const createTextureSet = (
         return;
       }
 
-      for (const texture of textures.values()) {
-        gl.deleteTexture(texture.texture);
+      for (const [name, texture] of loaded) {
+        if ((versions.get(name) ?? 0) !== startVersions.get(name)) {
+          gl.deleteTexture(texture.texture);
+          continue;
+        }
+        const previous = textures.get(name);
+        textures.set(name, texture);
+        if (previous) gl.deleteTexture(previous.texture);
       }
-      textures = loaded;
     },
 
     async set(gl, name, input, isCancelled) {

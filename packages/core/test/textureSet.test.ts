@@ -44,6 +44,19 @@ const createMockGl = (maxUnits = 4) =>
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+const idOf = (texture: unknown) => (texture as { id: string }).id;
+
+// Every texture created is either still held by the set or deleted, once.
+const expectNoLeaks = (
+  gl: ReturnType<typeof createMockGl>,
+  set: { textures: ReadonlyMap<string, LoadedTexture> },
+  created: readonly string[]
+) => {
+  const live = [...set.textures.values()].map((texture) => idOf(texture.texture));
+  const deleted = gl.deleteTexture.mock.calls.map(([texture]) => idOf(texture));
+  expect([...live, ...deleted].sort()).toEqual([...created].sort());
+};
+
 afterEach(() => {
   pending.length = 0;
 });
@@ -118,6 +131,48 @@ describe("createTextureSet", () => {
     await expect(loading).rejects.toThrow("b failed");
     expect(gl.deleteTexture).toHaveBeenCalledWith({ id: "a1" });
     expect(set.textures.size).toBe(0);
+  });
+
+  it("keeps a set() made during loadAll for an initial name (#122)", async () => {
+    const gl = createMockGl();
+    const set = createTextureSet({ a: "a.png" });
+
+    const loading = set.loadAll(gl, () => false);
+    const replacing = set.set(gl, "a", "replacement.png", () => false);
+    const [initial, replacement] = [pending[0]!, pending[1]!];
+    replacement.resolve(loaded("a", "replacement"));
+    expect(await replacing).not.toBeNull();
+    initial.resolve(loaded("a", "initial"));
+    await loading;
+
+    expect(set.textures.get("a")!.texture).toEqual({ id: "replacement" });
+    expect(gl.deleteTexture).toHaveBeenCalledWith({ id: "initial" });
+    expectNoLeaks(gl, set, ["initial", "replacement"]);
+  });
+
+  it("keeps a set() made during loadAll for a new name (#122)", async () => {
+    const gl = createMockGl();
+    const set = createTextureSet({ a: "a.png" });
+    const created = ["a1", "b"];
+
+    const loading = set.loadAll(gl, () => false);
+    const adding = set.set(gl, "b", "b.png", () => false);
+    const [initial, added] = [pending[0]!, pending[1]!];
+    added.resolve(loaded("b", "b"));
+    expect(await adding).not.toBeNull();
+    initial.resolve(loaded("a", "a1"));
+    // loadAll must not pick up the name set() added; settle any such load
+    // so a regression fails the assertions below instead of hanging.
+    await flush();
+    for (const extra of pending.splice(2)) {
+      created.push(`${extra.name}-reloaded`);
+      extra.resolve(loaded(extra.name, `${extra.name}-reloaded`));
+    }
+    await loading;
+
+    expect([...set.textures.keys()].sort()).toEqual(["a", "b"]);
+    expect(set.textures.get("b")!.texture).toEqual({ id: "b" });
+    expectNoLeaks(gl, set, created);
   });
 
   it("forgets the loaded textures without deleting them", async () => {
