@@ -12,19 +12,21 @@ Work made with frapx. Client sites will be added here as they ship.
 <ShowcaseVideo
   src="/frapx/showcase/sdf-skull"
   poster="/frapx/showcase/sdf-skull.jpg"
-  label="A white skull turning in the dark: orbiting spheres melt into it and pull away, then spines grow out of it as it rounds into a sea urchin, and it turns back into the skull."
+  label="A white skull turning in the dark: orbiting spheres melt into it on the beat, then spines grow out of it and stretch and shrink on the beat as it rounds into a sea urchin under them, and it turns back into the skull."
 />
 
 A skull baked from a mesh into a 3D signed distance texture, then treated in
 the shader like any other distance function. Orbiting spheres smooth-union into
-it and pull away; then the skull blends into an analytic sphere while spines —
-cones placed on rings of latitude — grow out of its surface until it is a sea
-urchin, and everything runs back. None of this needs the mesh: the volume is
-sampled with `frapx_sdVolume` from
+it on the beat and pull away; on the drop, spines — cones placed on rings of
+latitude — grow straight out of the skull and stretch and shrink on the beat,
+while under them the skull blends into an analytic sphere until it is a sea
+urchin; in the last bar everything runs back. None of this needs the mesh: the
+volume is sampled with `frapx_sdVolume` from
 [`@frapx/glsl-sdf-volume`](/frapx/packages/glsl-sdf-volume/), blended with
 [`@frapx/glsl-sdf`](/frapx/packages/glsl-sdf/) operators and marched with
-[`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/). The 12-second loop is
-a pure function of time, so the live page and the clip are the same frames.
+[`@frapx/glsl-raymarch`](/frapx/packages/glsl-raymarch/). The loop — 8 bars at
+128 BPM, 15 seconds — is a pure function of time, so the live page and the clip
+are the same frames.
 
 - **Live:** [/frapx/demos/sdf-skull/](/frapx/demos/sdf-skull/) (WebGL2; the
   pointer nudges the camera)
