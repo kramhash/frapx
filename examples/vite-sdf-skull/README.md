@@ -1,10 +1,13 @@
 # Baked SDF skull
 
-A showcase for [`@frapx/glsl-sdf-volume`](../../packages/glsl-sdf-volume). A skull baked into a 3D signed distance texture is raymarched as one more distance function. In a 12-second loop:
+A showcase for [`@frapx/glsl-sdf-volume`](../../packages/glsl-sdf-volume). A skull baked into a 3D signed distance texture is raymarched as one more distance function. The loop is 8 bars at 128 BPM (15 s), and the skull turns once in it:
 
-- 0–4 s: spheres orbit the skull and `frapx_opSmoothUnion` fuses them with it whenever they swing close.
-- 4–8 s: the spheres are swallowed, the skull rounds into a ball (`mix` of the baked and an analytic distance), and spines grow out of it until it is a sea urchin.
-- 8–12 s: the spines pull back, the skull returns, and the spheres come back out of it. The last frame equals the first.
+- Bars 1–4: spheres orbit the skull and swing in to touch it in turn on the beat, fused with it by `frapx_opSmoothUnion`. In bar 4 the skull swallows them.
+- Bar 5, beat 1 (the drop): with the face toward the camera, spines grow straight out of the skull, fastest on the beat and at full length a bar later. From then on, every two beats each spine moves to a new length, half of them on even beats and half on odd.
+- Bars 5–6: under the spines, the skull rounds into a ball (`mix` of the baked and an analytic distance) until it is a sea urchin, which holds through bar 7.
+- Bar 8: the body turns back into the skull, the spines pull back into it, and the spheres come back out. The last frame equals the first.
+
+The shader keeps time in beats, so `BPM` at the top of `src/main.ts` sets the tempo of everything. At 60 fps the clip loops without a seam only when the 32-beat loop is a whole number of frames, that is when 115200 / `BPM` is whole: 120, 128 and 144 work, 140 does not.
 
 Live: <https://kramhash.github.io/frapx/demos/sdf-skull/>
 
@@ -12,7 +15,7 @@ Live: <https://kramhash.github.io/frapx/demos/sdf-skull/>
 pnpm --filter @frapx/example-vite-sdf-skull dev
 ```
 
-- The pointer nudges the camera. Time alone decides the shape, so `?still=<seconds>` draws one frame (`?still=7.5` is the urchin).
+- The pointer nudges the camera. Time alone decides the shape, so `?still=<seconds>` draws one frame (`?still=8` is the skull as the spines grow out of it, `?still=12` the urchin).
 - With the OS "reduce motion" setting on, fx-canvas holds a still frame.
 - WebGL2 is required (the volume is a `sampler3D`).
 
@@ -30,7 +33,7 @@ It is `r16f` rather than `r8`: an `r8` volume stores distances only within a ban
 
 ## Export
 
-The page registers itself with `registerRenderTarget()` (30 fps, 12 s, 1280 × 720):
+The page registers itself with `registerRenderTarget()` (30 fps, 15 s, 1280 × 720):
 
 ```sh
 pnpm --filter @frapx/example-vite-sdf-skull build
